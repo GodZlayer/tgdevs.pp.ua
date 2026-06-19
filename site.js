@@ -37,13 +37,20 @@ const morphState = {
   lineAnimation: null
 };
 
+let latestScrollRatio = 0;
+let latestScrollY = 0;
+let sceneFrame = null;
+const idleStart = performance.now();
+
 const setScrollState = () => {
   const y = window.scrollY || 0;
   const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
   const scrollRatio = y / viewportHeight;
+  latestScrollY = y;
+  latestScrollRatio = scrollRatio;
   document.documentElement.style.setProperty('--scroll-ratio', String(scrollRatio));
   header?.classList.toggle('scrolled', scrollRatio > .02);
-  updateSectionScene();
+  requestSectionScene();
 };
 
 setScrollState();
@@ -76,10 +83,19 @@ const observer = new IntersectionObserver((entries) => {
 
 revealItems.forEach((item) => observer.observe(item));
 
+function requestSectionScene() {
+  if (sceneFrame) return;
+  sceneFrame = requestAnimationFrame(() => {
+    sceneFrame = null;
+    updateSectionScene();
+  });
+}
+
 function updateSectionScene() {
   if (!sections.length) return;
 
   const viewportCenter = window.innerHeight * 0.52;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
   let activeIndex = 0;
   let closestDistance = Infinity;
 
@@ -102,7 +118,6 @@ function updateSectionScene() {
   const activeSection = sections[activeIndex];
   const activeId = activeSection?.id || 'home';
   const heroRect = document.querySelector('#home')?.getBoundingClientRect();
-  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
   const onHero = heroRect ? heroRect.bottom > viewportHeight * .14 : activeId === 'home';
 
   header?.classList.toggle('on-hero', onHero);
@@ -112,10 +127,111 @@ function updateSectionScene() {
     menuButton?.setAttribute('aria-expanded', 'false');
   }
 
-  if (activeId !== morphState.activeId && morphShapes[activeId]) {
-    morphTo(activeId);
-  }
+  updateScrollMorph(activeIndex);
 }
+
+function updateScrollMorph(activeIndex) {
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
+  const screenPosition = latestScrollY / viewportHeight;
+  const screenIndex = clamp(Math.floor(screenPosition), 0, sections.length - 1);
+  const activeSection = sections[screenIndex] || sections[activeIndex];
+  if (!activeSection) return;
+
+  const nextIndex = Math.min(screenIndex + 1, sections.length - 1);
+  const nextSection = sections[nextIndex];
+  const activeId = activeSection.id || 'home';
+  const nextId = nextSection?.id || activeId;
+  const rawProgress = screenPosition - screenIndex;
+  const progress = smoothstep(clamp(rawProgress, 0, 1));
+  const energy = Math.sin(progress * Math.PI);
+  const idle = (performance.now() - idleStart) / 1000;
+  const idleStrength = 1 - energy * .55;
+
+  document.documentElement.classList.toggle('is-transitioning', energy > .08);
+  document.documentElement.style.setProperty('--zone-energy', energy.toFixed(4));
+  const idleX = Math.sin(idle * .74) * idleStrength;
+  const idleY = Math.cos(idle * .58) * idleStrength * .7;
+  document.documentElement.style.setProperty('--idle-x', `${idleX.toFixed(3)}svw`);
+  document.documentElement.style.setProperty('--idle-y', `${idleY.toFixed(3)}svh`);
+  document.documentElement.style.setProperty('--idle-x-alt', `${(-idleX * .75).toFixed(3)}svw`);
+  document.documentElement.style.setProperty('--idle-y-alt', `${(-idleY * .65).toFixed(3)}svh`);
+  document.documentElement.style.setProperty('--morph-angle', String(lerp(morphShapes[activeId]?.angle || 0, morphShapes[nextId]?.angle || 0, progress)));
+
+  morphState.activeId = activeId;
+  const transitionFill = buildZoneDividerFill(progress, idle, energy);
+  const transitionLine = buildZoneDividerLine(progress, idle, energy);
+  applyInterpolatedPath(morphPath, morphShapes[activeId]?.fill, transitionFill, energy, idle, 10 * idleStrength, (value) => {
+    morphState.fill = value;
+  });
+  applyInterpolatedPath(morphLine, morphShapes[activeId]?.line, transitionLine, energy, idle + 1.6, 8 * idleStrength, (value) => {
+    morphState.line = value;
+  });
+}
+
+function buildZoneDividerFill(progress, idle, energy) {
+  const center = lerp(800, 120, progress);
+  const thickness = 64 + energy * 210;
+  const waveA = Math.sin(idle * 1.2) * 24;
+  const waveB = Math.cos(idle * .9) * 28;
+  const top = center - thickness / 2;
+  const bottom = center + thickness / 2;
+
+  return [
+    `M-90,${top + waveA}`,
+    `C240,${top - 80 + waveB} 442,${top + 120 - waveA} 720,${top + waveB}`,
+    `C998,${top - 120 + waveA} 1258,${top + 86 - waveB} 1530,${top - waveA}`,
+    `L1530,${bottom + waveB}`,
+    `C1248,${bottom + 90 - waveA} 1010,${bottom - 118 + waveB} 720,${bottom - waveA}`,
+    `C430,${bottom + 132 + waveA} 216,${bottom - 92 - waveB} -90,${bottom + waveA}`,
+    'Z'
+  ].join(' ');
+}
+
+function buildZoneDividerLine(progress, idle, energy) {
+  const center = lerp(800, 120, progress);
+  const waveA = Math.sin(idle * 1.1) * (22 + energy * 36);
+  const waveB = Math.cos(idle * .8) * (18 + energy * 30);
+  return [
+    `M-90,${center + waveA}`,
+    `C220,${center - 96 + waveB} 448,${center + 108 - waveA} 720,${center}`,
+    `C992,${center - 118 + waveA} 1252,${center + 96 - waveB} 1530,${center - waveA}`
+  ].join(' ');
+}
+
+function applyInterpolatedPath(pathElement, fromPath, toPath, progress, idle, wobble, onFrame) {
+  if (!pathElement || !fromPath || !toPath) return;
+  const fromNumbers = extractNumbers(fromPath);
+  const toNumbers = extractNumbers(toPath);
+  const template = toPath.split(/-?\d*\.?\d+/g);
+  const values = toNumbers.map((target, index) => {
+    const from = fromNumbers[index] ?? target;
+    const isY = index % 2 === 1;
+    const idleOffset = isY ? Math.sin(idle + index * .72) * wobble : 0;
+    return lerp(from, target, progress) + idleOffset;
+  });
+  const nextPath = buildPath(template, values);
+  pathElement.setAttribute('d', nextPath);
+  onFrame(nextPath);
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function smoothstep(value) {
+  return value * value * (3 - 2 * value);
+}
+
+function lerp(from, to, progress) {
+  return from + (to - from) * progress;
+}
+
+function idleTick() {
+  requestSectionScene();
+  requestAnimationFrame(idleTick);
+}
+
+requestAnimationFrame(idleTick);
 
 function morphTo(id) {
   const target = morphShapes[id];

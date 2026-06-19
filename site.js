@@ -53,6 +53,9 @@ const setScrollState = () => {
   requestSectionScene();
 };
 
+document.documentElement.style.setProperty('--screen-count', String(sections.length));
+document.body.style.minBlockSize = `${Math.max(sections.length, 1) * 100}svh`;
+revealItems.forEach((item) => item.classList.add('visible'));
 setScrollState();
 window.addEventListener('scroll', setScrollState, { passive: true });
 window.addEventListener('resize', setScrollState);
@@ -65,11 +68,31 @@ menuButton?.addEventListener('click', () => {
 });
 
 nav?.addEventListener('click', (event) => {
-  if (event.target.closest('a')) {
+  const link = event.target.closest('a');
+  if (link) {
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target?.classList.contains('section-panel')) {
+      event.preventDefault();
+      const targetIndex = sections.indexOf(target);
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
+      window.scrollTo({ top: targetIndex * viewportHeight, behavior: 'smooth' });
+    }
     nav.classList.remove('open');
     menuButton?.classList.remove('open');
     menuButton?.setAttribute('aria-expanded', 'false');
   }
+});
+
+document.querySelectorAll('a[href^="#"]').forEach((link) => {
+  if (link.closest('[data-nav]')) return;
+  link.addEventListener('click', (event) => {
+    const target = document.querySelector(link.getAttribute('href'));
+    if (!target?.classList.contains('section-panel')) return;
+    event.preventDefault();
+    const targetIndex = sections.indexOf(target);
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
+    window.scrollTo({ top: targetIndex * viewportHeight, behavior: 'smooth' });
+  });
 });
 
 const observer = new IntersectionObserver((entries) => {
@@ -94,31 +117,29 @@ function requestSectionScene() {
 function updateSectionScene() {
   if (!sections.length) return;
 
-  const viewportCenter = window.innerHeight * 0.52;
   const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
-  let activeIndex = 0;
-  let closestDistance = Infinity;
+  const screenPosition = latestScrollY / viewportHeight;
+  const activeIndex = clamp(Math.floor(screenPosition), 0, sections.length - 1);
+  const nextIndex = Math.min(activeIndex + 1, sections.length - 1);
+  const rawProgress = clamp(screenPosition - activeIndex, 0, 1);
+  const progress = smoothstep(rawProgress);
+  const progressPct = `${(progress * 100).toFixed(3)}%`;
+  const inversePct = `${((1 - progress) * 100).toFixed(3)}%`;
 
-  sections.forEach((section, index) => {
-    const rect = section.getBoundingClientRect();
-    const sectionCenter = rect.top + rect.height / 2;
-    const distance = Math.abs(sectionCenter - viewportCenter);
-    if (distance < closestDistance) {
-      closestDistance = distance;
-      activeIndex = index;
-    }
-  });
+  document.documentElement.style.setProperty('--screen-progress', progress.toFixed(4));
+  document.documentElement.style.setProperty('--screen-progress-pct', progressPct);
+  document.documentElement.style.setProperty('--screen-progress-inverse-pct', inversePct);
 
   sections.forEach((section, index) => {
     section.classList.toggle('is-active', index === activeIndex);
+    section.classList.toggle('is-next', index === nextIndex && nextIndex !== activeIndex);
     section.classList.toggle('is-before', index < activeIndex);
-    section.classList.toggle('is-after', index > activeIndex);
+    section.classList.toggle('is-after', index > nextIndex);
   });
 
   const activeSection = sections[activeIndex];
   const activeId = activeSection?.id || 'home';
-  const heroRect = document.querySelector('#home')?.getBoundingClientRect();
-  const onHero = heroRect ? heroRect.bottom > viewportHeight * .14 : activeId === 'home';
+  const onHero = activeId === 'home' && progress < .9;
 
   header?.classList.toggle('on-hero', onHero);
   if (onHero) {
@@ -127,10 +148,10 @@ function updateSectionScene() {
     menuButton?.setAttribute('aria-expanded', 'false');
   }
 
-  updateScrollMorph(activeIndex);
+  updateScrollMorph(activeIndex, progress);
 }
 
-function updateScrollMorph(activeIndex) {
+function updateScrollMorph(activeIndex, forcedProgress) {
   const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
   const screenPosition = latestScrollY / viewportHeight;
   const screenIndex = clamp(Math.floor(screenPosition), 0, sections.length - 1);
@@ -141,8 +162,7 @@ function updateScrollMorph(activeIndex) {
   const nextSection = sections[nextIndex];
   const activeId = activeSection.id || 'home';
   const nextId = nextSection?.id || activeId;
-  const rawProgress = screenPosition - screenIndex;
-  const progress = smoothstep(clamp(rawProgress, 0, 1));
+  const progress = typeof forcedProgress === 'number' ? forcedProgress : smoothstep(clamp(screenPosition - screenIndex, 0, 1));
   const energy = Math.sin(progress * Math.PI);
   const idle = (performance.now() - idleStart) / 1000;
   const idleStrength = 1 - energy * .55;
@@ -169,32 +189,32 @@ function updateScrollMorph(activeIndex) {
 }
 
 function buildZoneDividerFill(progress, idle, energy) {
-  const center = lerp(800, 120, progress);
-  const thickness = 64 + energy * 210;
-  const waveA = Math.sin(idle * 1.2) * 24;
-  const waveB = Math.cos(idle * .9) * 28;
-  const top = center - thickness / 2;
-  const bottom = center + thickness / 2;
+  const center = lerp(1520, -80, progress);
+  const thickness = 60 + energy * 230;
+  const waveA = Math.sin(idle * 1.2) * 28;
+  const waveB = Math.cos(idle * .9) * 34;
+  const left = center - thickness / 2;
+  const right = center + thickness / 2;
 
   return [
-    `M-90,${top + waveA}`,
-    `C240,${top - 80 + waveB} 442,${top + 120 - waveA} 720,${top + waveB}`,
-    `C998,${top - 120 + waveA} 1258,${top + 86 - waveB} 1530,${top - waveA}`,
-    `L1530,${bottom + waveB}`,
-    `C1248,${bottom + 90 - waveA} 1010,${bottom - 118 + waveB} 720,${bottom - waveA}`,
-    `C430,${bottom + 132 + waveA} 216,${bottom - 92 - waveB} -90,${bottom + waveA}`,
+    `M${left + waveA},-90`,
+    `C${left - 120 + waveB},120 ${left + 108 - waveA},276 ${left + waveB},450`,
+    `C${left - 110 + waveA},624 ${left + 98 - waveB},778 ${left - waveA},990`,
+    `L${right + waveB},990`,
+    `C${right + 112 - waveA},778 ${right - 118 + waveB},624 ${right - waveA},450`,
+    `C${right + 126 + waveA},276 ${right - 102 - waveB},120 ${right + waveA},-90`,
     'Z'
   ].join(' ');
 }
 
 function buildZoneDividerLine(progress, idle, energy) {
-  const center = lerp(800, 120, progress);
-  const waveA = Math.sin(idle * 1.1) * (22 + energy * 36);
-  const waveB = Math.cos(idle * .8) * (18 + energy * 30);
+  const center = lerp(1520, -80, progress);
+  const waveA = Math.sin(idle * 1.1) * (24 + energy * 40);
+  const waveB = Math.cos(idle * .8) * (20 + energy * 34);
   return [
-    `M-90,${center + waveA}`,
-    `C220,${center - 96 + waveB} 448,${center + 108 - waveA} 720,${center}`,
-    `C992,${center - 118 + waveA} 1252,${center + 96 - waveB} 1530,${center - waveA}`
+    `M${center + waveA},-90`,
+    `C${center - 116 + waveB},120 ${center + 126 - waveA},276 ${center},450`,
+    `C${center - 132 + waveA},624 ${center + 116 - waveB},778 ${center - waveA},990`
   ].join(' ');
 }
 

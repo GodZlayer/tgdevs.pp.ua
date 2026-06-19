@@ -41,6 +41,8 @@ let latestScrollRatio = 0;
 let latestScrollY = 0;
 let sceneFrame = null;
 const idleStart = performance.now();
+const sectionStep = 2;
+const scrollUnits = Math.max(sections.length * sectionStep - 1, 1);
 
 const setScrollState = () => {
   const y = window.scrollY || 0;
@@ -54,7 +56,8 @@ const setScrollState = () => {
 };
 
 document.documentElement.style.setProperty('--screen-count', String(sections.length));
-document.body.style.minBlockSize = `${Math.max(sections.length, 1) * 100}svh`;
+document.documentElement.style.setProperty('--scroll-range', `${scrollUnits * 100}svh`);
+document.body.style.minHeight = `${scrollUnits * 100}svh`;
 revealItems.forEach((item) => item.classList.add('visible'));
 setScrollState();
 window.addEventListener('scroll', setScrollState, { passive: true });
@@ -75,7 +78,7 @@ nav?.addEventListener('click', (event) => {
       event.preventDefault();
       const targetIndex = sections.indexOf(target);
       const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
-      window.scrollTo({ top: targetIndex * viewportHeight, behavior: 'smooth' });
+      window.scrollTo({ top: targetIndex * sectionStep * viewportHeight, behavior: 'smooth' });
     }
     nav.classList.remove('open');
     menuButton?.classList.remove('open');
@@ -91,7 +94,7 @@ document.querySelectorAll('a[href^="#"]').forEach((link) => {
     event.preventDefault();
     const targetIndex = sections.indexOf(target);
     const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
-    window.scrollTo({ top: targetIndex * viewportHeight, behavior: 'smooth' });
+    window.scrollTo({ top: targetIndex * sectionStep * viewportHeight, behavior: 'smooth' });
   });
 });
 
@@ -118,28 +121,37 @@ function updateSectionScene() {
   if (!sections.length) return;
 
   const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
-  const screenPosition = latestScrollY / viewportHeight;
-  const activeIndex = clamp(Math.floor(screenPosition), 0, sections.length - 1);
+  const timelinePosition = latestScrollY / viewportHeight;
+  const activeIndex = clamp(Math.floor(timelinePosition / sectionStep), 0, sections.length - 1);
   const nextIndex = Math.min(activeIndex + 1, sections.length - 1);
-  const rawProgress = clamp(screenPosition - activeIndex, 0, 1);
-  const progress = smoothstep(rawProgress);
-  const progressPct = `${(progress * 100).toFixed(3)}%`;
-  const inversePct = `${((1 - progress) * 100).toFixed(3)}%`;
+  const localProgress = clamp(timelinePosition - activeIndex * sectionStep, 0, sectionStep);
+  const sectionProgress = smoothstep(clamp(localProgress, 0, 1));
+  const transitionRaw = clamp(localProgress - 1, 0, 1);
+  const transitionProgress = smoothstep(transitionRaw);
+  const progressPct = `${(transitionProgress * 100).toFixed(3)}%`;
+  const inversePct = `${((1 - transitionProgress) * 100).toFixed(3)}%`;
 
-  document.documentElement.style.setProperty('--screen-progress', progress.toFixed(4));
+  document.documentElement.style.setProperty('--screen-progress', transitionProgress.toFixed(4));
   document.documentElement.style.setProperty('--screen-progress-pct', progressPct);
   document.documentElement.style.setProperty('--screen-progress-inverse-pct', inversePct);
+  document.documentElement.style.setProperty('--section-progress', sectionProgress.toFixed(4));
 
   sections.forEach((section, index) => {
     section.classList.toggle('is-active', index === activeIndex);
-    section.classList.toggle('is-next', index === nextIndex && nextIndex !== activeIndex);
+    section.classList.toggle('is-next', transitionRaw > 0 && index === nextIndex && nextIndex !== activeIndex);
     section.classList.toggle('is-before', index < activeIndex);
     section.classList.toggle('is-after', index > nextIndex);
+    const play = index === activeIndex ? sectionProgress : 0;
+    section.style.setProperty('--section-play', play.toFixed(4));
+    section.style.setProperty('--content-y', `${((1 - play) * 4.8).toFixed(3)}svh`);
+    section.style.setProperty('--content-scale', (0.96 + play * .04).toFixed(4));
+    section.style.setProperty('--content-opacity', (0.34 + play * .66).toFixed(4));
+    section.style.setProperty('--ambient-boost', (0.7 + play * .3).toFixed(4));
   });
 
   const activeSection = sections[activeIndex];
   const activeId = activeSection?.id || 'home';
-  const onHero = activeId === 'home' && progress < .9;
+  const onHero = activeId === 'home' && localProgress < 1.65;
 
   header?.classList.toggle('on-hero', onHero);
   if (onHero) {
@@ -148,13 +160,13 @@ function updateSectionScene() {
     menuButton?.setAttribute('aria-expanded', 'false');
   }
 
-  updateScrollMorph(activeIndex, progress);
+  updateScrollMorph(activeIndex, transitionProgress);
 }
 
 function updateScrollMorph(activeIndex, forcedProgress) {
   const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
-  const screenPosition = latestScrollY / viewportHeight;
-  const screenIndex = clamp(Math.floor(screenPosition), 0, sections.length - 1);
+  const timelinePosition = latestScrollY / viewportHeight;
+  const screenIndex = clamp(Math.floor(timelinePosition / sectionStep), 0, sections.length - 1);
   const activeSection = sections[screenIndex] || sections[activeIndex];
   if (!activeSection) return;
 
@@ -162,7 +174,8 @@ function updateScrollMorph(activeIndex, forcedProgress) {
   const nextSection = sections[nextIndex];
   const activeId = activeSection.id || 'home';
   const nextId = nextSection?.id || activeId;
-  const progress = typeof forcedProgress === 'number' ? forcedProgress : smoothstep(clamp(screenPosition - screenIndex, 0, 1));
+  const localProgress = clamp(timelinePosition - screenIndex * sectionStep, 0, sectionStep);
+  const progress = typeof forcedProgress === 'number' ? forcedProgress : smoothstep(clamp(localProgress - 1, 0, 1));
   const energy = Math.sin(progress * Math.PI);
   const idle = (performance.now() - idleStart) / 1000;
   const idleStrength = 1 - energy * .55;

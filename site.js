@@ -39,8 +39,10 @@ const morphState = {
 
 const setScrollState = () => {
   const y = window.scrollY || 0;
-  document.documentElement.style.setProperty('--scroll', String(y));
-  header?.classList.toggle('scrolled', y > 12);
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
+  const scrollRatio = y / viewportHeight;
+  document.documentElement.style.setProperty('--scroll-ratio', String(scrollRatio));
+  header?.classList.toggle('scrolled', scrollRatio > .02);
   updateSectionScene();
 };
 
@@ -100,7 +102,8 @@ function updateSectionScene() {
   const activeSection = sections[activeIndex];
   const activeId = activeSection?.id || 'home';
   const heroRect = document.querySelector('#home')?.getBoundingClientRect();
-  const onHero = heroRect ? heroRect.bottom > 120 : activeId === 'home';
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
+  const onHero = heroRect ? heroRect.bottom > viewportHeight * .14 : activeId === 'home';
 
   header?.classList.toggle('on-hero', onHero);
   if (onHero) {

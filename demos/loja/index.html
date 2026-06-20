@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Lumix Ice | Webstore Demo</title>
+  <link rel="stylesheet" href="../static-demo.css">
+  <style>
+    .lumix { --primary:#26a7ff; --primary-dark:#0c315d; --green:#56d86c; --gold:#f6c34d; background:#f4f8fb; color:#102033; }
+    .lumix .store-topbar { background:rgba(255,255,255,.94); border-bottom:1px solid rgba(13,37,61,.1); backdrop-filter:blur(16px); }
+    .lumix-logo { display:flex; align-items:center; gap:12px; font-weight:900; }
+    .lumix-logo img { width:46px; height:46px; object-fit:contain; border-radius:10px; }
+    .lumix-hero { min-height:420px; display:grid; grid-template-columns:1.05fr .95fr; align-items:center; gap:28px; padding:42px 0; }
+    .lumix-hero h1 { margin:0; font-size:clamp(38px,6vw,82px); line-height:.9; letter-spacing:0; font-weight:950; color:#09203f; }
+    .lumix-hero p { max-width:620px; color:#4a6073; font-size:18px; }
+    .ice-stage { position:relative; min-height:330px; border-radius:22px; overflow:hidden; background:linear-gradient(135deg,#dff7ff,#ffffff 45%,#d4f9db); box-shadow:0 28px 90px rgba(38,167,255,.22); }
+    .ice-stage:before { content:""; position:absolute; inset:22px; border:1px solid rgba(255,255,255,.8); border-radius:18px; }
+    .ice-stage img { position:absolute; right:10%; top:18%; width:min(270px,58%); filter:drop-shadow(0 24px 28px rgba(22,70,104,.18)); }
+    .ice-card { position:absolute; left:28px; bottom:28px; right:28px; padding:18px; border-radius:14px; background:rgba(255,255,255,.86); border:1px solid rgba(13,37,61,.1); }
+    .store-band { max-width:1180px; margin:0 auto; padding:20px; }
+    .category-pills { display:flex; gap:10px; overflow:auto; padding:8px 0 20px; }
+    .category-pills button { border:1px solid rgba(13,37,61,.12); background:white; border-radius:999px; padding:10px 14px; font-weight:850; cursor:pointer; }
+    .category-pills button.active { background:#0c315d; color:#fff; }
+    .product-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+    .product-card { background:white; border:1px solid rgba(13,37,61,.1); border-radius:14px; padding:16px; box-shadow:0 18px 44px rgba(21,55,86,.08); display:grid; gap:12px; }
+    .product-card__image { min-height:150px; border-radius:12px; background:linear-gradient(135deg,#e5f8ff,#f7fffb); display:grid; place-items:center; font-size:46px; }
+    .cart-line { display:grid; grid-template-columns:1fr auto; gap:10px; padding:12px 0; border-bottom:1px solid rgba(13,37,61,.1); }
+    .checkout-steps { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; }
+    .checkout-steps span { border:1px solid rgba(13,37,61,.12); border-radius:10px; padding:10px; font-weight:850; color:#516779; }
+    .checkout-steps span.active { background:#e9f8ff; color:#0c315d; border-color:#79ceff; }
+    @media (max-width:900px){ .lumix-hero,.product-grid{grid-template-columns:1fr}.ice-stage{min-height:280px}.store-topbar-inner{gap:14px}.actions{width:100%;justify-content:flex-start} }
+  </style>
+</head>
+<body class="store-body lumix">
+  <header class="store-topbar">
+    <div class="store-topbar-inner">
+      <a class="lumix-logo" href="../../index.html#crm-demos">
+        <img src="logo/quadrada.png" alt="Lumix Ice">
+        <span>Lumix Ice</span>
+      </a>
+      <div class="actions">
+        <a class="btn" href="../../index.html#crm-demos">TGDevs</a>
+        <button class="btn" data-open-modal="profileModal">Perfil</button>
+        <button class="btn primary" data-open-modal="cartDrawer">Carrinho <span id="cartCount">0</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="store-band lumix-hero">
+      <div>
+        <p class="eyebrow">Webstore demo</p>
+        <h1>Gelo, bebidas e conveniência com entrega rápida.</h1>
+        <p>Vitrine simulada com busca, categorias, carrinho, login, perfil, checkout por etapas, entrega Uber/privada e pedido finalizado sem chamar servidor.</p>
+        <div class="toolbar">
+          <label class="field search">Buscar produtos<input id="search" placeholder="Ex.: gelo, carvão, energético"></label>
+          <button class="btn primary" data-open-modal="cartDrawer">Ver carrinho</button>
+        </div>
+      </div>
+      <div class="ice-stage">
+        <img src="logo/vertical.png" alt="Lumix Ice">
+        <div class="ice-card">
+          <strong>Loja aberta</strong>
+          <p class="muted">Entrega privada em até 35 min ou despacho Uber Flash simulado.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="store-band">
+      <div class="section-head">
+        <div><p class="eyebrow">Categorias</p><h2>Catálogo da loja</h2></div>
+        <button class="btn" data-demo-action="Promoção ativada para visualização.">Promoções</button>
+      </div>
+      <div class="category-pills" id="categories"></div>
+      <div class="product-grid" id="products"></div>
+    </section>
+  </main>
+
+  <div class="demo-modal" id="productModal" hidden>
+    <div class="demo-modal__panel">
+      <header class="demo-modal__head"><div><p class="eyebrow">Produto</p><h2 id="productTitle">Detalhe</h2></div><button class="btn" data-close-modal>Fechar</button></header>
+      <div class="demo-modal__body grid cols-2">
+        <div class="panel-card"><div class="product-card__image" id="productIcon">🧊</div><p id="productDesc" class="muted"></p></div>
+        <div class="panel-card"><h3 id="productPrice">R$ 0,00</h3><label class="field">Observação<textarea id="productNote">Separar o produto mais gelado disponível.</textarea></label><button class="btn primary" id="addProduct">Adicionar ao carrinho</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-modal" id="cartDrawer" hidden>
+    <div class="demo-modal__panel">
+      <header class="demo-modal__head"><div><p class="eyebrow">Carrinho</p><h2>Seu pedido</h2></div><button class="btn" data-close-modal>Fechar</button></header>
+      <div class="demo-modal__body">
+        <div id="cartLines"></div>
+        <div class="metric"><span>Total</span><strong id="cartTotal">R$ 0,00</strong></div>
+        <button class="btn primary" data-open-modal="checkoutModal">Ir para checkout</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-modal" id="profileModal" hidden>
+    <div class="demo-modal__panel">
+      <header class="demo-modal__head"><div><p class="eyebrow">Perfil simulado</p><h2>Cliente Lumix</h2></div><button class="btn" data-close-modal>Fechar</button></header>
+      <form class="demo-modal__body grid cols-2" data-demo-form="Perfil salvo no cache do demo.">
+        <label class="field">Nome<input value="Cliente Demo"></label>
+        <label class="field">Telefone<input value="(31) 99904-2766"></label>
+        <label class="field">Endereço<input value="Av. Francisco Sá, 787"></label>
+        <label class="field">Referência<input value="Loja 111"></label>
+        <button class="btn primary">Salvar perfil</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="demo-modal" id="checkoutModal" hidden>
+    <div class="demo-modal__panel">
+      <header class="demo-modal__head"><div><p class="eyebrow">Checkout</p><h2>Finalizar pedido</h2></div><button class="btn" data-close-modal>Fechar</button></header>
+      <div class="demo-modal__body">
+        <div class="checkout-steps"><span class="active">1. Dados</span><span>2. Pagamento</span><span>3. Entrega</span></div>
+        <form class="grid cols-2" id="checkoutForm">
+          <label class="field">Pagamento<select><option>Pix</option><option>Cartão na entrega</option><option>Dinheiro</option></select></label>
+          <label class="field">Entrega<select name="delivery"><option>Uber Flash simulado</option><option>Entrega privada Lumix</option><option>Retirada</option></select></label>
+          <label class="field">Cupom<input value="DEMO10"></label>
+          <label class="field">Observações<textarea>Entregar na portaria.</textarea></label>
+          <button class="btn primary">Concluir pedido</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-modal" id="doneModal" hidden>
+    <div class="demo-modal__panel">
+      <header class="demo-modal__head"><div><p class="eyebrow">Pedido finalizado</p><h2>Recebemos sua solicitação</h2></div><button class="btn" data-close-modal>Fechar</button></header>
+      <div class="demo-modal__body">
+        <div class="metric"><span>Status</span><strong>Pedido em separação</strong></div>
+        <p class="muted">Este fluxo é apenas uma simulação local. Nenhum pedido foi enviado.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="../demo-runtime.js"></script>
+  <script>
+    const demo = TGDemo.initDemo('loja-webstore', {
+      category: 'Todos',
+      cart: [],
+      products: [
+        { id: 1, name: 'Gelo Cubo 5kg', category: 'Gelos', price: 18.9, icon: '🧊', desc: 'Saco lacrado para festas, bares e eventos.' },
+        { id: 2, name: 'Gelo Escama 10kg', category: 'Gelos', price: 32.5, icon: '❄️', desc: 'Ideal para caixas térmicas e conservação.' },
+        { id: 3, name: 'Carvão Premium', category: 'Churrasco', price: 24.9, icon: '🔥', desc: 'Carvão selecionado com acendimento rápido.' },
+        { id: 4, name: 'Energético 2L', category: 'Bebidas', price: 15.9, icon: '⚡', desc: 'Bebida gelada pronta para entrega.' },
+        { id: 5, name: 'Água Mineral 12un', category: 'Bebidas', price: 22.0, icon: '💧', desc: 'Fardo com garrafas individuais.' },
+        { id: 6, name: 'Kit Festa Rápida', category: 'Promoções', price: 89.9, icon: '🎉', desc: 'Gelo, copos, carvão e bebidas em combo.' }
+      ]
+    });
+    const state = demo.state;
+    let selectedProduct = null;
+    const money = demo.money;
+    function categories() { return ['Todos', ...new Set(state.products.map((p) => p.category))]; }
+    function renderCategories() {
+      document.getElementById('categories').innerHTML = categories().map((cat) => `<button class="${state.category === cat ? 'active' : ''}" data-category="${cat}">${cat}</button>`).join('');
+    }
+    function renderProducts() {
+      const q = (document.getElementById('search').value || '').toLowerCase();
+      const items = state.products.filter((p) => (state.category === 'Todos' || p.category === state.category) && p.name.toLowerCase().includes(q));
+      document.getElementById('products').innerHTML = items.map((p) => `
+        <article class="product-card">
+          <div class="product-card__image">${p.icon}</div>
+          <div><p class="eyebrow">${p.category}</p><h3>${p.name}</h3><p class="muted">${p.desc}</p></div>
+          <div class="split"><strong>${money(p.price)}</strong><button class="btn primary" data-product="${p.id}">Comprar</button></div>
+        </article>
+      `).join('');
+    }
+    function renderCart() {
+      const count = state.cart.reduce((sum, item) => sum + item.qty, 0);
+      const total = state.cart.reduce((sum, item) => sum + item.qty * item.price, 0);
+      document.getElementById('cartCount').textContent = count;
+      document.getElementById('cartTotal').textContent = money(total);
+      document.getElementById('cartLines').innerHTML = state.cart.length ? state.cart.map((item) => `
+        <div class="cart-line"><div><strong>${item.name}</strong><p class="muted">${item.qty} x ${money(item.price)}</p></div><button class="btn" data-remove="${item.id}">Remover</button></div>
+      `).join('') : '<p class="muted">Carrinho vazio.</p>';
+    }
+    function saveRender() { demo.save(); renderCategories(); renderProducts(); renderCart(); }
+    document.addEventListener('click', (event) => {
+      const category = event.target.closest('[data-category]');
+      const product = event.target.closest('[data-product]');
+      const remove = event.target.closest('[data-remove]');
+      if (category) { state.category = category.dataset.category; saveRender(); }
+      if (product) {
+        selectedProduct = state.products.find((p) => p.id === Number(product.dataset.product));
+        document.getElementById('productTitle').textContent = selectedProduct.name;
+        document.getElementById('productDesc').textContent = selectedProduct.desc;
+        document.getElementById('productPrice').textContent = money(selectedProduct.price);
+        document.getElementById('productIcon').textContent = selectedProduct.icon;
+        demo.openModal('productModal');
+      }
+      if (remove) { state.cart = state.cart.filter((item) => item.id !== Number(remove.dataset.remove)); saveRender(); }
+    });
+    document.getElementById('addProduct').addEventListener('click', () => {
+      const found = state.cart.find((item) => item.id === selectedProduct.id);
+      if (found) found.qty += 1; else state.cart.push({ ...selectedProduct, qty: 1 });
+      saveRender(); demo.closeModal('productModal'); demo.toast('Produto adicionado ao carrinho.');
+    });
+    document.getElementById('search').addEventListener('input', renderProducts);
+    document.getElementById('checkoutForm').addEventListener('submit', (event) => {
+      event.preventDefault();
+      state.lastOrder = { at: new Date().toISOString(), total: state.cart.reduce((sum, item) => sum + item.qty * item.price, 0), items: state.cart };
+      state.cart = [];
+      saveRender();
+      demo.closeModal('checkoutModal');
+      demo.openModal('doneModal');
+    });
+    saveRender();
+  </script>
+</body>
+</html>

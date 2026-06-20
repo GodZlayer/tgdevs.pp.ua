@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excluir Conta - GeloCRM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #06162d; color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .card { max-width: 450px; width: 100%; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 40px; }
+        h1 { font-weight: 800; font-size: 1.75rem; color: #dc3545; margin-bottom: 20px; }
+        p { color: #adb5bd; margin-bottom: 30px; }
+        .form-control { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; border-radius: 12px; padding: 12px; }
+        .form-control:focus { background: rgba(255, 255, 255, 0.15); color: #fff; border-color: #dc3545; box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25); }
+        .btn-danger { border-radius: 12px; padding: 12px; font-weight: 700; width: 100%; margin-top: 10px; }
+        .alert { border-radius: 12px; display: none; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="card shadow-lg text-center">
+        <h1>Excluir conta e dados</h1>
+        <p>Ao excluir sua conta, todos os seus dados pessoais (telefone, endereços salvos e histórico de verificação de idade) serão removidos permanentemente dos nossos servidores.</p>
+        
+        <div id="formSection">
+            <div class="mb-4 text-start">
+                <label class="form-label small text-muted">Informe seu telefone cadastrado</label>
+                <input type="tel" id="phone" class="form-control" placeholder="(31) 99999-9999">
+            </div>
+            <div class="mb-4 text-start">
+                <label class="form-label small text-muted">Informe sua senha</label>
+                <input type="password" id="password" class="form-control" placeholder="Sua senha">
+            </div>
+            
+            <button id="btnDelete" class="btn btn-danger">Confirmar Exclusão Permanente</button>
+            <a href="/" class="btn btn-link text-muted mt-3">Cancelar e voltar</a>
+        </div>
+
+        <div id="successMessage" class="alert alert-success mt-4">
+            Sua conta e dados foram excluídos com sucesso.
+        </div>
+        <div id="errorMessage" class="alert alert-danger mt-4">
+            Não foi possível excluir a conta. Verifique o número e tente novamente.
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('btnDelete').addEventListener('click', async () => {
+            const phone = document.getElementById('phone').value.replace(/\D/g, '');
+            const password = document.getElementById('password').value || '';
+            if (!phone || phone.length < 10) {
+                alert('Por favor, informe um telefone válido.');
+                return;
+            }
+            if (password.length < 6) {
+                alert('Por favor, informe sua senha.');
+                return;
+            }
+
+            if (!confirm('TEM CERTEZA? Esta ação não pode ser desfeita e todos os seus dados serão apagados.')) {
+                return;
+            }
+
+            const btn = document.getElementById('btnDelete');
+            btn.disabled = true;
+            btn.innerText = 'Processando...';
+
+            try {
+                const response = await fetch('/api.php?action=delete_account', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: phone, password: password })
+                });
+
+                if (response.ok) {
+                    document.getElementById('formSection').style.display = 'none';
+                    document.getElementById('successMessage').style.display = 'block';
+                    localStorage.clear();
+                } else {
+                    throw new Error();
+                }
+            } catch (err) {
+                document.getElementById('errorMessage').style.display = 'block';
+                btn.disabled = false;
+                btn.innerText = 'Confirmar Exclusão Permanente';
+            }
+        });
+    </script>
+</body>
+</html>

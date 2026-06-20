@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brasil Express | Webstore Demo</title>
+  <link rel="stylesheet" href="../../static-demo.css">
+  <script src="../../demo-runtime.js"></script>
+</head>
+<body class="store-body">
+  <header class="store-topbar"><div class="store-topbar-inner"><div class="demo-brand" style="margin:0"><span class="demo-brand-mark">BE</span><div><h1>Brasil Express</h1><p>Webstore demo</p></div></div><div class="actions"><a class="btn" href="../../../index.html#crm-demos">TGDevs</a><button class="btn" data-open-modal="profileDrawer">Perfil</button><button class="btn primary" data-open-modal="cartDrawer">Carrinho <span id="cartCount">0</span></button></div></div></header>
+  <main class="store-main">
+    <section class="store-hero">
+      <div><p class="eyebrow">Assistência técnica</p><h1 style="font-size:clamp(38px,7vw,72px);line-height:.95;margin:0 0 14px">Há mais de 20 anos atendendo equipamentos de informática.</h1><p>Empresas e usuários contam com diagnóstico transparente, peças, serviços e orçamento online.</p><div class="actions"><button class="btn primary" data-scroll-products>Fazer orçamento</button><button class="btn" data-demo-action="WhatsApp aberto na simulação.">WhatsApp</button></div></div>
+      <div class="card" style="background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.18)"><h3>Bancada técnica</h3><p>Diagnóstico presencial, histórico no CRM e acompanhamento do serviço.</p><div class="grid cols-3"><div><strong>20</strong><br>Anos</div><div><strong>5000</strong><br>Clientes</div><div><strong>3</strong><br>Itens</div></div></div>
+    </section>
+    <section style="margin-top:24px">
+      <div class="demo-topbar"><div><p class="eyebrow">Catálogo</p><h2>Mais vendidos</h2><p>Produtos e serviços técnicos com pedido direto para o CRM.</p></div><label class="field" style="min-width:min(320px,100%)">Buscar<input id="search" placeholder="Buscar item"></label></div>
+      <div class="product-grid" id="products"></div>
+    </section>
+  </main>
+  <aside class="cart-drawer" id="cartDrawer" hidden><header class="demo-modal__head" style="padding:0 0 16px"><div><p class="eyebrow">Carrinho</p><h2>Pedido online</h2></div><button class="btn" data-close-modal="cartDrawer">Fechar</button></header><div id="cartLines"></div><div class="card" style="margin-top:16px"><div class="actions" style="justify-content:space-between"><strong>Total</strong><strong id="cartTotal">R$ 0,00</strong></div><button class="btn primary" style="width:100%;margin-top:12px" data-open-modal="checkoutModal">Finalizar pedido</button></div></aside>
+  <aside class="cart-drawer" id="profileDrawer" hidden><header class="demo-modal__head" style="padding:0 0 16px"><div><p class="eyebrow">Perfil</p><h2>Cliente Demo</h2></div><button class="btn" data-close-modal="profileDrawer">Fechar</button></header><form class="grid" data-demo-form="Perfil salvo no cache."><label class="field">Nome<input value="Cliente Demo"></label><label class="field">WhatsApp<input value="(11) 99999-0000"></label><label class="field">Endereço<textarea>Av. Demo, 100</textarea></label><button class="btn primary">Salvar perfil</button></form></aside>
+  <div class="demo-modal" id="checkoutModal" hidden><div class="demo-modal__panel"><header class="demo-modal__head"><div><p class="eyebrow">Checkout</p><h2>Dados do pedido</h2></div><button class="btn" data-close-modal>Fechar</button></header><form class="demo-modal__body grid cols-2" data-demo-form="Pedido enviado para a fila simulada."><label class="field">Telefone<input value="(11) 99999-0000"></label><label class="field">Pagamento<select><option>Pix</option><option>Cartão</option><option>Dinheiro</option></select></label><label class="field">Entrega<select><option>Retirar na loja</option><option>Entrega local</option></select></label><label class="field">Observações<textarea>Preciso de orçamento antes de aprovar.</textarea></label><button class="btn primary" data-webstore-finish>Concluir pedido</button></form></div></div>
+  <script>
+    const demo = TGDemo.initDemo('crmosfull-webstore', { cart: [], products: [
+      { id: 1, name: 'SSD 480GB', category: 'Peças', price: 219.9, img: '../app/be1.png' },
+      { id: 2, name: 'Limpeza preventiva', category: 'Serviços', price: 120, img: '../app/be2.png' },
+      { id: 3, name: 'Tela notebook 15.6', category: 'Peças', price: 389.9, img: '../app/be1.png' }
+    ]});
+    function render() {
+      const term = document.querySelector('#search').value.toLowerCase();
+      document.querySelector('#products').innerHTML = demo.state.products.filter(p => p.name.toLowerCase().includes(term)).map(p => `<article class="product-card"><img src="${p.img}" alt=""><p class="eyebrow">${p.category}</p><h3>${p.name}</h3><strong>${demo.money(p.price)}</strong><button class="btn primary" data-add="${p.id}">Adicionar</button></article>`).join('');
+      const total = demo.state.cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+      document.querySelector('#cartCount').textContent = demo.state.cart.reduce((sum, item) => sum + item.qty, 0);
+      document.querySelector('#cartTotal').textContent = demo.money(total);
+      document.querySelector('#cartLines').innerHTML = demo.state.cart.length ? demo.state.cart.map(i => `<div class="card" style="margin-bottom:10px"><strong>${i.name}</strong><p>${i.qty} x ${demo.money(i.price)}</p><button class="btn" data-remove="${i.id}">Remover</button></div>`).join('') : '<p class="muted">Carrinho vazio.</p>';
+    }
+    document.addEventListener('input', e => { if (e.target.id === 'search') render(); });
+    document.addEventListener('click', e => {
+      const add = e.target.closest('[data-add]');
+      if (add) { const p = demo.state.products.find(x => x.id == add.dataset.add); const line = demo.state.cart.find(x => x.id === p.id); line ? line.qty++ : demo.state.cart.push({ ...p, qty: 1 }); demo.save(); demo.toast('Item adicionado ao carrinho.'); render(); }
+      const rem = e.target.closest('[data-remove]');
+      if (rem) { demo.state.cart = demo.state.cart.filter(x => x.id != rem.dataset.remove); demo.save(); render(); }
+      if (e.target.closest('[data-webstore-finish]')) { demo.state.cart = []; demo.save(); render(); demo.toast('Pedido finalizado na simulação.'); }
+      if (e.target.closest('[data-scroll-products]')) document.querySelector('#products').scrollIntoView({ behavior: 'smooth' });
+    });
+    render();
+  </script>
+</body>
+</html>

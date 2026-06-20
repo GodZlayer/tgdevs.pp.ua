@@ -22,10 +22,20 @@ const morphShapes = {
     line: 'M-80,234 C194,420 382,436 590,316 C798,196 934,464 1206,384 C1478,304 1512,224 1590,154',
     angle: -10
   },
+  'crm-demos': {
+    fill: 'M-80,350 C160,178 390,250 610,372 C830,494 994,600 1202,426 C1410,252 1510,304 1590,248 L1590,980 L-80,980 Z',
+    line: 'M-80,520 C192,340 382,216 610,354 C838,492 972,620 1216,430 C1460,240 1512,330 1590,294',
+    angle: 5
+  },
   contact: {
     fill: 'M-80,620 C178,438 326,506 566,332 C806,158 1012,238 1208,430 C1404,622 1512,474 1590,548 L1590,980 L-80,980 Z',
     line: 'M-80,404 C172,294 360,562 574,374 C788,186 1014,224 1206,422 C1398,620 1512,534 1590,612',
     angle: 12
+  },
+  footer: {
+    fill: 'M-80,392 C168,230 358,646 590,482 C822,318 954,258 1192,386 C1430,514 1510,310 1590,356 L1590,980 L-80,980 Z',
+    line: 'M-80,232 C172,338 340,608 582,466 C824,324 944,234 1202,356 C1460,478 1518,366 1590,412',
+    angle: -6
   }
 };
 
@@ -42,7 +52,29 @@ let latestScrollY = 0;
 let sceneFrame = null;
 const idleStart = performance.now();
 const sectionStep = 2;
-const scrollUnits = Math.max(sections.length * sectionStep - 1, 1);
+const scrollUnits = Math.max(sections.length * sectionStep, 1);
+
+const scrollToSection = (target, behavior = 'smooth', updateHash = true) => {
+  if (!target?.classList.contains('section-panel')) return false;
+  const targetIndex = sections.indexOf(target);
+  if (targetIndex < 0) return false;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
+  window.scrollTo({ top: targetIndex * sectionStep * viewportHeight, behavior });
+  document.body.classList.toggle('partners-active', target.id === 'partners');
+  setScrollState();
+  if (updateHash && target.id) history.pushState(null, '', `#${target.id}`);
+  return true;
+};
+
+const scrollToCurrentHash = (behavior = 'auto') => {
+  if (!window.location.hash) return;
+  const target = document.querySelector(window.location.hash);
+  scrollToSection(target, behavior, false);
+};
+
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
 
 const setScrollState = () => {
   const y = window.scrollY || 0;
@@ -74,11 +106,8 @@ nav?.addEventListener('click', (event) => {
   const link = event.target.closest('a');
   if (link) {
     const target = document.querySelector(link.getAttribute('href'));
-    if (target?.classList.contains('section-panel')) {
+    if (scrollToSection(target)) {
       event.preventDefault();
-      const targetIndex = sections.indexOf(target);
-      const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
-      window.scrollTo({ top: targetIndex * sectionStep * viewportHeight, behavior: 'smooth' });
     }
     nav.classList.remove('open');
     menuButton?.classList.remove('open');
@@ -90,13 +119,20 @@ document.querySelectorAll('a[href^="#"]').forEach((link) => {
   if (link.closest('[data-nav]')) return;
   link.addEventListener('click', (event) => {
     const target = document.querySelector(link.getAttribute('href'));
-    if (!target?.classList.contains('section-panel')) return;
-    event.preventDefault();
-    const targetIndex = sections.indexOf(target);
-    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
-    window.scrollTo({ top: targetIndex * sectionStep * viewportHeight, behavior: 'smooth' });
+    if (scrollToSection(target)) event.preventDefault();
   });
 });
+
+window.addEventListener('load', () => {
+  requestAnimationFrame(() => {
+    scrollToCurrentHash('auto');
+    setTimeout(() => scrollToCurrentHash('auto'), 80);
+    setTimeout(() => scrollToCurrentHash('auto'), 320);
+    setTimeout(() => scrollToCurrentHash('auto'), 800);
+  });
+});
+
+window.addEventListener('hashchange', () => scrollToCurrentHash('smooth'));
 
 const observer = new IntersectionObserver((entries) => {
   entries.forEach((entry) => {
@@ -152,6 +188,7 @@ function updateSectionScene() {
   const activeSection = sections[activeIndex];
   const activeId = activeSection?.id || 'home';
   const onHero = activeId === 'home' && localProgress < 1.65;
+  document.body.classList.toggle('partners-active', activeId === 'partners');
 
   header?.classList.toggle('on-hero', onHero);
   if (onHero) {

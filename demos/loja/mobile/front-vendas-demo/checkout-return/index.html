@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Front Vendas Demo</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #06162d;
+            --card: rgba(11, 33, 64, 0.92);
+            --text: #f5fbff;
+            --muted: #9eb8cf;
+            --accent: #6dd6ff;
+            --border: rgba(109, 214, 255, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background:
+                radial-gradient(circle at top, rgba(109, 214, 255, 0.18), transparent 36%),
+                linear-gradient(180deg, #071224 0%, var(--bg) 100%);
+            color: var(--text);
+        }
+
+        main {
+            width: min(100%, 440px);
+            padding: 28px;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            background: var(--card);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+        }
+
+        h1 {
+            margin: 0 0 12px;
+            font-size: 1.75rem;
+        }
+
+        p {
+            margin: 0 0 14px;
+            line-height: 1.5;
+            color: var(--muted);
+        }
+
+        a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 46px;
+            padding: 0 18px;
+            border-radius: 999px;
+            background: var(--accent);
+            color: #03101f;
+            font-weight: 700;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Abrindo o app da loja...</h1>
+        <p>Se o `Front Vendas Demo` estiver instalado, o Android deve abrir o checkout automaticamente.</p>
+        <p id="fallback-copy">Se nada acontecer em alguns segundos, vamos continuar pelo site.</p>
+        <a id="fallback-link" href="/">Continuar no navegador</a>
+    </main>
+
+    <script>
+        const search = window.location.search || '';
+        const hash = window.location.hash || '';
+        const fallbackTarget = `/${search}${hash}`;
+        const fallbackLink = document.getElementById('fallback-link');
+        const fallbackCopy = document.getElementById('fallback-copy');
+
+        if (fallbackLink) {
+            fallbackLink.href = fallbackTarget;
+        }
+
+        window.setTimeout(() => {
+            if (fallbackCopy) {
+                fallbackCopy.textContent = 'O aplicativo nao respondeu a tempo. Redirecionando para a loja web...';
+            }
+
+            window.location.replace(fallbackTarget);
+        }, 1800);
+    </script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Front Vendas Painel Demo</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #08111b;
+            --card: rgba(16, 24, 38, 0.94);
+            --text: #f5f7fb;
+            --muted: #9ea8b7;
+            --accent: #ffbf47;
+            --border: rgba(255, 191, 71, 0.22);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background:
+                radial-gradient(circle at top, rgba(255, 191, 71, 0.16), transparent 36%),
+                linear-gradient(180deg, #060b12 0%, var(--bg) 100%);
+            color: var(--text);
+        }
+
+        main {
+            width: min(100%, 440px);
+            padding: 28px;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            background: var(--card);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+        }
+
+        h1 {
+            margin: 0 0 12px;
+            font-size: 1.75rem;
+        }
+
+        p {
+            margin: 0 0 14px;
+            line-height: 1.5;
+            color: var(--muted);
+        }
+
+        a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 46px;
+            padding: 0 18px;
+            border-radius: 999px;
+            background: var(--accent);
+            color: #140d00;
+            font-weight: 700;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Abrindo o painel...</h1>
+        <p>Se o `Front Vendas Painel Demo` estiver instalado, o Android deve abrir o painel automaticamente.</p>
+        <p id="fallback-copy">Se nada acontecer em alguns segundos, vamos continuar no painel web.</p>
+        <a id="fallback-link" href="/panel/">Abrir painel no navegador</a>
+    </main>
+
+    <script>
+        const search = window.location.search || '';
+        const hash = window.location.hash || '';
+        const fallbackTarget = `/panel/${search}${hash}`;
+        const fallbackLink = document.getElementById('fallback-link');
+        const fallbackCopy = document.getElementById('fallback-copy');
+
+        if (fallbackLink) {
+            fallbackLink.href = fallbackTarget;
+        }
+
+        window.setTimeout(() => {
+            if (fallbackCopy) {
+                fallbackCopy.textContent = 'O aplicativo nao respondeu a tempo. Redirecionando para o painel web...';
+            }
+
+            window.location.replace(fallbackTarget);
+        }, 1800);
+    </script>
+</body>
+</html>

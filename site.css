@@ -36,12 +36,13 @@ body {
   min-width: 100%;
   min-block-size: var(--scroll-range, 400svh);
   background:
-    radial-gradient(circle at 15% 10%, rgba(38, 166, 255, .16), transparent 42vmin),
-    radial-gradient(circle at 84% 18%, rgba(41, 230, 167, .12), transparent 38vmin),
-    linear-gradient(180deg, #05070a 0%, #071017 48%, #05070a 100%);
+    radial-gradient(circle at 15% 10%, var(--page-glow-a, rgba(38, 166, 255, .16)), transparent 42vmin),
+    radial-gradient(circle at 84% 18%, var(--page-glow-b, rgba(41, 230, 167, .12)), transparent 38vmin),
+    linear-gradient(180deg, var(--page-bg-top, #05070a) 0%, var(--page-bg-mid, #071017) 48%, var(--page-bg-bottom, #05070a) 100%);
   color: var(--text);
   overflow-x: clip;
   scrollbar-width: none;
+  transition: background .55s ease;
 }
 
 html::-webkit-scrollbar,
@@ -60,6 +61,24 @@ body::before {
     linear-gradient(90deg, rgba(255,255,255,.04) var(--hairline), transparent var(--hairline));
   background-size: 6vmin 6vmin;
   transform: translate3d(var(--idle-x, 0), var(--idle-y, 0svh), 0);
+}
+
+body.partners-active {
+  --page-glow-a: rgba(38, 166, 255, .24);
+  --page-glow-b: rgba(41, 230, 167, .2);
+  --page-bg-top: #d9ecea;
+  --page-bg-mid: #c9dedb;
+  --page-bg-bottom: #e8f2ef;
+  --text: #10232b;
+  --muted: #536a72;
+  --line: rgba(16, 35, 43, .16);
+}
+
+body.partners-active::before {
+  opacity: .42;
+  background-image:
+    linear-gradient(rgba(12, 54, 64, .075) var(--hairline), transparent var(--hairline)),
+    linear-gradient(90deg, rgba(12, 54, 64, .075) var(--hairline), transparent var(--hairline));
 }
 
 a { color: inherit; text-decoration: none; }
@@ -183,7 +202,7 @@ main {
   min-block-size: 100svh;
   padding: clamp(5.4em, 12svh, 7em) clamp(4%, 5svw, 7%) clamp(2em, 5svh, 4em);
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: hidden;
   isolation: isolate;
   container-type: inline-size;
   transform-style: preserve-3d;
@@ -220,6 +239,7 @@ main {
 }
 
 .section-panel.is-next {
+  pointer-events: auto;
   clip-path: inset(0 0 0 var(--screen-progress-inverse-pct, 100%));
 }
 
@@ -296,6 +316,14 @@ main {
   --ambient-rotation: 28deg;
   --ambient-scale: 1.12;
   --ambient-delay: -9s;
+}
+
+.footer {
+  --ambient-x: 22%;
+  --ambient-y: -2%;
+  --ambient-rotation: -18deg;
+  --ambient-scale: 1.04;
+  --ambient-delay: -11s;
 }
 
 .section-panel > :where(:not(.motion-field, .scroll-cue)) {
@@ -587,8 +615,7 @@ h2 span {
 }
 
 .service-card,
-.wizard,
-.partner-track {
+.wizard {
   border: var(--hairline) solid var(--line);
   border-radius: var(--radius);
   background: linear-gradient(180deg, rgba(255,255,255,.065), rgba(255,255,255,.025));
@@ -631,48 +658,126 @@ h2 span {
 }
 
 .partners {
-  background:
-    linear-gradient(180deg, rgba(244, 249, 250, .94), rgba(224, 239, 239, .9)),
-    #f3f7f8;
-  color: #081014;
-  --section-glow-a: rgba(38, 166, 255, .2);
-  --section-glow-b: rgba(248, 213, 107, .2);
+  background: transparent;
+  color: var(--text);
+  --section-glow-a: rgba(38, 166, 255, .28);
+  --section-glow-b: rgba(41, 230, 167, .24);
   padding-block-start: clamp(6.2em, 15svh, 8em);
 }
 
-.partners .eyebrow { color: #0b9771; }
-.partners .section-title p { color: #4c5b62; }
+.partners .eyebrow { color: var(--green); }
+.partners .section-title p { color: var(--muted); }
+
+.partners::before {
+  border-color: rgba(16, 35, 43, .12);
+  background:
+    radial-gradient(circle at 28% 22%, rgba(38, 166, 255, .2), transparent 28%),
+    radial-gradient(circle at 68% 66%, rgba(41, 230, 167, .18), transparent 34%),
+    linear-gradient(135deg, rgba(255,255,255,.3), rgba(255,255,255,0) 58%);
+}
+
+.partners::after {
+  background:
+    linear-gradient(90deg, rgba(16, 35, 43, .075) var(--hairline), transparent var(--hairline)),
+    linear-gradient(rgba(16, 35, 43, .065) var(--hairline), transparent var(--hairline));
+}
 
 .partner-track {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 10em), 1fr));
   gap: .7em;
-  padding: .8em;
-  background: rgba(255, 255, 255, .72);
-  box-shadow: 0 2.5svh 7svh rgba(16, 24, 32, .12);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .partner-track a {
   display: grid;
   min-block-size: clamp(6em, 12svh, 10em);
   place-items: center;
-  border: var(--hairline) solid rgba(8, 16, 20, .08);
+  border: var(--hairline) solid rgba(16, 35, 43, .13);
   border-radius: var(--radius);
-  background: white;
+  background: rgba(255, 255, 255, .24);
+  backdrop-filter: blur(1.4vmin);
   overflow: hidden;
-  transition: transform .25s ease, box-shadow .25s ease;
+  box-shadow: 0 1.4svh 4svh rgba(16, 35, 43, .1);
+  transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
 }
 
 .partner-track a:hover,
 .partner-track a:focus-visible {
   transform: translateY(-3%) scale(1.02);
-  box-shadow: 0 1.7svh 4.2svh rgba(0, 0, 0, .14);
+  background: rgba(255, 255, 255, .34);
+  box-shadow: 0 1.7svh 4.2svh rgba(16, 35, 43, .14);
 }
 
 .partner-track img {
   max-width: 78%;
   max-block-size: clamp(3em, 8svh, 5.2em);
   object-fit: contain;
+}
+
+.crm-demos {
+  background:
+    linear-gradient(180deg, rgba(5,7,10,.88), rgba(7,16,23,.95)),
+    radial-gradient(circle at 78% 22%, rgba(248, 213, 107, .12), transparent 36vmin);
+  --section-glow-a: rgba(41, 230, 167, .18);
+  --section-glow-b: rgba(38, 166, 255, .18);
+}
+
+.demo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(.7em, 1.6svw, 1.1em);
+  inline-size: min(100%, var(--content-max));
+}
+
+.demo-card {
+  display: grid;
+  align-content: start;
+  gap: .8em;
+  min-block-size: clamp(19em, 42svh, 25em);
+  padding: clamp(.9em, 2.4svw, 1.35em);
+  border: var(--hairline) solid var(--line);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.035)),
+    rgba(8, 16, 20, .64);
+  box-shadow: 0 2svh 5svh rgba(0,0,0,.22);
+}
+
+.demo-kicker {
+  color: var(--green);
+  font-size: 76%;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.demo-card h3 {
+  margin: 0;
+  font-size: clamp(150%, calc(120% + 1.2vmin), 230%);
+}
+
+.demo-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.demo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55em;
+  margin-top: auto;
+}
+
+.demo-actions .button {
+  min-height: 2.7em;
+  padding: .78em .95em;
+  font-size: 88%;
 }
 
 .contact {
@@ -820,18 +925,35 @@ textarea:focus {
 .hidden { display: none !important; }
 
 .footer {
-  display: none;
-  align-items: center;
-  justify-content: space-between;
-  gap: 3%;
-  padding: 4svh clamp(4%, 5svw, 7%);
+  align-content: center;
+  justify-items: center;
   border-top: var(--hairline) solid var(--line);
-  background: rgba(5, 7, 10, .92);
+  background:
+    radial-gradient(circle at 72% 28%, rgba(41, 230, 167, .14), transparent 34vmin),
+    radial-gradient(circle at 22% 70%, rgba(38, 166, 255, .14), transparent 38vmin),
+    rgba(5, 7, 10, .94);
   color: var(--muted);
+  --section-glow-a: rgba(41, 230, 167, .2);
+  --section-glow-b: rgba(38, 166, 255, .18);
 }
 
-.footer img { width: 12em; }
-.footer p { margin: 0; text-align: right; }
+.footer-content {
+  display: grid;
+  place-items: center;
+  gap: clamp(1em, 3svh, 1.8em);
+  text-align: center;
+}
+
+.footer img {
+  width: clamp(10em, 28svw, 18em);
+  filter: drop-shadow(0 1.2svh 4svh rgba(38, 166, 255, .24));
+}
+
+.footer p {
+  inline-size: min(100%, 38em);
+  margin: 0;
+  line-height: 1.6;
+}
 
 [data-reveal] {
   opacity: 0;
@@ -955,13 +1077,13 @@ textarea:focus {
 
   .partner-track a { min-block-size: clamp(8em, 18svh, 14em); }
   .partner-track img { max-block-size: clamp(3.5em, 10svh, 6em); }
+  .demo-grid { grid-template-columns: 1fr; }
+  .demo-card { min-block-size: auto; }
 
-  .footer {
-    align-items: flex-start;
-    flex-direction: column;
+  .footer-content {
+    place-items: center;
+    text-align: center;
   }
-
-  .footer p { text-align: left; }
 }
 
 @media (max-aspect-ratio: 2/3) {
@@ -1066,6 +1188,7 @@ textarea:focus {
   }
 
   .service-grid,
+  .demo-grid,
   .steps,
   .form-grid {
     grid-template-columns: 1fr;
@@ -1082,6 +1205,11 @@ textarea:focus {
 
   .service-card {
     min-block-size: auto;
+  }
+
+  .demo-card {
+    min-block-size: auto;
+    padding: clamp(.72em, 1.7svh, 1em);
   }
 
   .contact .section-title h2 {
@@ -1155,7 +1283,7 @@ textarea:focus {
   .partner-track {
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: clamp(.35em, 1svh, .6em);
-    padding: clamp(.45em, 1.4svh, .7em);
+    padding: 0;
   }
 
   .partner-track a {

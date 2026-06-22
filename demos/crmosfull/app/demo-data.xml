@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<crmosfullDemo generatedAt="2026-06-21T09:30:00-03:00" company="Brasil Express" store="Matriz">
+  <profiles>
+    <profile id="1" name="Santo Demo" email="demo@tgdevs.pp.ua" role="Administrador" status="Online" />
+    <profile id="2" name="Atendimento" email="atendimento@demo.local" role="Operador" status="Em atendimento" />
+    <profile id="3" name="Técnico bancada" email="tecnico@demo.local" role="Técnico" status="Em OS" />
+  </profiles>
+
+  <accounts>
+    <account id="1" code="CAIXA" name="Caixinha loja" kind="Dinheiro" balance="1840.50" target="2500" color="#0f8bff" />
+    <account id="2" code="MAQ-AM" name="Máquina amarela / Pix celular" kind="Cartão e Pix" balance="3860.00" target="4200" color="#f1b84b" />
+    <account id="3" code="VERM" name="C/C Pix PJ e máquina vermelha" kind="Banco" balance="6420.35" target="6500" color="#21b983" />
+    <account id="4" code="OUTROS" name="Boletos e despesas" kind="Controle" balance="-450.00" target="0" color="#d94b5f" />
+  </accounts>
+
+  <financeEntries>
+    <entry id="1" date="2026-06-21" account="VERM" type="income" category="Serviços" description="Recebimento OS BE-2026-06-21-01" amount="729.80" orderId="101" />
+    <entry id="2" date="2026-06-21" account="CAIXA" type="income" category="PDV" description="Venda balcão - fonte 19V" amount="149.90" saleId="501" />
+    <entry id="3" date="2026-06-20" account="OUTROS" type="expense" category="Compras" description="Reposição SSD 480GB" amount="-450.00" purchaseId="701" />
+    <entry id="4" date="2026-06-20" account="MAQ-AM" type="income" category="Webstore" description="Pedido online BE-WEB-9001" amount="389.90" webOrderId="9001" />
+    <entry id="5" date="2026-06-19" account="CAIXA" type="expense" category="Operacional" description="Motoboy entrega local" amount="-35.00" />
+    <entry id="6" date="2026-06-18" account="VERM" type="income" category="Serviços" description="Entrada OS Endodontia" amount="160.00" orderId="103" />
+  </financeEntries>
+
+  <clients>
+    <client id="1" name="Maxine Atelier" phone="(11) 98888-0101" email="contato@maxine.pp.ua" document="00.000.000/0001-01" tag="VIP" lifetimeValue="5840.70" openOrders="1" lastContact="2026-06-21" notes="Cliente recorrente, prefere retorno por WhatsApp." />
+    <client id="2" name="Cosmedamião Festas" phone="(85) 97777-0202" email="eventos@cosmedamiaofestas.com.br" document="00.000.000/0001-02" tag="Contrato" lifetimeValue="3190.20" openOrders="1" lastContact="2026-06-20" notes="Eventos com prioridade e cobrança por Pix PJ." />
+    <client id="3" name="Endodontia Clínica" phone="(31) 97777-3030" email="agenda@endodontia.pp.ua" document="00.000.000/0001-03" tag="Saúde" lifetimeValue="1280.00" openOrders="1" lastContact="2026-06-18" notes="Retornos precisam cair na agenda da recepção." />
+    <client id="4" name="Studio Invoga" phone="(31) 96666-4040" email="financeiro@invoga.pp.ua" document="00.000.000/0001-04" tag="Webstore" lifetimeValue="920.30" openOrders="0" lastContact="2026-06-17" notes="Compra peças pela webstore e retira na loja." />
+  </clients>
+
+  <orders>
+    <order id="101" code="BE-2026-06-21-01" clientId="1" client="Maxine Atelier" equipment="Notebook Dell Inspiron" defect="Não inicializa após atualização" status="Em andamento" approval="Aprovada" technician="Santo" due="2026-06-22" total="729.80" paid="300.00" stage="Diagnóstico">
+      <items>
+        <item sku="SSD-480" name="SSD 480GB" quantity="1" unit="219.90" />
+        <item sku="CABO-SATA" name="Cabo SATA reforçado" quantity="1" unit="39.90" />
+      </items>
+      <services>
+        <service code="LIMP-01" name="Limpeza preventiva" quantity="1" unit="120.00" />
+        <service code="BACKUP-01" name="Backup e reinstalação" quantity="1" unit="350.00" />
+      </services>
+      <timeline>
+        <event at="2026-06-21T09:10:00-03:00" label="OS criada" actor="Atendimento" />
+        <event at="2026-06-21T10:20:00-03:00" label="Diagnóstico iniciado" actor="Santo" />
+        <event at="2026-06-21T11:05:00-03:00" label="Orçamento aprovado no WhatsApp" actor="Cliente" />
+      </timeline>
+    </order>
+    <order id="102" code="BE-2026-06-20-02" clientId="2" client="Cosmedamião Festas" equipment="Desktop i5 eventos" defect="Travamentos em emissão de contrato" status="Aguardando cliente" approval="Aguardando aprovação" technician="Atendimento" due="2026-06-24" total="389.90" paid="0" stage="Orçamento">
+      <items>
+        <item sku="TELA-15" name="Memória DDR4 8GB" quantity="1" unit="189.90" />
+      </items>
+      <services>
+        <service code="DIAG-01" name="Diagnóstico avançado" quantity="1" unit="200.00" />
+      </services>
+      <timeline>
+        <event at="2026-06-20T14:10:00-03:00" label="OS criada via WhatsApp" actor="Atendimento" />
+        <event at="2026-06-20T16:30:00-03:00" label="Orçamento enviado" actor="Atendimento" />
+      </timeline>
+    </order>
+    <order id="103" code="BE-2026-06-18-03" clientId="3" client="Endodontia Clínica" equipment="Impressora laser" defect="Falha ao puxar papel" status="Diagnóstico" approval="Pré-aprovada" technician="Técnico bancada" due="2026-06-23" total="160.00" paid="160.00" stage="Recepção">
+      <services>
+        <service code="DIAG-01" name="Diagnóstico avançado" quantity="1" unit="160.00" />
+      </services>
+      <timeline>
+        <event at="2026-06-18T15:45:00-03:00" label="Equipamento recebido" actor="Recepção" />
+      </timeline>
+    </order>
+  </orders>
+
+  <catalog>
+    <product sku="SSD-480" name="SSD 480GB" category="Peças" stock="14" minStock="4" cost="150.00" price="219.90" location="Gaveta A2" storeEnabled="true" />
+    <product sku="TELA-15" name="Tela notebook 15.6" category="Peças" stock="8" minStock="2" cost="240.00" price="389.90" location="Prateleira T1" storeEnabled="true" />
+    <product sku="FONTE-19V" name="Fonte universal 19V" category="Peças" stock="5" minStock="3" cost="82.00" price="149.90" location="Balcão" storeEnabled="true" />
+    <product sku="CABO-SATA" name="Cabo SATA reforçado" category="Peças" stock="18" minStock="6" cost="12.00" price="39.90" location="Gaveta C1" storeEnabled="false" />
+  </catalog>
+
+  <services>
+    <service code="LIMP-01" name="Limpeza preventiva" type="Bancada" basePrice="120.00" deadline="1 dia" active="true" />
+    <service code="DIAG-01" name="Diagnóstico avançado" type="Bancada" basePrice="160.00" deadline="2 dias" active="true" />
+    <service code="BACKUP-01" name="Backup e reinstalação" type="Sistema" basePrice="350.00" deadline="3 dias" active="true" />
+  </services>
+
+  <purchases>
+    <purchase id="701" date="2026-06-20" supplier="Distribuidora Minas Tech" status="Recebida" total="450.00" account="OUTROS" items="SSD 480GB x3" />
+    <purchase id="702" date="2026-06-19" supplier="Peças BH" status="Aguardando nota" total="280.00" account="VERM" items="Fontes 19V x4" />
+  </purchases>
+
+  <sales>
+    <sale id="501" code="PDV-2026-06-21-01" date="2026-06-21" client="Balcão" operator="Atendimento" total="149.90" payment="Pix" items="Fonte universal 19V" />
+    <sale id="502" code="PDV-2026-06-20-04" date="2026-06-20" client="Studio Invoga" operator="Santo" total="219.90" payment="Cartão" items="SSD 480GB" />
+  </sales>
+
+  <webstore>
+    <settings status="Aberta agora" homepage="Ativa" theme="Brasil Express" ordersInQueue="2" gmail="CONNECTED" />
+    <orders>
+      <webOrder id="9001" code="BE-WEB-9001" client="Studio Invoga" phone="(31) 96666-4040" delivery="Retirar na loja" payment="Pix" total="389.90" status="Na fila" />
+      <webOrder id="9002" code="BE-WEB-9002" client="Cliente Demo" phone="(11) 99999-0000" delivery="Entrega local" payment="Dinheiro" total="120.00" status="Aguardando confirmação" />
+    </orders>
+  </webstore>
+
+  <calendar>
+    <event id="1" date="2026-06-21" time="15:00" title="Retorno Maxine" relatedOrder="101" owner="Santo" status="Hoje" />
+    <event id="2" date="2026-06-22" time="09:30" title="Entrega Endodontia" relatedOrder="103" owner="Atendimento" status="Próxima" />
+    <event id="3" date="2026-06-23" time="11:00" title="Cobrar aprovação Cosmedamião" relatedOrder="102" owner="Atendimento" status="Próxima" />
+  </calendar>
+
+  <tasks>
+    <task id="1" title="Conferir OS prioritárias" owner="Santo" status="Pendente" relatedOrder="101" priority="Alta" />
+    <task id="2" title="Separar peça para Maxine" owner="Técnico bancada" status="Hoje" relatedOrder="101" priority="Alta" />
+    <task id="3" title="Validar planilha de importação" owner="Santo" status="Backoffice" priority="Média" />
+  </tasks>
+
+  <alerts>
+    <alert id="1" title="OS aguardando aprovação" body="Cosmedamião Festas está parada desde 20/06." tone="gold" />
+    <alert id="2" title="Estoque perto do mínimo" body="Fonte universal 19V está com 5 unidades." tone="red" />
+    <alert id="3" title="Pedido webstore na fila" body="BE-WEB-9002 precisa virar OS ou venda PDV." tone="green" />
+  </alerts>
+</crmosfullDemo>

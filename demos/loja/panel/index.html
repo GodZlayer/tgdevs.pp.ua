@@ -4,164 +4,859 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
-  <title>Lumix Ice | Admin Demo</title>
+  <title>Lumix Ice | CRM Operacional Demo</title>
   <link rel="stylesheet" href="../../static-demo.css">
   <style>
-    .lumix-panel { --primary:#26a7ff; --primary-dark:#0b2d55; --green:#55c877; --gold:#f5bc42; --danger:#e55366; background:#edf4f8; }
-    .lumix-panel .demo-sidebar { background:linear-gradient(180deg,#071b33,#0b2d55); }
-    .lumix-panel .demo-brand-mark { background:#e8f8ff; color:#0b2d55; }
-    .ops-grid { display:grid; grid-template-columns:1.1fr .9fr; gap:16px; }
-    .order-card { background:#fff; border:1px solid rgba(13,37,61,.1); border-radius:12px; padding:14px; display:grid; gap:10px; box-shadow:0 14px 34px rgba(22,55,86,.08); }
-    .status-pill { display:inline-flex; width:max-content; border-radius:999px; padding:5px 9px; font-weight:900; font-size:12px; background:#e9f8ff; color:#0b63a7; }
-    .status-pill.warn { background:#fff4d6; color:#8a5c00; }
-    .status-pill.ok { background:#ddf9e6; color:#116b34; }
-    .status-pill.bad { background:#ffe3e8; color:#9a2033; }
-    .stock-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
-    .stock-tile { background:#fff; border:1px solid rgba(13,37,61,.1); border-radius:12px; padding:14px; }
-    .tracking-map { min-height:260px; border-radius:14px; background:linear-gradient(135deg,#dff7ff,#ffffff 45%,#dff9e8); position:relative; overflow:hidden; border:1px solid rgba(13,37,61,.1); }
-    .tracking-map:before { content:""; position:absolute; inset:0; background-image:linear-gradient(rgba(11,45,85,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(11,45,85,.08) 1px,transparent 1px); background-size:32px 32px; }
-    .tracking-map strong { position:absolute; left:22px; top:22px; }
-    .tracking-map span { position:absolute; right:32px; bottom:32px; width:18px; height:18px; border-radius:50%; background:#26a7ff; box-shadow:0 0 0 12px rgba(38,167,255,.18); }
-    @media(max-width:980px){ .ops-grid,.stock-grid{grid-template-columns:1fr}.demo-shell{grid-template-columns:1fr}.demo-sidebar{position:static} }
+    .lumix-panel {
+      --primary: #1688d7;
+      --primary-dark: #07517f;
+      --green: #1f9a62;
+      --gold: #c98714;
+      --danger: #c94155;
+      --bg: #eef3f7;
+      --surface: #fff;
+      --surface-strong: #fff;
+      --line: rgba(20, 38, 58, .12);
+      --text: #172434;
+      --muted: #667688;
+      --shadow: 0 10px 28px rgba(17, 35, 54, .08);
+      --radius: 8px;
+      background: #eef3f7;
+      color: var(--text);
+    }
+    .lumix-panel .demo-shell { grid-template-columns: 248px minmax(0, 1fr); }
+    .lumix-panel .demo-sidebar {
+      padding: 16px;
+      background: #0b253a;
+      border-right: 1px solid rgba(255,255,255,.08);
+    }
+    .lumix-panel .demo-brand { margin: 14px 0 18px; }
+    .lumix-panel .demo-brand-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: #e9f6ff;
+      color: #0b253a;
+    }
+    .lumix-panel .demo-nav { gap: 6px; }
+    .lumix-panel .demo-nav a {
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+    }
+    .lumix-panel .demo-main { padding: 18px; }
+    .lumix-panel .demo-screen { display: block; }
+    .lumix-panel .demo-screen[hidden] { display: none !important; }
+    .lumix-panel .demo-topbar {
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .lumix-panel .demo-topbar h2 { font-size: 24px; }
+    .lumix-panel .btn {
+      border-radius: 7px;
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+    .lumix-panel .card,
+    .lumix-panel .panel-card,
+    .lumix-panel .metric {
+      box-shadow: var(--shadow);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .lumix-panel .metric > strong,
+    .lumix-panel .metric:not(:has(span)) {
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+    .lumix-panel .metrics-row {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .ops-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(320px, .75fr); gap: 12px; }
+    .dense-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .two-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, .55fr); gap: 12px; }
+    .mini-list { display: grid; gap: 8px; }
+    .mini-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+    .mini-row p,
+    .mini-row h4 { margin: 0; }
+    .mini-row h4 { font-size: 14px; }
+    .mini-row small { color: var(--muted); display: block; margin-top: 3px; }
+    .status-pill {
+      display: inline-flex;
+      width: max-content;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-weight: 900;
+      font-size: 11px;
+      background: #e8f4ff;
+      color: #07517f;
+      white-space: nowrap;
+    }
+    .status-pill.warn { background: #fff2cc; color: #815400; }
+    .status-pill.ok { background: #dcf6e8; color: #12613e; }
+    .status-pill.bad { background: #ffe2e7; color: #9d2334; }
+    .status-pill.dark { background: #e9edf3; color: #334155; }
+    .order-card {
+      display: grid;
+      gap: 9px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .order-card.warn { border-left-color: var(--gold); }
+    .order-card.bad { border-left-color: var(--danger); }
+    .order-card.ok { border-left-color: var(--green); }
+    .order-meta { display: flex; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 12px; }
+    .order-items { margin: 0; color: var(--text); font-size: 13px; }
+    .alert-stack { display: grid; gap: 8px; }
+    .alert-item {
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--gold);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+    }
+    .alert-item.bad { border-left-color: var(--danger); }
+    .alert-item.ok { border-left-color: var(--green); }
+    .alert-item p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+    .stock-level {
+      height: 8px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #edf1f5;
+      border: 1px solid rgba(20,38,58,.08);
+    }
+    .stock-level i {
+      display: block;
+      height: 100%;
+      width: var(--w);
+      background: var(--c, var(--primary));
+    }
+    .route-box {
+      min-height: 230px;
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(rgba(22,136,215,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(22,136,215,.08) 1px, transparent 1px),
+        #f8fbfd;
+      background-size: 28px 28px;
+      overflow: hidden;
+    }
+    .route-box:before {
+      content: "";
+      position: absolute;
+      left: 12%;
+      top: 56%;
+      width: 76%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--green));
+      transform: rotate(-9deg);
+      transform-origin: left center;
+    }
+    .route-pin {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 0 8px rgba(22,136,215,.18);
+    }
+    .route-pin.a { left: 14%; top: 58%; }
+    .route-pin.b { right: 12%; top: 39%; background: var(--green); box-shadow: 0 0 0 8px rgba(31,154,98,.18); }
+    .route-label {
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      background: rgba(255,255,255,.9);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .demo-table th,
+    .demo-table td { padding: 9px 8px; font-size: 13px; }
+    .demo-modal__panel { border-radius: 10px; }
+    .demo-modal__head { padding: 16px 18px; }
+    .demo-modal__body { padding: 18px; }
+    .modal-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .timeline.compact { gap: 8px; }
+    .timeline.compact p { font-size: 13px; }
+    @media(max-width: 1100px) {
+      .lumix-panel .metrics-row,
+      .dense-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .ops-layout,
+      .two-col { grid-template-columns: 1fr; }
+    }
+    @media(max-width: 780px) {
+      .lumix-panel .demo-shell,
+      .lumix-panel .metrics-row,
+      .dense-grid,
+      .modal-kpis { grid-template-columns: 1fr; }
+      .lumix-panel .demo-sidebar { position: static; height: auto; }
+      .lumix-panel .demo-main { padding: 12px; }
+      .demo-table { min-width: 680px; }
+    }
   </style>
 </head>
 <body class="lumix-panel">
   <div class="demo-shell">
     <aside class="demo-sidebar">
-      <a class="btn" href="../../../index.html#crm-demos">Voltar para TGDevs</a>
+      <a class="btn" href="../../../index.html#crm-demos">Voltar</a>
       <div class="demo-brand">
         <span class="demo-brand-mark">LI</span>
-        <div><h1>Lumix Ice</h1><p>Admin demo</p></div>
+        <div><h1>Lumix Ice</h1><p>Loja, Uber e InfinitePay</p></div>
       </div>
-      <nav class="demo-nav" data-demo-tabs>
-        <a href="#operations" class="active">Operação</a>
-        <a href="#stock">Estoque</a>
-        <a href="#ifood">iFood</a>
-        <a href="#delivery">Entregas</a>
-        <a href="#finance">Finanças</a>
+      <nav class="demo-nav">
+        <a href="#dashboard" data-tab="dashboard">Dashboard</a>
+        <a href="#orders" data-tab="orders">Pedidos</a>
+        <a href="#customers" data-tab="customers">Clientes</a>
+        <a href="#stock" data-tab="stock">Estoque</a>
+        <a href="#delivery" data-tab="delivery">Entregas</a>
+        <a href="#finance" data-tab="finance">Financeiro</a>
+        <a href="#agenda" data-tab="agenda">Agenda</a>
+        <a href="#reports" data-tab="reports">Relatorios</a>
       </nav>
+      <div class="card sidebar-profile">
+        <p class="eyebrow">Sessao</p>
+        <strong>Administrador Demo</strong>
+        <p>Perfil: gerente operacional</p>
+        <button class="btn" data-open-modal="profileModal">Ver permissoes</button>
+      </div>
     </aside>
 
     <main class="demo-main">
       <header class="demo-topbar">
-        <div><p class="eyebrow">Painel administrativo</p><h2>Operação em tempo real</h2></div>
-        <div class="actions"><button class="btn" data-open-modal="hoursModal">Horários</button><button class="btn primary" data-open-modal="productModal">Novo produto</button></div>
+        <div>
+          <p class="eyebrow">Painel pos-login</p>
+          <h2>Operacao da loja em tempo real</h2>
+        </div>
+        <div class="actions">
+          <button class="btn" data-open-modal="shiftModal">Caixa aberto</button>
+          <button class="btn" data-action="sync-ifood">Sincronizar iFood</button>
+          <button class="btn primary" data-action="new-order">Novo pedido</button>
+        </div>
       </header>
 
-      <section class="demo-screen active" id="operations">
-        <div class="metrics-row">
-          <div class="metric"><span>Pedidos ativos</span><strong id="activeOrders">0</strong></div>
-          <div class="metric"><span>Tempo médio</span><strong>28 min</strong></div>
-          <div class="metric"><span>Caixa</span><strong id="dayCash">R$ 0,00</strong></div>
+      <section class="demo-screen" id="dashboard" data-panel="dashboard">
+        <div class="metrics-row" id="dashboardMetrics"></div>
+        <div class="ops-layout">
+          <div class="card">
+            <div class="section-head">
+              <div><p class="eyebrow">Fila principal</p><h3>Pedidos que exigem acao</h3></div>
+              <button class="btn" data-action="print-pending">Imprimir pendentes</button>
+            </div>
+            <div class="mini-list" id="priorityOrders"></div>
+          </div>
+          <div class="card">
+            <div class="section-head">
+              <div><p class="eyebrow">Alertas</p><h3>Agora</h3></div>
+              <button class="btn" data-action="resolve-alerts">Revisar</button>
+            </div>
+            <div class="alert-stack" id="alerts"></div>
+          </div>
         </div>
-        <div class="ops-grid">
-          <div class="card"><div class="section-head"><div><p class="eyebrow">Fila</p><h3>Pedidos da loja</h3></div><button class="btn" data-admin-action="add-order">Adicionar pedido</button></div><div id="orders"></div></div>
-          <div class="card"><p class="eyebrow">Tracking</p><h3>Entrega em andamento</h3><div class="tracking-map"><strong>Uber Flash simulado</strong><span></span></div><div class="toolbar"><button class="btn" data-open-modal="dispatchModal">Despachar Uber</button><button class="btn" data-admin-action="print">Imprimir</button></div></div>
+        <div class="dense-grid" style="margin-top:12px">
+          <div class="card">
+            <p class="eyebrow">Agenda</p>
+            <h3>Tarefas de hoje</h3>
+            <div class="mini-list" id="todayTasks"></div>
+          </div>
+          <div class="card">
+            <p class="eyebrow">Estoque critico</p>
+            <h3>Reposicao</h3>
+            <div class="mini-list" id="criticalStock"></div>
+          </div>
+          <div class="card">
+            <p class="eyebrow">Financeiro</p>
+            <h3>Movimentos recentes</h3>
+            <div class="mini-list" id="recentMoney"></div>
+          </div>
         </div>
       </section>
 
-      <section class="demo-screen" id="stock">
-        <div class="section-head"><div><p class="eyebrow">Catálogo</p><h2>Estoque e produtos</h2></div><div class="actions"><button class="btn" data-open-modal="importModal">Importar/exportar</button><button class="btn primary" data-open-modal="promotionModal">Promoção</button></div></div>
-        <div class="stock-grid" id="stockTiles"></div>
-        <div class="card"><table class="demo-table"><thead><tr><th>Produto</th><th>Categoria</th><th>Estoque</th><th>Preço</th><th></th></tr></thead><tbody id="stockTable"></tbody></table></div>
-      </section>
-
-      <section class="demo-screen" id="ifood">
-        <div class="grid cols-2">
-          <div class="card"><p class="eyebrow">Loja iFood</p><h2>Integração simulada</h2><p class="muted">Catálogo sincronizado, pausas, tracking e cancelamento sem chamar API real.</p><div class="toolbar"><button class="btn" data-admin-action="poll-ifood">Buscar eventos</button><button class="btn" data-open-modal="ifoodModal">Detalhes do pedido</button></div></div>
-          <div class="card"><table class="demo-table"><thead><tr><th>Pedido</th><th>Status</th><th>Ação</th></tr></thead><tbody><tr><td>#IFO-2091</td><td><span class="status-pill warn">Aguardando aceite</span></td><td><button class="btn" data-admin-action="accept-ifood">Aceitar</button></td></tr><tr><td>#IFO-2090</td><td><span class="status-pill ok">Em preparo</span></td><td><button class="btn" data-admin-action="cancel-ifood">Cancelar</button></td></tr></tbody></table></div>
+      <section class="demo-screen" id="orders" data-panel="orders">
+        <div class="section-head">
+          <div><p class="eyebrow">Pedidos e OS</p><h2>Webstore, iFood, balcao e entrega</h2></div>
+          <div class="actions">
+            <button class="btn" data-action="filter-attention">Somente atencao</button>
+            <button class="btn primary" data-action="new-order">Criar pedido fake</button>
+          </div>
+        </div>
+        <div class="ops-layout">
+          <div class="mini-list" id="orderCards"></div>
+          <div class="card">
+            <p class="eyebrow">Resumo da fila</p>
+            <h3>Distribuicao por status</h3>
+            <div class="mini-list" id="statusSummary"></div>
+          </div>
         </div>
       </section>
 
-      <section class="demo-screen" id="delivery">
-        <div class="grid cols-2">
-          <div class="card"><p class="eyebrow">Entregas</p><h2>Despacho Uber e privado</h2><div class="tracking-map"><strong>Rota simulada</strong><span></span></div></div>
-          <div class="card"><table class="demo-table"><thead><tr><th>Pedido</th><th>Modal</th><th>Status</th></tr></thead><tbody><tr><td>#1024</td><td>Uber Flash</td><td><span class="status-pill ok">Coletado</span></td></tr><tr><td>#1025</td><td>Privada</td><td><span class="status-pill warn">Separando</span></td></tr></tbody></table></div>
+      <section class="demo-screen" id="customers" data-panel="customers">
+        <div class="section-head">
+          <div><p class="eyebrow">CRM</p><h2>Clientes, historico e receita</h2></div>
+          <button class="btn primary" data-action="new-customer">Novo cliente</button>
+        </div>
+        <div class="card">
+          <table class="demo-table">
+            <thead><tr><th>Cliente</th><th>Contato</th><th>Ultimo pedido</th><th>Receita</th><th>Tags</th><th></th></tr></thead>
+            <tbody id="customerRows"></tbody>
+          </table>
         </div>
       </section>
 
-      <section class="demo-screen" id="finance">
-        <div class="metrics-row"><div class="metric"><span>Receita</span><strong id="financeRevenue">R$ 0,00</strong></div><div class="metric"><span>Taxas</span><strong>R$ 42,80</strong></div><div class="metric"><span>Ticket médio</span><strong>R$ 74,20</strong></div></div>
-        <div class="card"><table class="demo-table"><thead><tr><th>Movimento</th><th>Origem</th><th>Valor</th><th>Status</th></tr></thead><tbody><tr><td>#1024</td><td>Webstore</td><td>R$ 89,90</td><td>Pago</td></tr><tr><td>#1023</td><td>iFood</td><td>R$ 64,50</td><td>Conciliado</td></tr></tbody></table></div>
+      <section class="demo-screen" id="stock" data-panel="stock">
+        <div class="section-head">
+          <div><p class="eyebrow">Catalogo</p><h2>Estoque, preco e canais</h2></div>
+          <div class="actions">
+            <button class="btn" data-open-modal="importModal">Importar/exportar</button>
+            <button class="btn primary" data-open-modal="productModal">Novo produto</button>
+          </div>
+        </div>
+        <div class="dense-grid" id="stockTiles"></div>
+        <div class="card" style="margin-top:12px">
+          <table class="demo-table">
+            <thead><tr><th>Produto</th><th>Categoria</th><th>Estoque</th><th>Preco</th><th>Local</th><th>Status</th><th></th></tr></thead>
+            <tbody id="stockRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="demo-screen" id="delivery" data-panel="delivery">
+        <div class="two-col">
+          <div class="card">
+            <div class="section-head">
+              <div><p class="eyebrow">Logistica</p><h2>Uber Flash e entrega privada</h2></div>
+              <button class="btn primary" data-action="dispatch-next">Despachar proximo</button>
+            </div>
+            <div class="route-box">
+              <div class="route-label" id="routeLabel">Rota ativa</div>
+              <span class="route-pin a"></span>
+              <span class="route-pin b"></span>
+            </div>
+          </div>
+          <div class="card">
+            <p class="eyebrow">Fila de entregas</p>
+            <h3>Coleta, rota e comprovante</h3>
+            <div class="mini-list" id="deliveryRows"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="demo-screen" id="finance" data-panel="finance">
+        <div class="metrics-row" id="financeMetrics"></div>
+        <div class="two-col">
+          <div class="card">
+            <div class="section-head">
+              <div><p class="eyebrow">Caixa</p><h2>Movimentacoes</h2></div>
+              <button class="btn" data-action="close-shift">Fechar caixa</button>
+            </div>
+            <table class="demo-table">
+              <thead><tr><th>Movimento</th><th>Origem</th><th>Pedido</th><th>Valor</th><th>Status</th></tr></thead>
+              <tbody id="moneyRows"></tbody>
+            </table>
+          </div>
+          <div class="card">
+            <p class="eyebrow">Conciliacao</p>
+            <h3>InfinitePay, iFood e dinheiro</h3>
+            <div class="mini-list" id="reconcileRows"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="demo-screen" id="agenda" data-panel="agenda">
+        <div class="section-head">
+          <div><p class="eyebrow">Agenda operacional</p><h2>Tarefas ligadas a pedidos e estoque</h2></div>
+          <button class="btn primary" data-action="new-task">Nova tarefa</button>
+        </div>
+        <div class="dense-grid" id="taskCards"></div>
+      </section>
+
+      <section class="demo-screen" id="reports" data-panel="reports">
+        <div class="metrics-row" id="reportMetrics"></div>
+        <div class="dense-grid">
+          <div class="card">
+            <p class="eyebrow">Produtos</p>
+            <h3>Mais vendidos</h3>
+            <div class="mini-list" id="topProducts"></div>
+          </div>
+          <div class="card">
+            <p class="eyebrow">Canais</p>
+            <h3>Receita por origem</h3>
+            <div class="mini-list" id="channelRows"></div>
+          </div>
+          <div class="card">
+            <p class="eyebrow">Riscos</p>
+            <h3>O que revisar</h3>
+            <div class="alert-stack" id="riskRows"></div>
+          </div>
+        </div>
       </section>
     </main>
   </div>
 
-  <div class="demo-modal" id="hoursModal" hidden><div class="demo-modal__panel"><header class="demo-modal__head"><div><p class="eyebrow">Horários</p><h2>Funcionamento</h2></div><button class="btn" data-close-modal>Fechar</button></header><form class="demo-modal__body grid cols-2" data-demo-form="Horários salvos no cache."><label class="field">Abertura<input type="time" value="09:00"></label><label class="field">Fechamento<input type="time" value="22:00"></label><label class="field">Pedidos online<select><option>Ativo</option><option>Pausado</option></select></label><button class="btn primary">Salvar</button></form></div></div>
-  <div class="demo-modal" id="productModal" hidden><div class="demo-modal__panel"><header class="demo-modal__head"><div><p class="eyebrow">Produto</p><h2>Cadastro</h2></div><button class="btn" data-close-modal>Fechar</button></header><form class="demo-modal__body grid cols-2" id="productForm"><label class="field">Nome<input name="name" value="Gelo Cubo 3kg"></label><label class="field">Categoria<input name="category" value="Gelos"></label><label class="field">Estoque<input name="stock" type="number" value="42"></label><label class="field">Preço<input name="price" type="number" value="14.90" step="0.01"></label><button class="btn primary">Salvar produto</button></form></div></div>
-  <div class="demo-modal" id="promotionModal" hidden><div class="demo-modal__panel"><header class="demo-modal__head"><div><p class="eyebrow">Promoção</p><h2>Campanha relâmpago</h2></div><button class="btn" data-close-modal>Fechar</button></header><form class="demo-modal__body" data-demo-form="Promoção criada no demo."><label class="field">Descrição<input value="10% off em combos"></label><label class="field">Validade<input type="date" value="2026-06-30"></label><button class="btn primary">Ativar</button></form></div></div>
-  <div class="demo-modal" id="importModal" hidden><div class="demo-modal__panel"><header class="demo-modal__head"><div><p class="eyebrow">Catálogo</p><h2>Importação e exportação</h2></div><button class="btn" data-close-modal>Fechar</button></header><div class="demo-modal__body"><label class="field">JSON do catálogo<textarea>{"products": []}</textarea></label><div class="toolbar"><button class="btn" data-admin-action="import">Importar</button><button class="btn" data-admin-action="export">Exportar</button></div></div></div></div>
-  <div class="demo-modal" id="dispatchModal" hidden><div class="demo-modal__panel"><header class="demo-modal__head"><div><p class="eyebrow">Despacho</p><h2>Uber Flash</h2></div><button class="btn" data-close-modal>Fechar</button></header><div class="demo-modal__body"><p class="muted">Solicitação simulada de motorista, tracking e comprovante.</p><button class="btn primary" data-admin-action="dispatch">Confirmar despacho</button></div></div></div>
-  <div class="demo-modal" id="ifoodModal" hidden><div class="demo-modal__panel"><header class="demo-modal__head"><div><p class="eyebrow">iFood</p><h2>Pedido #IFO-2091</h2></div><button class="btn" data-close-modal>Fechar</button></header><div class="demo-modal__body"><div class="metric"><span>Status</span><strong>Aguardando aceite</strong></div><div class="toolbar"><button class="btn primary" data-admin-action="accept-ifood">Aceitar</button><button class="btn" data-admin-action="tracking-ifood">Tracking</button><button class="btn" data-admin-action="cancel-ifood">Cancelar</button></div></div></div></div>
+  <div class="demo-modal" id="orderModal" hidden>
+    <div class="demo-modal__panel">
+      <header class="demo-modal__head">
+        <div><p class="eyebrow">Pedido</p><h2 id="orderModalTitle">Detalhe</h2></div>
+        <button class="btn" data-close-modal>Fechar</button>
+      </header>
+      <div class="demo-modal__body" id="orderModalBody"></div>
+    </div>
+  </div>
+
+  <div class="demo-modal" id="customerModal" hidden>
+    <div class="demo-modal__panel">
+      <header class="demo-modal__head">
+        <div><p class="eyebrow">Cliente</p><h2 id="customerModalTitle">Detalhe</h2></div>
+        <button class="btn" data-close-modal>Fechar</button>
+      </header>
+      <div class="demo-modal__body" id="customerModalBody"></div>
+    </div>
+  </div>
+
+  <div class="demo-modal" id="productDetailModal" hidden>
+    <div class="demo-modal__panel">
+      <header class="demo-modal__head">
+        <div><p class="eyebrow">Produto</p><h2 id="productDetailTitle">Detalhe</h2></div>
+        <button class="btn" data-close-modal>Fechar</button>
+      </header>
+      <div class="demo-modal__body" id="productDetailBody"></div>
+    </div>
+  </div>
+
+  <div class="demo-modal" id="productModal" hidden>
+    <div class="demo-modal__panel">
+      <header class="demo-modal__head">
+        <div><p class="eyebrow">Produto</p><h2>Cadastro rapido</h2></div>
+        <button class="btn" data-close-modal>Fechar</button>
+      </header>
+      <form class="demo-modal__body grid cols-2" id="productForm">
+        <label class="field">Nome<input name="name" value="Gelo Cubo 3kg"></label>
+        <label class="field">Categoria<input name="category" value="Gelos"></label>
+        <label class="field">Estoque<input name="stock" type="number" value="42"></label>
+        <label class="field">Preco<input name="price" type="number" value="14.90" step="0.01"></label>
+        <label class="field">Local<input name="location" value="Freezer A3"></label>
+        <label class="field">Canais<select name="channels"><option>Webstore, PDV e iFood</option><option>Somente PDV</option><option>Webstore e PDV</option></select></label>
+        <button class="btn primary">Salvar produto</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="demo-modal" id="importModal" hidden>
+    <div class="demo-modal__panel">
+      <header class="demo-modal__head">
+        <div><p class="eyebrow">Catalogo</p><h2>Importacao e exportacao</h2></div>
+        <button class="btn" data-close-modal>Fechar</button>
+      </header>
+      <div class="demo-modal__body">
+        <label class="field">JSON do catalogo<textarea rows="8">{"products": [], "prices": [], "channels": ["webstore", "pdv", "ifood"]}</textarea></label>
+        <div class="toolbar">
+          <button class="btn" data-action="import-products">Importar</button>
+          <button class="btn" data-action="export-products">Exportar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-modal" id="shiftModal" hidden>
+    <div class="demo-modal__panel">
+      <header class="demo-modal__head">
+        <div><p class="eyebrow">Caixa</p><h2>Turno aberto</h2></div>
+        <button class="btn" data-close-modal>Fechar</button>
+      </header>
+      <div class="demo-modal__body">
+        <div class="modal-kpis" id="shiftKpis"></div>
+        <div class="toolbar">
+          <button class="btn" data-action="cash-withdrawal">Registrar sangria</button>
+          <button class="btn primary" data-action="close-shift">Fechar caixa</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-modal" id="profileModal" hidden>
+    <div class="demo-modal__panel">
+      <header class="demo-modal__head">
+        <div><p class="eyebrow">Usuario</p><h2>Administrador Demo</h2></div>
+        <button class="btn" data-close-modal>Fechar</button>
+      </header>
+      <div class="demo-modal__body grid cols-2">
+        <div class="panel-card"><h3>Permissoes</h3><p class="muted">Pedidos, estoque, financeiro, entregas, relatorios e ajustes da loja.</p></div>
+        <div class="panel-card"><h3>Atividade</h3><p class="muted">Ultima acao: sincronizacao do catalogo e impressao de pedidos pendentes.</p></div>
+      </div>
+    </div>
+  </div>
 
   <script src="../../demo-runtime.js"></script>
   <script>
-    const demo = TGDemo.initDemo('loja-admin', {
-      orders: [
-        { id: 1024, client: 'Cliente Demo', items: 'Kit Festa Rápida', total: 89.9, status: 'Separando' },
-        { id: 1025, client: 'Marina Alves', items: 'Gelo Cubo 5kg x2', total: 37.8, status: 'Aguardando pagamento' }
+    const seed = {
+      customers: [
+        { id: 1, name: 'Marina Alves', phone: '(31) 99904-2766', address: 'Av. Francisco Sa, 787', tags: ['VIP', 'Festa'], notes: 'Prefere gelo em cubo e entrega pela portaria.' },
+        { id: 2, name: 'Bar do Renato', phone: '(31) 98844-1020', address: 'Rua Sapucai, 22', tags: ['Recorrente', 'B2B'], notes: 'Compra toda sexta. Faturamento por Pix.' },
+        { id: 3, name: 'Condominio Vista Azul', phone: '(31) 97718-4430', address: 'Rua dos Timbiras, 1400', tags: ['Contrato'], notes: 'Exige comprovante e nota no grupo do zelador.' },
+        { id: 4, name: 'Cliente Balcao', phone: '(31) 90000-0000', address: 'Retirada na loja', tags: ['PDV'], notes: 'Venda rapida sem cadastro completo.' },
+        { id: 5, name: 'Luiza Campos', phone: '(31) 99120-4411', address: 'Rua Curitiba, 510', tags: ['iFood'], notes: 'Pedido sensivel a atraso. Confirmar troco quando dinheiro.' }
       ],
       products: [
-        { name: 'Gelo Cubo 5kg', category: 'Gelos', stock: 86, price: 18.9 },
-        { name: 'Gelo Escama 10kg', category: 'Gelos', stock: 34, price: 32.5 },
-        { name: 'Carvão Premium', category: 'Churrasco', stock: 19, price: 24.9 },
-        { name: 'Kit Festa Rápida', category: 'Promoções', stock: 11, price: 89.9 }
+        { id: 101, name: 'Gelo Cubo 5kg', category: 'Gelos', stock: 86, min: 35, price: 18.9, location: 'Freezer A1', channels: ['Webstore', 'PDV', 'iFood'], sold: 42 },
+        { id: 102, name: 'Gelo Escama 10kg', category: 'Gelos', stock: 18, min: 22, price: 32.5, location: 'Freezer B2', channels: ['Webstore', 'PDV'], sold: 19 },
+        { id: 103, name: 'Carvao Premium 4kg', category: 'Churrasco', stock: 11, min: 16, price: 24.9, location: 'Prateleira C1', channels: ['Webstore', 'PDV', 'iFood'], sold: 16 },
+        { id: 104, name: 'Energetico 2L', category: 'Bebidas', stock: 36, min: 20, price: 15.9, location: 'Geladeira D2', channels: ['Webstore', 'PDV'], sold: 31 },
+        { id: 105, name: 'Agua Mineral 12un', category: 'Bebidas', stock: 9, min: 14, price: 22, location: 'Deposito E1', channels: ['Webstore', 'PDV', 'iFood'], sold: 23 },
+        { id: 106, name: 'Kit Festa Rapida', category: 'Combos', stock: 7, min: 8, price: 89.9, location: 'Combo virtual', channels: ['Webstore', 'iFood'], sold: 12 }
+      ],
+      orders: [
+        { id: 2048, customerId: 1, channel: 'Webstore', status: 'Separando', payment: 'Pago InfinitePay', delivery: 'Uber Flash', deliveryStatus: 'Aguardando coleta', total: 134.7, fee: 13.5, created: 'Hoje 18:42', promised: '19:20', items: [{ productId: 101, qty: 3 }, { productId: 104, qty: 2 }, { productId: 106, qty: 1 }], timeline: ['18:42 Pedido recebido', '18:43 Pagamento aprovado', '18:47 Separacao iniciada'] },
+        { id: 2047, customerId: 2, channel: 'WhatsApp', status: 'Aguardando pagamento', payment: 'Pix pendente', delivery: 'Entrega privada', deliveryStatus: 'Parado', total: 162.5, fee: 9, created: 'Hoje 18:10', promised: '19:05', items: [{ productId: 102, qty: 5 }], timeline: ['18:10 Pedido criado pelo atendente', '18:11 Link Pix enviado'] },
+        { id: 2046, customerId: 5, channel: 'iFood', status: 'Em preparo', payment: 'Pago iFood', delivery: 'iFood entregador', deliveryStatus: 'Aguardando aceite', total: 64.8, fee: 0, created: 'Hoje 17:58', promised: '18:45', items: [{ productId: 101, qty: 2 }, { productId: 105, qty: 1 }], timeline: ['17:58 Evento ORDER_CREATED', '18:00 Aceito no painel', '18:12 Em preparo'] },
+        { id: 2045, customerId: 3, channel: 'Contrato', status: 'Pronto para despacho', payment: 'Faturado', delivery: 'Entrega privada', deliveryStatus: 'Motoboy atribuido', total: 295, fee: 18, created: 'Hoje 16:30', promised: '18:30', items: [{ productId: 101, qty: 10 }, { productId: 103, qty: 4 }, { productId: 105, qty: 1 }], timeline: ['16:30 Agendado', '17:20 Separado', '17:45 Motoboy Joao atribuido'] },
+        { id: 2044, customerId: 4, channel: 'PDV', status: 'Concluido', payment: 'Dinheiro', delivery: 'Retirada', deliveryStatus: 'Entregue', total: 37.8, fee: 0, created: 'Hoje 15:55', promised: 'Retirada', items: [{ productId: 101, qty: 2 }], timeline: ['15:55 Venda no balcao', '15:57 Pago em dinheiro', '15:58 Entregue'] }
+      ],
+      tasks: [
+        { id: 1, title: 'Repor agua 12un no deposito', link: 'Estoque #105', owner: 'Estoque', due: 'Hoje 19:00', status: 'Pendente' },
+        { id: 2, title: 'Confirmar Pix do Bar do Renato', link: 'Pedido #2047', owner: 'Financeiro', due: 'Hoje 18:55', status: 'Atrasada' },
+        { id: 3, title: 'Enviar comprovante ao condominio', link: 'Pedido #2045', owner: 'Entregas', due: 'Hoje 19:30', status: 'Pendente' },
+        { id: 4, title: 'Sincronizar cardapio iFood', link: 'Catalogo', owner: 'Admin', due: 'Hoje 20:00', status: 'Concluida' }
+      ],
+      movements: [
+        { id: 1, type: 'Entrada', source: 'InfinitePay', orderId: 2048, amount: 134.7, status: 'Pago' },
+        { id: 2, type: 'Entrada', source: 'iFood', orderId: 2046, amount: 64.8, status: 'A conciliar' },
+        { id: 3, type: 'Entrada', source: 'Dinheiro', orderId: 2044, amount: 37.8, status: 'No caixa' },
+        { id: 4, type: 'Saida', source: 'Uber Flash', orderId: 2048, amount: -13.5, status: 'Previsto' },
+        { id: 5, type: 'Saida', source: 'Motoboy privado', orderId: 2045, amount: -18, status: 'Previsto' }
       ]
-    });
+    };
+
+    const demo = TGDemo.initDemo('loja-admin-rich', seed);
     const state = demo.state;
     const money = demo.money;
-    demo.bindTabs('[data-demo-tabs]', '.demo-screen');
-    function render() {
-      const revenue = state.orders.reduce((sum, order) => sum + order.total, 0);
-      document.getElementById('activeOrders').textContent = state.orders.length;
-      document.getElementById('dayCash').textContent = money(revenue);
-      document.getElementById('financeRevenue').textContent = money(revenue);
-      document.getElementById('orders').innerHTML = state.orders.map((order) => `
-        <article class="order-card">
-          <div class="split"><strong>#${order.id} - ${order.client}</strong><span class="status-pill ${order.status.includes('pagamento') ? 'warn' : 'ok'}">${order.status}</span></div>
-          <p class="muted">${order.items} · ${money(order.total)}</p>
-          <div class="toolbar"><button class="btn" data-order="${order.id}" data-status="Em preparo">Preparar</button><button class="btn" data-order="${order.id}" data-status="Pronto para despacho">Despachar</button><button class="btn" data-open-modal="dispatchModal">Tracking</button></div>
-        </article>
-      `).join('');
-      document.getElementById('stockTiles').innerHTML = state.products.map((item) => `<div class="stock-tile"><p class="eyebrow">${item.category}</p><h3>${item.name}</h3><strong>${item.stock} un.</strong></div>`).join('');
-      document.getElementById('stockTable').innerHTML = state.products.map((item, index) => `<tr><td>${item.name}</td><td>${item.category}</td><td>${item.stock}</td><td>${money(item.price)}</td><td><button class="btn" data-edit-product="${index}">Editar</button></td></tr>`).join('');
+    demo.bindTabs('dashboard');
+
+    const $ = (id) => document.getElementById(id);
+    const customer = (id) => state.customers.find((item) => item.id === id) || state.customers[0];
+    const product = (id) => state.products.find((item) => item.id === id) || state.products[0];
+    const orderItems = (order) => order.items.map((item) => `${item.qty}x ${product(item.productId).name}`).join(', ');
+    const statusClass = (value) => /pendente|Atrasada|Aguardando/i.test(value) ? 'warn' : /Cancelado|Parado|critico/i.test(value) ? 'bad' : /Concluido|Pago|Entregue|Concluida/i.test(value) ? 'ok' : '';
+    const sum = (items) => items.reduce((total, item) => total + item, 0);
+    const activeOrders = () => state.orders.filter((order) => order.status !== 'Concluido');
+    const revenue = () => sum(state.movements.filter((m) => m.amount > 0).map((m) => m.amount));
+    const costs = () => Math.abs(sum(state.movements.filter((m) => m.amount < 0).map((m) => m.amount)));
+
+    function renderMetrics() {
+      $('dashboardMetrics').innerHTML = [
+        ['Pedidos ativos', activeOrders().length],
+        ['Receita do turno', money(revenue())],
+        ['Saidas previstas', money(costs())],
+        ['Alertas', buildAlerts().length]
+      ].map(([label, value]) => `<div class="metric"><span>${label}</span><strong>${value}</strong></div>`).join('');
+
+      $('financeMetrics').innerHTML = [
+        ['Entradas', money(revenue())],
+        ['Custos entrega', money(costs())],
+        ['Saldo parcial', money(revenue() - costs())],
+        ['A conciliar', money(sum(state.movements.filter((m) => m.status === 'A conciliar').map((m) => m.amount)))]
+      ].map(([label, value]) => `<div class="metric"><span>${label}</span><strong>${value}</strong></div>`).join('');
+
+      const avgTicket = revenue() / Math.max(1, state.orders.length);
+      $('reportMetrics').innerHTML = [
+        ['Ticket medio', money(avgTicket)],
+        ['Itens vendidos', sum(state.products.map((p) => p.sold || 0))],
+        ['Clientes ativos', state.customers.length],
+        ['Rupturas', state.products.filter((p) => p.stock <= p.min).length]
+      ].map(([label, value]) => `<div class="metric"><span>${label}</span><strong>${value}</strong></div>`).join('');
+
+      $('shiftKpis').innerHTML = [
+        ['Abertura', 'R$ 240,00'],
+        ['Entradas', money(revenue())],
+        ['Saldo esperado', money(revenue() - costs() + 240)]
+      ].map(([label, value]) => `<div class="metric"><span>${label}</span><strong>${value}</strong></div>`).join('');
     }
-    function saveRender() { demo.save(); render(); }
+
+    function buildAlerts() {
+      const alerts = [];
+      state.products.filter((item) => item.stock <= item.min).forEach((item) => alerts.push({ type: 'bad', title: `${item.name} abaixo do minimo`, text: `${item.stock} un. no ${item.location}. Minimo operacional: ${item.min}.` }));
+      state.orders.filter((order) => /Aguardando pagamento|Aguardando coleta|Aguardando aceite/.test(order.status + order.deliveryStatus)).forEach((order) => alerts.push({ type: 'warn', title: `Pedido #${order.id} precisa de acao`, text: `${customer(order.customerId).name} - ${order.status} / ${order.deliveryStatus}.` }));
+      state.tasks.filter((task) => task.status === 'Atrasada').forEach((task) => alerts.push({ type: 'bad', title: task.title, text: `${task.owner} - ${task.link}.` }));
+      return alerts;
+    }
+
+    function renderDashboard() {
+      $('priorityOrders').innerHTML = activeOrders().slice(0, 4).map(orderRow).join('');
+      $('alerts').innerHTML = buildAlerts().map((item) => `<div class="alert-item ${item.type}"><strong>${item.title}</strong><p>${item.text}</p></div>`).join('');
+      $('todayTasks').innerHTML = state.tasks.slice(0, 4).map((task) => `<div class="mini-row"><div><h4>${task.title}</h4><small>${task.owner} - ${task.due}</small></div><span class="status-pill ${statusClass(task.status)}">${task.status}</span></div>`).join('');
+      $('criticalStock').innerHTML = state.products.filter((item) => item.stock <= item.min).map(stockMini).join('');
+      $('recentMoney').innerHTML = state.movements.slice(0, 4).map((m) => `<div class="mini-row"><div><h4>${m.source}</h4><small>${m.type} do pedido #${m.orderId}</small></div><strong>${money(m.amount)}</strong></div>`).join('');
+    }
+
+    function orderRow(order) {
+      return `<article class="order-card ${statusClass(order.status)}">
+        <div class="split"><strong>#${order.id} - ${customer(order.customerId).name}</strong><span class="status-pill ${statusClass(order.status)}">${order.status}</span></div>
+        <p class="order-items">${orderItems(order)}</p>
+        <div class="order-meta"><span>${order.channel}</span><span>${order.payment}</span><span>${order.delivery}</span><span>Promessa: ${order.promised}</span><strong>${money(order.total)}</strong></div>
+        <div class="toolbar">
+          <button class="btn" data-open-order="${order.id}">Detalhes</button>
+          <button class="btn" data-status-order="${order.id}" data-next-status="Em preparo">Preparar</button>
+          <button class="btn" data-status-order="${order.id}" data-next-status="Pronto para despacho">Despachar</button>
+          <button class="btn primary" data-status-order="${order.id}" data-next-status="Concluido">Concluir</button>
+        </div>
+      </article>`;
+    }
+
+    function renderOrders() {
+      $('orderCards').innerHTML = state.orders.map(orderRow).join('');
+      const statuses = [...new Set(state.orders.map((order) => order.status))];
+      $('statusSummary').innerHTML = statuses.map((status) => {
+        const orders = state.orders.filter((order) => order.status === status);
+        return `<div class="mini-row"><div><h4>${status}</h4><small>${orders.map((order) => `#${order.id}`).join(', ')}</small></div><strong>${orders.length}</strong></div>`;
+      }).join('');
+    }
+
+    function renderCustomers() {
+      $('customerRows').innerHTML = state.customers.map((item) => {
+        const orders = state.orders.filter((order) => order.customerId === item.id);
+        const total = sum(orders.map((order) => order.total));
+        const last = orders[0] ? `#${orders[0].id} - ${orders[0].status}` : 'Sem pedidos';
+        return `<tr><td><strong>${item.name}</strong><br><span class="muted">${item.address}</span></td><td>${item.phone}</td><td>${last}</td><td>${money(total)}</td><td>${item.tags.map((tag) => `<span class="status-pill dark">${tag}</span>`).join(' ')}</td><td><button class="btn" data-open-customer="${item.id}">Abrir</button></td></tr>`;
+      }).join('');
+    }
+
+    function stockMini(item) {
+      const pct = Math.max(4, Math.min(100, Math.round((item.stock / Math.max(item.min * 2, 1)) * 100)));
+      const color = item.stock <= item.min ? 'var(--danger)' : 'var(--green)';
+      return `<div class="mini-row"><div><h4>${item.name}</h4><small>${item.location} - minimo ${item.min}</small><div class="stock-level"><i style="--w:${pct}%;--c:${color}"></i></div></div><strong>${item.stock}</strong></div>`;
+    }
+
+    function renderStock() {
+      $('stockTiles').innerHTML = state.products.map(stockMini).join('');
+      $('stockRows').innerHTML = state.products.map((item) => {
+        const low = item.stock <= item.min;
+        return `<tr>
+          <td><strong>${item.name}</strong><br><span class="muted">${item.channels.join(', ')}</span></td>
+          <td>${item.category}</td>
+          <td>${item.stock} un.<div class="stock-level"><i style="--w:${Math.max(4, Math.min(100, item.stock))}%;--c:${low ? 'var(--danger)' : 'var(--green)'}"></i></div></td>
+          <td>${money(item.price)}</td>
+          <td>${item.location}</td>
+          <td><span class="status-pill ${low ? 'bad' : 'ok'}">${low ? 'Repor' : 'OK'}</span></td>
+          <td><button class="btn" data-open-product="${item.id}">Abrir</button></td>
+        </tr>`;
+      }).join('');
+    }
+
+    function renderDelivery() {
+      const deliveryOrders = state.orders.filter((order) => order.delivery !== 'Retirada');
+      $('routeLabel').textContent = deliveryOrders[0] ? `#${deliveryOrders[0].id} - ${deliveryOrders[0].deliveryStatus}` : 'Sem rotas ativas';
+      $('deliveryRows').innerHTML = deliveryOrders.map((order) => `<div class="mini-row"><div><h4>#${order.id} - ${customer(order.customerId).name}</h4><small>${order.delivery} - ${order.promised}</small></div><span class="status-pill ${statusClass(order.deliveryStatus)}">${order.deliveryStatus}</span></div>`).join('');
+    }
+
+    function renderFinance() {
+      $('moneyRows').innerHTML = state.movements.map((m) => `<tr><td>${m.type}</td><td>${m.source}</td><td>#${m.orderId}</td><td><strong>${money(m.amount)}</strong></td><td><span class="status-pill ${statusClass(m.status)}">${m.status}</span></td></tr>`).join('');
+      const groups = ['InfinitePay', 'iFood', 'Dinheiro', 'Uber Flash', 'Motoboy privado'];
+      $('reconcileRows').innerHTML = groups.map((source) => {
+        const total = sum(state.movements.filter((m) => m.source === source).map((m) => m.amount));
+        return `<div class="mini-row"><div><h4>${source}</h4><small>${total >= 0 ? 'Recebimento' : 'Custo operacional'}</small></div><strong>${money(total)}</strong></div>`;
+      }).join('');
+    }
+
+    function renderAgenda() {
+      $('taskCards').innerHTML = state.tasks.map((task) => `<div class="card"><div class="split"><p class="eyebrow">${task.owner}</p><span class="status-pill ${statusClass(task.status)}">${task.status}</span></div><h3>${task.title}</h3><p class="muted">${task.link} - ${task.due}</p><div class="toolbar"><button class="btn" data-task-done="${task.id}">Concluir</button><button class="btn" data-action="reschedule-task">Reagendar</button></div></div>`).join('');
+    }
+
+    function renderReports() {
+      $('topProducts').innerHTML = [...state.products].sort((a, b) => (b.sold || 0) - (a.sold || 0)).slice(0, 5).map((item) => `<div class="mini-row"><div><h4>${item.name}</h4><small>${item.category}</small></div><strong>${item.sold || 0}</strong></div>`).join('');
+      const channels = [...new Set(state.orders.map((order) => order.channel))];
+      $('channelRows').innerHTML = channels.map((channel) => `<div class="mini-row"><div><h4>${channel}</h4><small>${state.orders.filter((order) => order.channel === channel).length} pedidos</small></div><strong>${money(sum(state.orders.filter((order) => order.channel === channel).map((order) => order.total)))}</strong></div>`).join('');
+      $('riskRows').innerHTML = buildAlerts().slice(0, 4).map((item) => `<div class="alert-item ${item.type}"><strong>${item.title}</strong><p>${item.text}</p></div>`).join('');
+    }
+
+    function openOrder(id) {
+      const order = state.orders.find((item) => item.id === Number(id));
+      if (!order) return;
+      $('orderModalTitle').textContent = `#${order.id} - ${customer(order.customerId).name}`;
+      $('orderModalBody').innerHTML = `
+        <div class="modal-kpis">
+          <div class="metric"><span>Total</span><strong>${money(order.total)}</strong></div>
+          <div class="metric"><span>Status</span><strong>${order.status}</strong></div>
+          <div class="metric"><span>Entrega</span><strong>${order.deliveryStatus}</strong></div>
+        </div>
+        <div class="grid cols-2 modal-section">
+          <div class="panel-card"><h3>Cliente</h3><p><strong>${customer(order.customerId).name}</strong></p><p class="muted">${customer(order.customerId).phone}<br>${customer(order.customerId).address}</p></div>
+          <div class="panel-card"><h3>Itens</h3><p>${orderItems(order)}</p><p class="muted">${order.channel} - ${order.payment} - taxa ${money(order.fee)}</p></div>
+        </div>
+        <div class="panel-card modal-section"><h3>Linha do tempo</h3><div class="timeline compact">${order.timeline.map((line) => `<p><strong>${line}</strong><span>Relacionado a financeiro, estoque e entrega.</span></p>`).join('')}</div></div>
+        <div class="toolbar">
+          <button class="btn" data-status-order="${order.id}" data-next-status="Em preparo">Preparar</button>
+          <button class="btn" data-status-order="${order.id}" data-next-status="Pronto para despacho">Despachar</button>
+          <button class="btn primary" data-status-order="${order.id}" data-next-status="Concluido">Concluir</button>
+        </div>`;
+      demo.openModal('orderModal');
+    }
+
+    function openCustomer(id) {
+      const item = customer(Number(id));
+      const orders = state.orders.filter((order) => order.customerId === item.id);
+      $('customerModalTitle').textContent = item.name;
+      $('customerModalBody').innerHTML = `
+        <div class="modal-kpis">
+          <div class="metric"><span>Pedidos</span><strong>${orders.length}</strong></div>
+          <div class="metric"><span>Receita</span><strong>${money(sum(orders.map((order) => order.total)))}</strong></div>
+          <div class="metric"><span>Tags</span><strong>${item.tags.join(', ')}</strong></div>
+        </div>
+        <div class="grid cols-2 modal-section">
+          <div class="panel-card"><h3>Contato</h3><p>${item.phone}</p><p class="muted">${item.address}</p><p>${item.notes}</p></div>
+          <div class="panel-card"><h3>Historico</h3><div class="mini-list">${orders.map((order) => `<div class="mini-row"><div><h4>#${order.id} - ${order.channel}</h4><small>${orderItems(order)}</small></div><strong>${money(order.total)}</strong></div>`).join('') || '<p class="muted">Sem pedidos.</p>'}</div></div>
+        </div>
+        <div class="toolbar"><button class="btn" data-action="message-customer">Enviar WhatsApp</button><button class="btn primary" data-action="new-order">Novo pedido</button></div>`;
+      demo.openModal('customerModal');
+    }
+
+    function openProduct(id) {
+      const item = product(Number(id));
+      const relatedOrders = state.orders.filter((order) => order.items.some((line) => line.productId === item.id));
+      $('productDetailTitle').textContent = item.name;
+      $('productDetailBody').innerHTML = `
+        <div class="modal-kpis">
+          <div class="metric"><span>Estoque</span><strong>${item.stock} un.</strong></div>
+          <div class="metric"><span>Preco</span><strong>${money(item.price)}</strong></div>
+          <div class="metric"><span>Vendido</span><strong>${item.sold || 0}</strong></div>
+        </div>
+        <div class="grid cols-2 modal-section">
+          <div class="panel-card"><h3>Cadastro</h3><p>${item.category} - ${item.location}</p><p class="muted">Canais: ${item.channels.join(', ')}. Minimo: ${item.min} un.</p></div>
+          <div class="panel-card"><h3>Pedidos relacionados</h3><div class="mini-list">${relatedOrders.map((order) => `<div class="mini-row"><div><h4>#${order.id}</h4><small>${customer(order.customerId).name}</small></div><span class="status-pill ${statusClass(order.status)}">${order.status}</span></div>`).join('')}</div></div>
+        </div>
+        <div class="toolbar"><button class="btn" data-restock-product="${item.id}">Repor +12</button><button class="btn primary" data-open-modal="productModal">Editar cadastro</button></div>`;
+      demo.openModal('productDetailModal');
+    }
+
+    function saveRender() {
+      demo.save();
+      renderMetrics();
+      renderDashboard();
+      renderOrders();
+      renderCustomers();
+      renderStock();
+      renderDelivery();
+      renderFinance();
+      renderAgenda();
+      renderReports();
+    }
+
     document.addEventListener('click', (event) => {
-      const order = event.target.closest('[data-order]');
-      const action = event.target.closest('[data-admin-action]');
-      const edit = event.target.closest('[data-edit-product]');
-      if (order) {
-        const found = state.orders.find((item) => item.id === Number(order.dataset.order));
-        if (found) found.status = order.dataset.status;
-        saveRender();
-        demo.toast('Status do pedido alterado no cache.');
-      }
-      if (edit) {
-        const product = state.products[Number(edit.dataset.editProduct)];
-        document.querySelector('#productForm [name=name]').value = product.name;
-        document.querySelector('#productForm [name=category]').value = product.category;
-        document.querySelector('#productForm [name=stock]').value = product.stock;
-        document.querySelector('#productForm [name=price]').value = product.price;
-        demo.openModal('productModal');
-      }
-      if (action) {
-        if (action.dataset.adminAction === 'add-order') {
-          state.orders.unshift({ id: 1026 + state.orders.length, client: 'Pedido balcão', items: 'Gelo + bebida', total: 54.7, status: 'Novo' });
+      const action = event.target.closest('[data-action]');
+      const openOrderButton = event.target.closest('[data-open-order]');
+      const openCustomerButton = event.target.closest('[data-open-customer]');
+      const openProductButton = event.target.closest('[data-open-product]');
+      const statusButton = event.target.closest('[data-status-order]');
+      const taskButton = event.target.closest('[data-task-done]');
+      const restockButton = event.target.closest('[data-restock-product]');
+
+      if (openOrderButton) openOrder(openOrderButton.dataset.openOrder);
+      if (openCustomerButton) openCustomer(openCustomerButton.dataset.openCustomer);
+      if (openProductButton) openProduct(openProductButton.dataset.openProduct);
+
+      if (statusButton) {
+        const order = state.orders.find((item) => item.id === Number(statusButton.dataset.statusOrder));
+        if (order) {
+          order.status = statusButton.dataset.nextStatus;
+          order.timeline.push(`${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} Status alterado para ${order.status}`);
+          if (order.status === 'Concluido') order.deliveryStatus = 'Entregue';
           saveRender();
+          openOrder(order.id);
+          demo.toast(`Pedido #${order.id} atualizado.`);
         }
-        demo.toast('Ação simulada: ' + action.dataset.adminAction);
+      }
+
+      if (taskButton) {
+        const task = state.tasks.find((item) => item.id === Number(taskButton.dataset.taskDone));
+        if (task) task.status = 'Concluida';
+        saveRender();
+        demo.toast('Tarefa concluida no demo.');
+      }
+
+      if (restockButton) {
+        const item = product(Number(restockButton.dataset.restockProduct));
+        item.stock += 12;
+        saveRender();
+        openProduct(item.id);
+        demo.toast('Reposicao simulada adicionada ao estoque.');
+      }
+
+      if (action) {
+        const name = action.dataset.action;
+        if (name === 'new-order') {
+          const id = Math.max(...state.orders.map((order) => order.id)) + 1;
+          state.orders.unshift({ id, customerId: 1, channel: 'Webstore', status: 'Novo', payment: 'Pix pendente', delivery: 'Uber Flash', deliveryStatus: 'Aguardando cotacao', total: 78.7, fee: 12.5, created: 'Agora', promised: 'Em 45 min', items: [{ productId: 101, qty: 2 }, { productId: 104, qty: 1 }, { productId: 103, qty: 1 }], timeline: ['Agora Pedido criado manualmente'] });
+          state.movements.unshift({ id: Date.now(), type: 'Entrada', source: 'Pix', orderId: id, amount: 78.7, status: 'Pendente' });
+          saveRender();
+          demo.toast(`Pedido #${id} criado na base simulada.`);
+        } else if (name === 'new-customer') {
+          const id = Math.max(...state.customers.map((item) => item.id)) + 1;
+          state.customers.unshift({ id, name: 'Novo Cliente Demo', phone: '(31) 95555-0000', address: 'Endereco em cadastro', tags: ['Novo'], notes: 'Cliente criado pela acao simulada.' });
+          saveRender();
+          demo.toast('Cliente inserido no CRM demo.');
+        } else if (name === 'new-task') {
+          const id = Math.max(...state.tasks.map((item) => item.id)) + 1;
+          state.tasks.unshift({ id, title: 'Conferir pedido recem-criado', link: 'Pedidos', owner: 'Operacao', due: 'Hoje 20:30', status: 'Pendente' });
+          saveRender();
+          demo.toast('Tarefa criada e ligada a operacao.');
+        } else if (name === 'dispatch-next') {
+          const order = state.orders.find((item) => item.delivery !== 'Retirada' && item.status !== 'Concluido');
+          if (order) {
+            order.deliveryStatus = 'Motorista solicitado';
+            order.timeline.push('Despacho solicitado pela acao da demo');
+            saveRender();
+            demo.toast(`Despacho simulado para o pedido #${order.id}.`);
+          }
+        } else if (name === 'resolve-alerts') {
+          state.tasks.filter((task) => task.status === 'Atrasada').forEach((task) => task.status = 'Pendente');
+          saveRender();
+          demo.toast('Alertas revisados. Tarefas atrasadas foram reagendadas no demo.');
+        } else if (name === 'close-shift') {
+          demo.toast(`Caixa fechado parcialmente: saldo ${money(revenue() - costs() + 240)}.`);
+        } else {
+          demo.toast('Acao simulada: ' + name.replaceAll('-', ' '));
+        }
       }
     });
-    document.getElementById('productForm').addEventListener('submit', (event) => {
+
+    $('productForm').addEventListener('submit', (event) => {
       event.preventDefault();
       const form = event.target;
-      state.products.unshift({ name: form.elements.name.value, category: form.elements.category.value, stock: Number(form.elements.stock.value || 0), price: Number(form.elements.price.value || 0) });
+      const id = Math.max(...state.products.map((item) => item.id)) + 1;
+      state.products.unshift({
+        id,
+        name: form.elements.name.value,
+        category: form.elements.category.value,
+        stock: Number(form.elements.stock.value || 0),
+        min: 12,
+        price: Number(form.elements.price.value || 0),
+        location: form.elements.location.value,
+        channels: form.elements.channels.value.split(',').map((item) => item.trim()),
+        sold: 0
+      });
       saveRender();
       demo.closeModal('productModal');
-      demo.toast('Produto salvo no demo.');
+      demo.toast('Produto salvo e publicado na simulacao.');
     });
-    render();
+
+    saveRender();
   </script>
 </body>
 </html>

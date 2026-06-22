@@ -38,6 +38,8 @@ body {
   background:
     radial-gradient(circle at 15% 10%, var(--page-glow-a, rgba(38, 166, 255, .16)), transparent 42vmin),
     radial-gradient(circle at 84% 18%, var(--page-glow-b, rgba(41, 230, 167, .12)), transparent 38vmin),
+    radial-gradient(circle at 22% 72%, var(--page-glow-c, transparent), transparent 46vmin),
+    radial-gradient(circle at 78% 74%, var(--page-glow-d, transparent), transparent 52vmin),
     linear-gradient(180deg, var(--page-bg-top, #05070a) 0%, var(--page-bg-mid, #071017) 48%, var(--page-bg-bottom, #05070a) 100%);
   color: var(--text);
   overflow-x: clip;
@@ -64,21 +66,37 @@ body::before {
 }
 
 body.partners-active {
-  --page-glow-a: rgba(38, 166, 255, .24);
-  --page-glow-b: rgba(41, 230, 167, .2);
-  --page-bg-top: #d9ecea;
-  --page-bg-mid: #c9dedb;
-  --page-bg-bottom: #e8f2ef;
-  --text: #10232b;
-  --muted: #536a72;
-  --line: rgba(16, 35, 43, .16);
+  --page-glow-a: rgba(38, 166, 255, .3);
+  --page-glow-b: rgba(41, 230, 167, .24);
+  --page-glow-c: rgba(38, 166, 255, .12);
+  --page-glow-d: rgba(248, 213, 107, .12);
+  --page-bg-top: #e8f5f2;
+  --page-bg-mid: #cfe5df;
+  --page-bg-bottom: #eef7f2;
+  --text: #10242b;
+  --muted: #526a71;
+  --line: rgba(16, 36, 43, .18);
 }
 
 body.partners-active::before {
-  opacity: .42;
+  opacity: .58;
   background-image:
-    linear-gradient(rgba(12, 54, 64, .075) var(--hairline), transparent var(--hairline)),
-    linear-gradient(90deg, rgba(12, 54, 64, .075) var(--hairline), transparent var(--hairline));
+    linear-gradient(rgba(12, 54, 64, .085) var(--hairline), transparent var(--hairline)),
+    linear-gradient(90deg, rgba(12, 54, 64, .085) var(--hairline), transparent var(--hairline));
+}
+
+body.partners-active .section-morph {
+  opacity: .38;
+  mix-blend-mode: multiply;
+  filter: drop-shadow(0 0 4svh rgba(38, 166, 255, .16));
+}
+
+body.partners-active .section-morph path:first-of-type {
+  opacity: calc(.26 + var(--zone-energy, 0) * .46);
+}
+
+body.partners-active .section-morph .morph-line {
+  opacity: calc(.46 + var(--zone-energy, 0) * .34);
 }
 
 a { color: inherit; text-decoration: none; }
@@ -660,26 +678,30 @@ h2 span {
 .partners {
   background: transparent;
   color: var(--text);
-  --section-glow-a: rgba(38, 166, 255, .28);
+  --section-glow-a: rgba(38, 166, 255, .3);
   --section-glow-b: rgba(41, 230, 167, .24);
+  --section-fade: .34;
   padding-block-start: clamp(6.2em, 15svh, 8em);
 }
 
-.partners .eyebrow { color: var(--green); }
+.partners .eyebrow { color: #1e9d7a; }
 .partners .section-title p { color: var(--muted); }
 
 .partners::before {
-  border-color: rgba(16, 35, 43, .12);
+  border-color: rgba(16, 36, 43, .13);
+  opacity: calc(.2 + var(--ambient-boost, .7) * .16);
   background:
-    radial-gradient(circle at 28% 22%, rgba(38, 166, 255, .2), transparent 28%),
-    radial-gradient(circle at 68% 66%, rgba(41, 230, 167, .18), transparent 34%),
-    linear-gradient(135deg, rgba(255,255,255,.3), rgba(255,255,255,0) 58%);
+    radial-gradient(circle at 28% 22%, rgba(38, 166, 255, .24), transparent 28%),
+    radial-gradient(circle at 68% 66%, rgba(41, 230, 167, .22), transparent 34%),
+    linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,0) 58%);
+  filter: blur(.04em) drop-shadow(0 0 5svh rgba(38, 166, 255, .2));
 }
 
 .partners::after {
+  opacity: .42;
   background:
-    linear-gradient(90deg, rgba(16, 35, 43, .075) var(--hairline), transparent var(--hairline)),
-    linear-gradient(rgba(16, 35, 43, .065) var(--hairline), transparent var(--hairline));
+    linear-gradient(90deg, rgba(16, 36, 43, .075) var(--hairline), transparent var(--hairline)),
+    linear-gradient(rgba(16, 36, 43, .065) var(--hairline), transparent var(--hairline));
 }
 
 .partner-track {
@@ -697,20 +719,20 @@ h2 span {
   display: grid;
   min-block-size: clamp(6em, 12svh, 10em);
   place-items: center;
-  border: var(--hairline) solid rgba(16, 35, 43, .13);
+  border: var(--hairline) solid transparent;
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, .24);
-  backdrop-filter: blur(1.4vmin);
+  background: transparent;
+  backdrop-filter: none;
   overflow: hidden;
-  box-shadow: 0 1.4svh 4svh rgba(16, 35, 43, .1);
+  box-shadow: none;
   transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
 }
 
 .partner-track a:hover,
 .partner-track a:focus-visible {
   transform: translateY(-3%) scale(1.02);
-  background: rgba(255, 255, 255, .34);
-  box-shadow: 0 1.7svh 4.2svh rgba(16, 35, 43, .14);
+  background: rgba(255, 255, 255, .12);
+  box-shadow: 0 1.2svh 3.4svh rgba(16, 36, 43, .08);
 }
 
 .partner-track img {

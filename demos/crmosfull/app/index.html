@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CRMosFULL | Demo</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="../../static-demo.css">
+  <link rel="stylesheet" href="../../static-demo.css?v=20260621-crmosfull-scale">
   <script src="../../demo-runtime.js"></script>
 </head>
-<body>
+<body class="crmosfull-app-demo">
   <div class="demo-shell">
     <aside class="demo-sidebar">
       <a class="demo-badge" href="../../../index.html#crm-demos" style="margin-bottom:18px;color:#fff;background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16)">Voltar para TGDevs</a>
@@ -17,78 +17,153 @@
         <div><h1>CRMosFULL</h1><p>Brasil Express · Matriz</p></div>
       </div>
       <nav class="demo-nav">
-        <button data-tab="financeiro">💰 Financeiro</button>
-        <button data-tab="os">🧾 PDV e OS</button>
-        <button data-tab="webstore">🛒 Webstore</button>
-        <button data-tab="agenda">📅 Calendário e Tarefas</button>
-        <button data-tab="inventario">📦 Inventário</button>
-        <button data-tab="clientes">👥 Clientes</button>
-        <button data-tab="backup">🗂 Backup e Importação</button>
-        <button data-tab="relatorios">📊 Relatórios</button>
+        <button data-tab="dashboard">Dashboard</button>
+        <button data-tab="financeiro">Financeiro</button>
+        <button data-tab="os">PDV e OS</button>
+        <button data-tab="webstore">Webstore</button>
+        <button data-tab="agenda">Calendário e Tarefas</button>
+        <button data-tab="inventario">Inventário</button>
+        <button data-tab="clientes">Clientes</button>
+        <button data-tab="backup">Backup e Importação</button>
+        <button data-tab="relatorios">Relatórios</button>
       </nav>
-      <div class="card" style="margin-top:20px;background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.12)">
-        <div class="muted" style="color:rgba(255,255,255,.62)">Conta ativa</div>
+      <div class="card sidebar-profile">
+        <div class="muted">Conta ativa</div>
         <strong>Santo Demo</strong>
-        <p style="margin:.35rem 0;color:rgba(255,255,255,.62)">Brasil Express · Matriz</p>
-        <button class="btn ghost" data-open-modal="profileModal" style="color:#fff;border-color:rgba(255,255,255,.18)">Trocar perfil</button>
+        <p>Brasil Express · Matriz</p>
+        <button class="btn ghost" data-open-modal="profileModal">Trocar perfil</button>
       </div>
     </aside>
+
     <main class="demo-main">
       <header class="demo-topbar">
-        <div><p class="eyebrow">Operação inteligente</p><h2 data-title>Financeiro</h2><p>Demo estática com estado local simulado.</p></div>
-        <div class="actions"><button class="btn" data-open-modal="alertsModal">Alertas <span class="status red" data-alert-count>1</span></button><button class="btn dark" data-demo-action="Saida simulada.">Sair da empresa</button></div>
+        <div>
+          <p class="eyebrow">Operação inteligente</p>
+          <h2 data-title>Dashboard</h2>
+          <p>Base XML simulada com relações entre financeiro, OS, PDV, webstore, estoque e clientes.</p>
+        </div>
+        <div class="actions">
+          <button class="btn" data-open-modal="alertsModal">Alertas <span class="status red" data-alert-count>1</span></button>
+          <button class="btn dark" data-demo-action="Saída simulada.">Sair da empresa</button>
+        </div>
       </header>
 
-      <section data-panel="financeiro">
-        <div class="actions" style="margin-bottom:16px"><button class="btn primary" data-crm-action="open-cash">Abrir caixa</button><button class="btn" data-open-modal="transferModal">Transferir saldo</button><button class="btn" data-open-modal="expenseModal">Lançar saída</button></div>
+      <section data-panel="dashboard">
+        <div class="grid cols-4" id="dashboardMetrics"></div>
+        <div class="grid cols-2 dashboard-grid">
+          <article class="panel-card">
+            <div class="section-head">
+              <div><p class="eyebrow">Fluxo</p><h3>Receita, despesa e lucro</h3></div>
+              <button class="btn" data-tab="financeiro">Ver financeiro</button>
+            </div>
+            <div id="financeChart"></div>
+          </article>
+          <article class="panel-card">
+            <div class="section-head">
+              <div><p class="eyebrow">Operação</p><h3>OS por etapa</h3></div>
+              <button class="btn" data-tab="os">Ver OS</button>
+            </div>
+            <div class="donut-grid" id="stageChart"></div>
+          </article>
+        </div>
+        <article class="panel-card" style="margin-top:16px">
+          <div class="section-head">
+            <div><p class="eyebrow">Relações reais</p><h3>OS conectadas a cliente, tarefa e financeiro</h3></div>
+          </div>
+          <div class="relation-grid" id="dashboardRelations"></div>
+        </article>
+      </section>
+
+      <section data-panel="financeiro" hidden>
+        <div class="actions page-actions">
+          <button class="btn primary" data-crm-action="open-cash">Abrir caixa</button>
+          <button class="btn" data-open-modal="transferModal">Transferir saldo</button>
+          <button class="btn" data-open-modal="expenseModal">Lançar saída</button>
+        </div>
         <div class="grid cols-4" id="financeMetrics"></div>
         <div class="grid cols-2" style="margin-top:16px">
           <article class="panel-card"><p class="eyebrow">Contas vivas</p><h3>Saldo por conta</h3><table class="table" id="accountsTable"></table></article>
-          <article class="panel-card"><p class="eyebrow">Ciclo manual</p><h3>Abrir e fechar caixa</h3><div id="cashCycle"></div></article>
+          <article class="panel-card"><p class="eyebrow">Ciclo manual</p><h3>Abrir e fechar caixa</h3><div id="cashCycle"></div><div id="accountChart" style="margin-top:16px"></div></article>
         </div>
       </section>
 
       <section data-panel="os" hidden>
-        <div class="actions" style="margin-bottom:16px"><button class="btn primary" data-open-modal="newOsModal">Nova OS</button><button class="btn" data-open-modal="filterModal">Filtros</button><button class="btn" data-crm-action="select-all">Selecionar fila</button></div>
+        <div class="actions page-actions">
+          <button class="btn primary" data-open-modal="newOsModal">Nova OS</button>
+          <button class="btn" data-open-modal="filterModal">Filtros</button>
+          <button class="btn" data-crm-action="select-all">Selecionar fila</button>
+        </div>
         <div class="grid cols-3" id="osMetrics"></div>
-        <article class="panel-card" style="margin-top:16px"><p class="eyebrow">Operação</p><h3>Fila de atendimento</h3><table class="table" id="ordersTable"></table></article>
+        <div class="grid cols-2" style="margin-top:16px">
+          <article class="panel-card"><p class="eyebrow">Operação</p><h3>Fila de atendimento</h3><table class="table" id="ordersTable"></table></article>
+          <article class="panel-card"><p class="eyebrow">PDV</p><h3>Vendas e cupons</h3><table class="table" id="pdvTable"></table></article>
+        </div>
       </section>
 
       <section data-panel="webstore" hidden>
         <div class="grid cols-3">
-          <article class="panel-card"><p class="eyebrow">Status</p><h3>Loja aberta</h3><p class="muted">Vitrine sincronizada com catálogo demo.</p><button class="btn" data-demo-action="Configuração de horário salva na simulação.">Editar horários</button></article>
+          <article class="panel-card">
+            <p class="eyebrow">Status</p>
+            <h3>Loja online</h3>
+            <p class="muted">Homepage, catálogo e fila de pedidos sincronizados com a base.</p>
+            <div class="status-row" id="webstoreStatus"></div>
+            <button class="btn" data-demo-action="Configuração de horário salva na simulação.">Editar horários</button>
+          </article>
           <article class="panel-card"><p class="eyebrow">Pedidos</p><div class="metric" id="webOrders">0</div><p class="muted">Pedidos online na fila.</p></article>
-          <article class="panel-card"><p class="eyebrow">Tema</p><h3>Brasil Express</h3><p class="muted">Hero, cores, WhatsApp e Google Business.</p></article>
+          <article class="panel-card"><p class="eyebrow">Tema</p><h3>Brasil Express</h3><p class="muted">Hero, cores, WhatsApp, Google Business e Gmail.</p><button class="btn" data-demo-action="Editor visual aberto na simulação.">Editar visual</button></article>
         </div>
+        <article class="panel-card" style="margin-top:16px"><p class="eyebrow">Fila webstore</p><h3>Pedidos públicos aguardando ação</h3><table class="table" id="webOrdersTable"></table></article>
       </section>
 
       <section data-panel="agenda" hidden>
-        <div class="grid cols-2"><article class="panel-card"><p class="eyebrow">Calendário</p><h3>Retornos da semana</h3><table class="table" id="calendarTable"></table></article><article class="panel-card"><p class="eyebrow">Tarefas</p><h3>Pendências</h3><table class="table" id="tasksTable"></table></article></div>
+        <div class="grid cols-2">
+          <article class="panel-card"><p class="eyebrow">Calendário</p><h3>Retornos da semana</h3><table class="table" id="calendarTable"></table></article>
+          <article class="panel-card"><p class="eyebrow">Tarefas</p><h3>Pendências conectadas à OS</h3><table class="table" id="tasksTable"></table></article>
+        </div>
       </section>
 
       <section data-panel="inventario" hidden>
-        <div class="actions" style="margin-bottom:16px"><button class="btn primary" data-open-modal="productModal">Novo produto</button><button class="btn" data-demo-action="Importação simulada concluída.">Importar catálogo</button></div>
-        <article class="panel-card"><p class="eyebrow">Catálogo</p><h3>Produtos e serviços</h3><table class="table" id="catalogTable"></table></article>
+        <div class="actions page-actions">
+          <button class="btn primary" data-open-modal="productModal">Novo produto</button>
+          <button class="btn" data-demo-action="Importação simulada concluída.">Importar catálogo</button>
+          <button class="btn" data-demo-action="Reposição em lote aberta na simulação.">Reposição em lote</button>
+        </div>
+        <div class="grid cols-2">
+          <article class="panel-card"><p class="eyebrow">Catálogo</p><h3>Produtos e peças</h3><table class="table" id="catalogTable"></table></article>
+          <article class="panel-card"><p class="eyebrow">Estoque</p><h3>Saúde por SKU</h3><div id="stockChart"></div></article>
+        </div>
+        <article class="panel-card" style="margin-top:16px"><p class="eyebrow">Serviços</p><h3>Base de serviços da loja</h3><table class="table" id="servicesTable"></table></article>
       </section>
 
       <section data-panel="clientes" hidden>
-        <div class="actions" style="margin-bottom:16px"><button class="btn primary" data-open-modal="clientModal">Novo cliente</button></div>
-        <article class="panel-card"><p class="eyebrow">Relacionamento</p><h3>Clientes</h3><table class="table" id="clientsTable"></table></article>
+        <div class="actions page-actions"><button class="btn primary" data-open-modal="clientModal">Novo cliente</button></div>
+        <div class="grid cols-2">
+          <article class="panel-card"><p class="eyebrow">Relacionamento</p><h3>Clientes</h3><table class="table" id="clientsTable"></table></article>
+          <article class="panel-card"><p class="eyebrow">Carteira</p><h3>Receita por cliente</h3><div id="clientChart"></div></article>
+        </div>
       </section>
 
       <section data-panel="backup" hidden>
-        <div class="grid cols-3"><article class="panel-card"><h3>Backup MySQL</h3><p class="muted">Exportação zip simulada.</p><button class="btn" data-demo-action="Backup gerado na simulação.">Gerar backup</button></article><article class="panel-card"><h3>Importar ODS</h3><p class="muted">Validação de colunas e prévia.</p><button class="btn" data-demo-action="Planilha validada na simulação.">Selecionar arquivo</button></article><article class="panel-card"><h3>Transferência</h3><p class="muted">Pacote completo para migração.</p><button class="btn" data-demo-action="Transferência simulada.">Preparar pacote</button></article></div>
+        <div class="grid cols-3" id="backupSummary"></div>
+        <div class="grid cols-3" style="margin-top:16px">
+          <article class="panel-card"><h3>Backup MySQL</h3><p class="muted">Exportação zip simulada.</p><button class="btn" data-demo-action="Backup gerado na simulação.">Gerar backup</button></article>
+          <article class="panel-card"><h3>Importar ODS</h3><p class="muted">Validação de colunas, chaves e prévia.</p><button class="btn" data-demo-action="Planilha validada na simulação.">Selecionar arquivo</button></article>
+          <article class="panel-card"><h3>Transferência</h3><p class="muted">Pacote completo para migração.</p><button class="btn" data-demo-action="Transferência simulada.">Preparar pacote</button></article>
+        </div>
       </section>
 
       <section data-panel="relatorios" hidden>
         <div class="grid cols-3" id="reportMetrics"></div>
-        <article class="panel-card" style="margin-top:16px"><h3>Movimentações recentes</h3><table class="table" id="reportsTable"></table></article>
+        <div class="grid cols-2" style="margin-top:16px">
+          <article class="panel-card"><h3>Movimentações recentes</h3><table class="table" id="reportsTable"></table></article>
+          <article class="panel-card"><p class="eyebrow">Estratégico</p><h3>Movimento por categoria</h3><div id="reportChart"></div></article>
+        </div>
       </section>
     </main>
   </div>
 
   <div class="demo-modal" id="profileModal" hidden><div class="demo-modal__panel"><header class="demo-modal__head"><div><p class="eyebrow">Troca rápida</p><h2>Quem vai usar agora?</h2></div><button class="btn" data-close-modal>Fechar</button></header><div class="demo-modal__body grid cols-2"><button class="card" data-crm-action="profile-santo"><strong>Santo Demo</strong><p class="muted">Administrador</p></button><button class="card" data-crm-action="profile-atendimento"><strong>Atendimento</strong><p class="muted">Operador</p></button></div></div></div>
-  <div class="demo-modal" id="alertsModal" hidden><div class="demo-modal__panel"><header class="demo-modal__head"><div><p class="eyebrow">Alertas</p><h2>Central de notificações</h2></div><button class="btn" data-close-modal>Fechar</button></header><div class="demo-modal__body" id="alertsList"></div></div></div>
+  <div class="demo-modal" id="alertsModal" hidden><div class="demo-modal__panel"><header class="demo-modal__head"><div><p class="eyebrow">Alertas</p><h2>Central de notificações</h2></div><button class="btn" data-close-modal>Fechar</button></header><div class="demo-modal__body grid" id="alertsList"></div></div></div>
   <div class="demo-modal" id="newOsModal" hidden><div class="demo-modal__panel"><header class="demo-modal__head"><div><p class="eyebrow">Fluxo guiado</p><h2>Nova ordem de serviço</h2></div><button class="btn" data-close-modal>Fechar</button></header><form class="demo-modal__body grid" data-demo-form="OS criada na simulação."><div class="grid cols-2"><label class="field">Cliente<input name="client" value="Maxine Atelier"></label><label class="field">Equipamento<input name="equipment" value="Notebook Dell"></label><label class="field">Defeito<textarea>Não inicializa após atualização.</textarea></label><label class="field">Orçamento<input value="729,80"></label></div><button class="btn primary" data-crm-action="create-os">Concluir OS</button></form></div></div>
   <div class="demo-modal" id="orderDetailModal" hidden><div class="demo-modal__panel"><header class="demo-modal__head"><div><p class="eyebrow">CRM operacional</p><h2 id="orderDetailTitle">OS ativa</h2></div><button class="btn" data-close-modal>Fechar</button></header><div class="demo-modal__body" id="orderDetailBody"></div></div></div>
   <div class="demo-modal" id="transferModal" hidden><div class="demo-modal__panel"><header class="demo-modal__head"><h2>Transferir saldo</h2><button class="btn" data-close-modal>Fechar</button></header><form class="demo-modal__body grid cols-2" data-demo-form="Transferência simulada."><label class="field">Origem<select><option>Caixa loja</option><option>Conta vermelha</option></select></label><label class="field">Destino<select><option>Máquina amarela</option><option>Outros</option></select></label><label class="field">Valor<input value="250,00"></label><button class="btn primary">Transferir</button></form></div></div>

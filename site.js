@@ -25,12 +25,8 @@ const phrases=[...document.querySelectorAll("[data-phrase]")];
 const frame=document.getElementById("frame");
 const worldObject=document.getElementById("worldObject");
 const grid=document.querySelector(".space-grid");
-const particleSvg=document.getElementById("particleWaves");
-const cloudA=document.getElementById("cloudA");
-const cloudB=document.getElementById("cloudB");
-const SVG_NS="http://www.w3.org/2000/svg";
-let cloudPoints=[];
-let cloudPortrait=null;
+const particleCanvas=document.getElementById("particleWaves");
+const world3d=window.TGWorld3D&&particleCanvas?new window.TGWorld3D(particleCanvas):null;
 
 const layers={
   tgbc:document.querySelector(".tgbc-layer"),
@@ -77,10 +73,7 @@ function setSceneScale(){
   const scale=Math.min(innerWidth/DESIGN_W,innerHeight/DESIGN_H);
   document.documentElement.style.setProperty("--scene-scale",String(scale));
 
-  if(particleSvg){
-    particleSvg.setAttribute("viewBox",`0 0 ${DESIGN_W} ${DESIGN_H}`);
-    if(cloudPortrait!==portrait)buildSvgCloud(portrait);
-  }
+  if(world3d)world3d.resize(DESIGN_W,DESIGN_H);
 }
 
 function setOpacity(el,v){
@@ -96,131 +89,6 @@ function setCopy(el,v,x=0,y=0,ry=0){
 function phraseOpacity(p,start,end){
   const fade=.006;
   return Math.min(mix(p,start,start+fade),1-mix(p,end-fade,end));
-}
-
-function rgbMix(a,b,t){
-  return [
-    Math.round(lerp(a[0],b[0],t)),
-    Math.round(lerp(a[1],b[1],t)),
-    Math.round(lerp(a[2],b[2],t))
-  ];
-}
-
-function gradient3(c1,c2,c3,t){
-  return t<.5?rgbMix(c1,c2,t*2):rgbMix(c2,c3,(t-.5)*2);
-}
-
-function seeded(n){
-  const x=Math.sin(n*12.9898+78.233)*43758.5453;
-  return x-Math.floor(x);
-}
-
-function buildSvgSurface(group,surface,portrait){
-  if(!group)return [];
-  group.replaceChildren();
-
-  const cols=portrait?72:104;
-  const rows=portrait?34:28;
-  const points=[];
-  const frag=document.createDocumentFragment();
-  const cfg=surface===0
-    ? {reverse:false,colors:[[11,124,255],[0,199,217],[0,230,177]]}
-    : {reverse:true,colors:[[0,230,107],[0,199,217],[27,118,255]]};
-
-  for(let row=0;row<rows;row++){
-    const depth=row/(rows-1);
-    for(let col=0;col<cols;col++){
-      const u=col/(cols-1);
-      const seed=surface*100000+row*cols+col+1;
-      const jx=(seeded(seed)-.5)*7;
-      const jy=(seeded(seed+3107)-.5)*6;
-      const r=.62+depth*1.22+seeded(seed+991)*.44;
-      const revealBase=cfg.reverse?1-u:u;
-      const reveal=clamp(revealBase*.91+seeded(seed+171)*.09);
-      const colorT=clamp(cfg.reverse?1-u:u);
-      const [cr,cg,cb]=gradient3(cfg.colors[0],cfg.colors[1],cfg.colors[2],colorT);
-
-      const circle=document.createElementNS(SVG_NS,"circle");
-      circle.setAttribute("r",r.toFixed(2));
-      circle.setAttribute("fill",`rgb(${cr} ${cg} ${cb})`);
-      circle.setAttribute("opacity","0");
-      frag.appendChild(circle);
-
-      points.push({
-        el:circle,surface,u,depth,jx,jy,reveal,
-        alpha:(.04+depth*.23)*(.58+seeded(seed+701)*.42),
-        phase:(seeded(seed+1337)-.5)*.42
-      });
-    }
-  }
-
-  group.appendChild(frag);
-  return points;
-}
-
-function buildSvgCloud(portrait){
-  cloudPortrait=portrait;
-  cloudPoints=[
-    ...buildSvgSurface(cloudA,0,portrait),
-    ...buildSvgSurface(cloudB,1,portrait)
-  ];
-}
-
-function updateSvgCloud(build,visibility,flow){
-  if(!particleSvg||cloudPoints.length===0)return;
-
-  const portrait=document.documentElement.classList.contains("is-portrait");
-
-  for(const pt of cloudPoints){
-    const isA=pt.surface===0;
-    const baseY=isA
-      ? (portrait?860:555)
-      : (portrait?1010:645);
-    const amp=isA
-      ? (portrait?118:92)
-      : (portrait?132:104);
-    const shear=isA
-      ? (portrait?120:170)
-      : (portrait?-135:-190);
-    const depthDrop=isA
-      ? (portrait?210:145)
-      : (portrait?235:160);
-    const freq1=isA?8.4:7.1;
-    const freq2=isA?16.8:15.2;
-    const phase=(isA ? .3 : 2.05)+pt.phase;
-
-    const born=smooth(clamp((build-pt.reveal*.91)/.12));
-    const life=visibility*(isA?1:.92);
-    const edgeFade=Math.sin(Math.PI*clamp(pt.u));
-    const alpha=pt.alpha*born*life*edgeFade;
-
-    if(alpha<=.001){
-      pt.el.setAttribute("opacity","0");
-      continue;
-    }
-
-    const drift=(flow-.5);
-    const wave1=Math.sin(pt.u*freq1+pt.depth*3.2+phase+flow*1.35);
-    const wave2=Math.sin(pt.u*freq2-pt.depth*5.1+phase*.7-flow*.72);
-    const wave3=Math.cos(pt.u*9.5+pt.depth*6.4+phase*.5+flow*.55);
-
-    const x=pt.u*DESIGN_W
-      +(pt.depth-.5)*shear
-      +wave3*8
-      +pt.jx
-      +drift*(isA?22:-18);
-
-    const y=baseY
-      +wave1*amp
-      +wave2*amp*.24
-      +(pt.depth-.5)*depthDrop
-      +pt.jy
-      +drift*(isA?-14:12);
-
-    pt.el.setAttribute("cx",x.toFixed(2));
-    pt.el.setAttribute("cy",y.toFixed(2));
-    pt.el.setAttribute("opacity",alpha.toFixed(4));
-  }
 }
 
 let ticking=false;
@@ -263,10 +131,18 @@ function render(){
   brandWordmark.style.transform=`translateX(${lerp(-96,0,word)}px)`;
   brandWordmark.style.clipPath=`inset(0 ${lerp(100,0,word)}% 0 0)`;
 
-  const cloudFlow=mix(p,.005,.235);
-  updateSvgCloud(build,waveFade,cloudFlow);
-
   const portrait=document.documentElement.classList.contains("is-portrait");
+  const cloudFlow=mix(p,.005,.235);
+  if(world3d){
+    world3d.render({
+      width:DESIGN_W,
+      height:DESIGN_H,
+      build,
+      visibility:waveFade,
+      flow:cloudFlow,
+      portrait
+    });
+  }
   const baseX=portrait?450:720;
   const baseY=portrait?800:450;
   const targetX=portrait?72:74;

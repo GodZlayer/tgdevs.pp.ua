@@ -148,70 +148,30 @@ class ArcCurve extends THREE.Curve{
 }
 
 function createTGDevsMark(){
+  const data=BRAND.tgdevsMark;
+  const ranked=data.shapes.map(rec=>({rec,box:contourBBox(rec)})).sort((a,b)=>b.box.w-a.box.w);
+  const ringRec=ranked[0].rec;
+  const gearRecs=data.shapes.filter(r=>r!==ringRec);
+
   const root=new THREE.Group();
+  const gear=new THREE.Group();
+  gearRecs.forEach(rec=>gear.add(contourMesh(rec,data,{depth:.052,bevel:.004,mode:'gradient'})));
 
-  const gapCenter=-2.18;
-  const gap=.44;
-  const start=gapCenter+gap/2;
-  const end=start+TAU-gap;
-  const curve=new ArcCurve(1.03,start,end);
+  const finalRing=contourMesh(ringRec,data,{depth:.046,bevel:.0035,mode:'gradient'});
+  materialOpacity(finalRing,0);
 
-  const trackG=new THREE.TubeGeometry(curve,128,.054,8,false);
-  const track=new THREE.Mesh(trackG,physicalSolid(0x141b1f,.25));
+  const gapCenter=-2.18,gap=.44,start=gapCenter+gap/2,end=start+TAU-gap;
+  const curve=new ArcCurve(.505,start,end);
+  const trackG=new THREE.TubeGeometry(curve,100,.030,8,false);
+  const track=new THREE.Mesh(trackG,physicalSolid(0x11181b,.18));
 
-  const progressG=addGradientColors(new THREE.TubeGeometry(curve,128,.058,8,false),-1.1,1.1);
+  const progressG=addGradientColors(new THREE.TubeGeometry(curve,100,.031,8,false),-.55,.55);
   const progress=new THREE.Mesh(progressG,physicalGradient());
   progress.userData.fullCount=progressG.index.count;
   progressG.setDrawRange(0,0);
-  root.add(track,progress);
 
-  const shape=new THREE.Shape();
-  const teeth=8;
-  const points=[];
-  for(let t=0;t<teeth;t++){
-    const center=t/teeth*TAU;
-    const profile=[
-      [-.34,.575],[-.25,.575],[-.205,.675],[-.115,.775],
-      [.115,.775],[.205,.675],[.25,.575],[.34,.575]
-    ];
-    for(const [off,r] of profile){
-      const a=center+off;
-      points.push([Math.cos(a)*r,Math.sin(a)*r]);
-    }
-  }
-  points.forEach((p,i)=>i===0?shape.moveTo(p[0],p[1]):shape.lineTo(p[0],p[1]));
-  shape.closePath();
-
-  const hole=new THREE.Path();
-  hole.absarc(0,0,.292,0,TAU,true);
-  shape.holes.push(hole);
-
-  const gearG=addGradientColors(new THREE.ExtrudeGeometry(shape,{
-    depth:.12,
-    bevelEnabled:true,
-    bevelThickness:.020,
-    bevelSize:.016,
-    bevelSegments:1,
-    curveSegments:10
-  }),-.82,.82);
-  gearG.center();
-
-  const gear=new THREE.Group();
-  gear.add(new THREE.Mesh(gearG,physicalGradient()));
-
-  const hubG=addGradientColors(new THREE.CylinderGeometry(.118,.118,.12,24),-.12,.12);
-  const hub=new THREE.Mesh(hubG,physicalGradient());
-  hub.rotation.x=Math.PI/2;
-  hub.position.z=.075;
-  gear.add(hub);
-
-  const pointerStart=new THREE.Vector3(.07,.045,.075);
-  const pointerEnd=new THREE.Vector3(.43,.285,.075);
-  const pointer=cylinderBetween(pointerStart,pointerEnd,.043,physicalGradient());
-  gear.add(pointer);
-
-  root.add(gear);
-  root.userData={track,progress,gear};
+  root.add(track,progress,finalRing,gear);
+  root.userData={track,progress,finalRing,gear};
   return root;
 }
 
@@ -237,62 +197,7 @@ function cylinderBetween(a,b,r,mat){
 }
 
 function createTGBCMark(){
-  const root=new THREE.Group();
-  const mat=physicalGradient();
-
-  const centerG=addGradientColors(new THREE.SphereGeometry(.49,26,18),-.50,.50);
-  const center=new THREE.Mesh(centerG,mat.clone());
-  root.add(center);
-
-  const ringG=addGradientColors(new THREE.TorusGeometry(.78,.042,8,72),-.84,.84);
-  root.add(new THREE.Mesh(ringG,mat.clone()));
-
-  const nodeGeo=addGradientColors(new THREE.SphereGeometry(.118,18,12),-.12,.12);
-
-  const panelShape=new THREE.Shape();
-  panelShape.moveTo(-.31,-.13);
-  panelShape.lineTo(.22,-.13);
-  panelShape.lineTo(.31,-.055);
-  panelShape.lineTo(.31,.13);
-  panelShape.lineTo(-.22,.13);
-  panelShape.lineTo(-.31,.055);
-  panelShape.closePath();
-
-  const panelGeo=addGradientColors(new THREE.ExtrudeGeometry(panelShape,{
-    depth:.08,
-    bevelEnabled:true,
-    bevelThickness:.012,
-    bevelSize:.010,
-    bevelSegments:1
-  }),-.33,.33);
-  panelGeo.center();
-
-  const angles=[Math.PI/2,Math.PI/6,-Math.PI/6,-Math.PI/2,-5*Math.PI/6,5*Math.PI/6];
-
-  angles.forEach(a=>{
-    const dir=new THREE.Vector3(Math.cos(a),Math.sin(a),0);
-
-    root.add(cylinderBetween(
-      dir.clone().multiplyScalar(.83),
-      dir.clone().multiplyScalar(1.10),
-      .017,
-      mat.clone()
-    ));
-
-    const node=new THREE.Mesh(nodeGeo.clone(),mat.clone());
-    node.position.copy(dir.clone().multiplyScalar(1.24));
-    root.add(node);
-
-    const mid=a-Math.PI/6;
-    const panel=new THREE.Mesh(panelGeo.clone(),mat.clone());
-    panel.position.set(Math.cos(mid)*1.055,Math.sin(mid)*1.055,0);
-    panel.rotation.z=mid;
-    root.add(panel);
-  });
-
-  root.rotation.x=-.045;
-  root.rotation.y=.055;
-  return root;
+  return contourBrand(BRAND.tgbcMark,{depth:.048,bevel:.0035,mode:'gradient'});
 }
 
 function createTextMesh(text,font,size,kind='gradient',depth=.105){
@@ -317,20 +222,12 @@ function createTextMesh(text,font,size,kind='gradient',depth=.105){
   return mesh;
 }
 
-function createSourceWord(font){
-  const g=new THREE.Group();
-  const word=createTextMesh('TGDevs',font,.73,'gradient',.11);
-  g.add(word);
-  return g;
+function createSourceWord(){
+  return contourBrand(BRAND.tgdevsWord,{depth:.042,bevel:.0035,mode:'gradient'});
 }
 
-function createTargetWord(font){
-  const g=new THREE.Group();
-  const tg=createTextMesh('TG',font,.50,'gradient',.085);
-  const business=createTextMesh('BusinessCenter',font,.355,'white',.070);
-  business.position.x=tg.userData.width+.045;
-  g.add(tg,business);
-  return g;
+function createTargetWord(){
+  return contourBrand(BRAND.tgbcWord,{depth:.040,bevel:.003,mode:'tgbcWord'});
 }
 
 function createSlogan(text,font,size=.34){

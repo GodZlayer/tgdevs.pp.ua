@@ -1,8 +1,12 @@
+const DESIGN_W=1440;
+const DESIGN_H=900;
+const SCROLL_DISTANCE=9600;
 const clamp=(v,min=0,max=1)=>Math.min(max,Math.max(min,v));
 const lerp=(a,b,t)=>a+(b-a)*t;
 const smooth=t=>t*t*(3-2*t);
 const mix=(p,a,b)=>smooth(clamp((p-a)/(b-a)));
 
+const designSpace=document.getElementById("designSpace");
 const brandStage=document.getElementById("brandStage");
 const logoBuild=document.getElementById("logoBuild");
 const gearWindow=document.querySelector(".gear-window");
@@ -42,6 +46,10 @@ const partnerUrls=[
 
 logoProgress.style.strokeDasharray=String(circumference);
 
+function setSceneScale(){
+  const scale=Math.min(innerWidth/DESIGN_W,innerHeight/DESIGN_H);
+  document.documentElement.style.setProperty("--scene-scale",String(scale));
+}
 function setOpacity(el,v){if(el)el.style.opacity=String(clamp(v))}
 function setCopy(el,v,x=0,y=0,ry=0){
   if(!el)return;
@@ -59,11 +67,9 @@ function blendOpacity(p,start,hold,end){
 let ticking=false;
 function render(){
   ticking=false;
-  const max=document.documentElement.scrollHeight-innerHeight;
-  const p=max>0?clamp(scrollY/max):0;
-  const vw=innerWidth,vh=innerHeight;
+  const p=clamp(scrollY/SCROLL_DISTANCE);
 
-  /* SCENE 01 — build the actual TGDevs mark */
+  /* SCENE 01 — same timing and geometry on every device */
   const build=mix(p,.005,.145);
   const complete=mix(p,.115,.16);
   const navMove=mix(p,.145,.205);
@@ -79,21 +85,13 @@ function render(){
   brandWord.style.transform=`translateX(${lerp(-46,0,word)}px)`;
   brandWord.style.clipPath=`inset(0 ${lerp(100,0,word)}% 0 0)`;
 
-  const stageWidth=brandStage.offsetWidth||330;
-  const targetScale=vw<560?.56:.50;
-  const targetX=-vw/2+22+(stageWidth*targetScale)/2;
-  const targetY=-vh/2+36;
-  const brandScale=lerp(1,targetScale,navMove);
-  const brandX=lerp(0,targetX,navMove);
-  const brandY=lerp(0,targetY,navMove);
-  brandStage.style.transform=`translate(-50%,-50%) translate3d(${brandX}px,${brandY}px,0) scale(${brandScale})`;
+  const stageWidth=330;
+  const targetScale=.50;
+  const targetX=-DESIGN_W/2+22+(stageWidth*targetScale)/2;
+  const targetY=-DESIGN_H/2+36;
+  brandStage.style.transform=`translate(-50%,-50%) translate3d(${lerp(0,targetX,navMove)}px,${lerp(0,targetY,navMove)}px,0) scale(${lerp(1,targetScale,navMove)})`;
 
-  const ranges=[
-    [0,.040],
-    [.035,.075],
-    [.070,.110],
-    [.105,.155]
-  ];
+  const ranges=[[0,.040],[.035,.075],[.070,.110],[.105,.155]];
   phrases.forEach((el,i)=>{
     const op=phraseOpacity(p,ranges[i][0],ranges[i][1]);
     el.style.opacity=String(op);
@@ -101,13 +99,12 @@ function render(){
   });
   document.querySelector(".intro-copy").style.opacity=String(1-mix(p,.145,.19));
 
-  /* logo gradient becomes the transition itself */
   const wipeIn=mix(p,.185,.225);
   const wipeOut=mix(p,.225,.255);
   wipe.style.transform=`scaleX(${wipeIn})`;
   wipe.style.opacity=String(1-wipeOut);
 
-  /* SCENE 02+ retains the current world only after the wipe. It will be redesigned next. */
+  /* existing later scenes — fixed to the same 1440x900 coordinate system */
   const q=clamp((p-.235)/.765);
   const revealWorld=mix(p,.235,.265);
   frame.style.opacity=String(revealWorld);
@@ -122,23 +119,24 @@ function render(){
   setCopy(copies.partner,partners,lerp(-35,0,partners),0,0);
   setCopy(copies.demos,demos,lerp(-35,0,demos),0,0);
 
-  let fw=360,fh=360,fr=180,fx=vw*.18,fy=0,ry=12;
+  let fw=360,fh=360,fr=180,fx=DESIGN_W*.18,fy=0,ry=12;
   if(q<.27){
     const t=mix(q,.02,.27);
-    fw=lerp(360,390,t);fh=lerp(360,390,t);fr=lerp(180,195,t);fx=vw*.18;ry=lerp(12,7,t);
+    fw=lerp(360,390,t);fh=lerp(360,390,t);fr=lerp(180,195,t);fx=DESIGN_W*.18;ry=lerp(12,7,t);
   }else if(q<.50){
     const t=mix(q,.27,.50);
-    fw=lerp(390,Math.min(vw*.50,720),t);fh=lerp(390,Math.min(vh*.55,430),t);fr=lerp(195,28,t);fx=lerp(vw*.18,-vw*.17,t);ry=lerp(7,-9,t);
+    fw=lerp(390,720,t);fh=lerp(390,430,t);fr=lerp(195,28,t);fx=lerp(DESIGN_W*.18,-DESIGN_W*.17,t);ry=lerp(7,-9,t);
   }else if(q<.82){
     const t=mix(q,.50,.62);
-    fw=lerp(Math.min(vw*.50,720),Math.min(vw*.78,1180),t);fh=lerp(Math.min(vh*.55,430),Math.min(vh*.72,720),t);fr=lerp(28,22,t);fx=lerp(-vw*.17,vw*.11,t);ry=lerp(-9,4,t);
+    fw=lerp(720,1120,t);fh=lerp(430,648,t);fr=lerp(28,22,t);fx=lerp(-DESIGN_W*.17,DESIGN_W*.11,t);ry=lerp(-9,4,t);
   }else{
     const t=mix(q,.82,.94);
-    fw=lerp(Math.min(vw*.78,1180),Math.min(vw*.86,1320),t);fh=lerp(Math.min(vh*.72,720),Math.min(vh*.74,760),t);fr=lerp(22,18,t);fx=vw*.10;ry=lerp(4,-3,t);
+    fw=lerp(1120,1240,t);fh=lerp(648,666,t);fr=lerp(22,18,t);fx=DESIGN_W*.10;ry=lerp(4,-3,t);
   }
-  if(vw<900){fw=Math.min(fw,vw*.92);fh=Math.min(fh,vh*.70);fx=0}
 
-  frame.style.width=`${fw}px`;frame.style.height=`${fh}px`;frame.style.borderRadius=`${fr}px`;
+  frame.style.width=`${fw}px`;
+  frame.style.height=`${fh}px`;
+  frame.style.borderRadius=`${fr}px`;
   worldObject.style.transform=`translate3d(${fx}px,${fy}px,0) rotateY(${ry}deg)`;
 
   const tgbcIn=mix(q,.00,.09),tgbcOut=1-mix(q,.23,.31);
@@ -173,6 +171,8 @@ function render(){
   }
 }
 function request(){if(!ticking){ticking=true;requestAnimationFrame(render)}}
+
+setSceneScale();
 render();
 addEventListener("scroll",request,{passive:true});
-addEventListener("resize",request);
+addEventListener("resize",()=>{setSceneScale();request()});

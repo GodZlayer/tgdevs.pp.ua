@@ -547,3 +547,11 @@ html.is-portrait .scroll-cue{
 /* Gear geometry: the approved mark is centered inside the ring, never stretched. */
 .gear-fit{pointer-events:none}
 .gear-svg{preserve-aspect-ratio:xMidYMid meet}
+
+
+/* Scene 01 v4 — original single open ring, no stray terminal bar */
+.loader-track.ring-main,
+.loader-progress.ring-main{
+  stroke-dasharray:1 1;
+  stroke-dashoffset:1;
+}

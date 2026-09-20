@@ -11,12 +11,34 @@
   <meta property="og:title" content="TGDevs — Sistemas que simplificam">
   <meta property="og:image" content="https://www.tgdevs.pp.ua/favicon.png">
   <meta property="og:url" content="https://www.tgdevs.pp.ua/">
-  <link rel="stylesheet" href="site.css?v=20260920d">
+  <link rel="stylesheet" href="site.css?v=20260920e">
 </head>
 <body>
   <main class="world" id="top">
     <div class="design-space" id="designSpace">
     <div class="space-grid" aria-hidden="true"></div>
+    <div class="color-waves" aria-hidden="true">
+      <svg class="wave wave-a" viewBox="0 0 1440 900" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="waveA" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#0b7cff"/>
+            <stop offset=".58" stop-color="#00c7d9"/>
+            <stop offset="1" stop-color="#1af0cc"/>
+          </linearGradient>
+        </defs>
+        <path d="M-120 570C150 350 340 310 565 420C790 530 900 675 1160 560C1310 494 1455 365 1560 280L1560 980L-120 980Z" fill="url(#waveA)"/>
+      </svg>
+      <svg class="wave wave-b" viewBox="0 0 1440 900" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="waveB" x1="1" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#00e66b"/>
+            <stop offset=".5" stop-color="#00c7d9"/>
+            <stop offset="1" stop-color="#1478ff"/>
+          </linearGradient>
+        </defs>
+        <path d="M-90 710C180 530 430 550 650 655C870 760 1035 770 1260 610C1395 514 1488 420 1550 350L1550 980L-90 980Z" fill="url(#waveB)"/>
+      </svg>
+    </div>
 
     <section class="intro-copy" aria-live="polite">
       <div class="phrase-stack">
@@ -43,6 +65,7 @@
         <div class="gear-window">
           <img src="favicon.png" alt="TGDevs">
         </div>
+        <span class="load-percent" id="loadPercent">0%</span>
       </div>
       <strong class="brand-word" id="brandWord">TGDevs</strong>
     </div>
@@ -137,6 +160,6 @@
   </main>
 
   <div class="scroll-space" aria-hidden="true"></div>
-  <script src="site.js?v=20260920d" defer></script>
+  <script src="site.js?v=20260920e" defer></script>
 </body>
 </html>

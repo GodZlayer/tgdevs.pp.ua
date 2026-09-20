@@ -163,3 +163,109 @@ html.is-portrait .frame{
   left:450px;
   top:720px;
 }
+
+
+/* Scene 01 refinement: fixed orientation, stronger logo build and two 3D gradient waves */
+.color-waves{
+  position:absolute;
+  inset:0;
+  z-index:4;
+  pointer-events:none;
+  overflow:hidden;
+  transform-style:preserve-3d;
+}
+.wave{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  opacity:0;
+  transform-origin:center bottom;
+  will-change:transform,opacity,clip-path,filter;
+}
+.wave-a{
+  filter:blur(2px) drop-shadow(0 34px 54px rgba(0,126,255,.16));
+  mix-blend-mode:screen;
+}
+.wave-b{
+  filter:blur(3px) drop-shadow(0 46px 70px rgba(0,230,107,.13));
+  mix-blend-mode:screen;
+}
+
+.intro-copy{
+  left:72px;
+  top:423px;
+  width:500px;
+  height:50px;
+}
+.phrase-stack span{
+  width:500px;
+  font-size:34px;
+  line-height:1.06;
+  font-weight:680;
+}
+
+.brand-stage{
+  left:720px;
+  top:450px;
+  gap:24px;
+}
+.logo-build{
+  width:190px;
+  height:190px;
+}
+.loader-base,.loader-progress{
+  stroke-width:7;
+}
+.loader-base{
+  stroke:rgba(255,255,255,.12);
+}
+.loader-progress{
+  filter:
+    drop-shadow(0 0 10px rgba(11,124,255,.26))
+    drop-shadow(0 0 18px rgba(0,230,107,.12));
+}
+.gear-window{
+  inset:23px;
+}
+.brand-word{
+  font-size:68px;
+  letter-spacing:-.065em;
+}
+.load-percent{
+  position:absolute;
+  left:50%;
+  bottom:-28px;
+  transform:translateX(-50%);
+  font-size:12px;
+  line-height:1;
+  font-weight:700;
+  letter-spacing:.12em;
+  color:rgba(255,255,255,.56);
+}
+
+html.is-portrait .intro-copy{
+  left:90px;
+  top:285px;
+  width:720px;
+  height:58px;
+}
+html.is-portrait .phrase-stack span{
+  width:720px;
+  font-size:40px;
+}
+html.is-portrait .brand-stage{
+  left:450px;
+  top:760px;
+  gap:24px;
+}
+html.is-portrait .logo-build{
+  width:220px;
+  height:220px;
+}
+html.is-portrait .brand-word{
+  font-size:72px;
+}
+html.is-portrait .gear-window{
+  inset:27px;
+}

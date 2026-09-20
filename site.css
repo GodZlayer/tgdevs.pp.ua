@@ -576,3 +576,60 @@ html.is-portrait .scroll-cue{
 #cloudA,#cloudB{
   mix-blend-mode:screen;
 }
+
+
+/* Scene 02+ v1 — one GPU world, DOM is only semantic/interactive overlay */
+.world-object{display:none!important}
+
+canvas.particle-waves{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:4;
+  pointer-events:none;
+  opacity:1;
+  filter:none;
+}
+
+.scene-copy{
+  z-index:14;
+}
+.scene-copy p{
+  max-width:520px;
+}
+.partner-copy p{
+  max-width:610px;
+  font-size:17px;
+}
+.demos-copy{
+  pointer-events:auto;
+}
+.demo-links{
+  display:flex;
+  gap:10px;
+  margin-top:24px;
+}
+.demo-links a{
+  display:inline-flex;
+  align-items:center;
+  min-height:42px;
+  padding:0 16px;
+  margin:0;
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:999px;
+  background:rgba(5,8,10,.58);
+  backdrop-filter:blur(10px);
+  font-size:13px;
+  font-weight:700;
+}
+.demo-links a:hover{
+  border-color:rgba(0,199,217,.5);
+}
+
+html.is-portrait .partner-copy p{
+  max-width:680px;
+}
+html.is-portrait .demo-links{
+  margin-top:20px;
+}

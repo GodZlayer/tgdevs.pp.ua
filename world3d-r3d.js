@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+import { BRAND } from './brandContours-r1.js';
 
 const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
 const smooth=t=>t*t*(3-2*t);
@@ -65,6 +66,77 @@ function materialOpacity(root,a){
       m.depthWrite=a>.96;
     });
   });
+}
+
+function contourBBox(rec){
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  for(const [x,y] of rec.p){minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}
+  return {minX,maxX,minY,maxY,w:maxX-minX,h:maxY-minY,cx:(minX+maxX)/2};
+}
+
+function contourShape(rec,ratio){
+  const shape=new THREE.Shape();
+  rec.p.forEach(([x,y],i)=>{const px=x-ratio/2,py=y-.5;i?shape.lineTo(px,py):shape.moveTo(px,py);});
+  shape.closePath();
+  for(const holePts of rec.h||[]){
+    const h=new THREE.Path();
+    holePts.forEach(([x,y],i)=>{const px=x-ratio/2,py=y-.5;i?h.lineTo(px,py):h.moveTo(px,py);});
+    h.closePath();shape.holes.push(h);
+  }
+  return shape;
+}
+
+function contourGradient(geo,ratio){
+  const p=geo.getAttribute('position');
+  const colors=new Float32Array(p.count*3);
+  const b=new THREE.Color('#0b7cff'),c=new THREE.Color('#00c7d9'),g=new THREE.Color('#00e66b'),o=new THREE.Color();
+  for(let i=0;i<p.count;i++){
+    const t=clamp((p.getX(i)+ratio/2)/ratio);
+    if(t<.54)o.copy(b).lerp(c,t/.54);else o.copy(c).lerp(g,(t-.54)/.46);
+    colors[i*3]=o.r;colors[i*3+1]=o.g;colors[i*3+2]=o.b;
+  }
+  geo.setAttribute('color',new THREE.BufferAttribute(colors,3));
+}
+
+function contourMesh(rec,data,{depth=.055,bevel=.004,mode='gradient'}={}){
+  const geo=new THREE.ExtrudeGeometry(contourShape(rec,data.ratio),{depth,bevelEnabled:true,bevelThickness:bevel,bevelSize:bevel,bevelSegments:1,curveSegments:3});
+  geo.translate(0,0,-depth/2);
+  if(mode==='gradient'){contourGradient(geo,data.ratio);return new THREE.Mesh(geo,physicalGradient());}
+  if(mode==='tgbcWord'){
+    if(contourBBox(rec).cx<1.8){contourGradient(geo,data.ratio);return new THREE.Mesh(geo,physicalGradient());}
+    return new THREE.Mesh(geo,physicalSolid(0xe8edf2,1));
+  }
+  const col=(rec.c[0]<<16)|(rec.c[1]<<8)|rec.c[2];
+  return new THREE.Mesh(geo,physicalSolid(col,1));
+}
+
+function contourBrand(data,opts={}){
+  const g=new THREE.Group();data.shapes.forEach(rec=>g.add(contourMesh(rec,data,opts)));return g;
+}
+
+function pointInContour(x,y,poly){
+  let inside=false;
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];
+    if(((yi>y)!=(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi+1e-9)+xi))inside=!inside;
+  }
+  return inside;
+}
+
+function sampleContourBrand(data,count,scale=1,offsetX=0,offsetY=0){
+  const weights=data.shapes.map(s=>Math.max(.001,s.a)),total=weights.reduce((a,b)=>a+b,0),cum=[];
+  let acc=0;weights.forEach(w=>{acc+=w/total;cum.push(acc);});
+  const out=new Float32Array(count*3);
+  for(let n=0;n<count;n++){
+    const r=seeded(n*1.93+.17);let idx=cum.findIndex(v=>r<=v);if(idx<0)idx=data.shapes.length-1;
+    const sh=data.shapes[idx],box=contourBBox(sh);let px=0,py=0,ok=false;
+    for(let tries=0;tries<48&&!ok;tries++){
+      px=lerp(box.minX,box.maxX,seeded(n*13.1+tries*2.3));py=lerp(box.minY,box.maxY,seeded(n*9.7+tries*3.7));
+      ok=pointInContour(px,py,sh.p)&&!(sh.h||[]).some(h=>pointInContour(px,py,h));
+    }
+    out[n*3]=(px-data.ratio/2)*scale+offsetX;out[n*3+1]=(py-.5)*scale+offsetY;out[n*3+2]=(seeded(n*7.91)-.5)*.055;
+  }
+  return out;
 }
 
 class ArcCurve extends THREE.Curve{

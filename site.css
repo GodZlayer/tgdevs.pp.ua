@@ -350,19 +350,31 @@ html.is-portrait .gear-window{
 .loader-progress{
   fill:none;
   stroke-width:14;
+  stroke-linecap:round;
 }
 .loader-track{
-  stroke:rgba(255,255,255,.055);
-  stroke-linecap:round;
-  stroke-dasharray:.972 .028;
+  stroke:rgba(255,255,255,.05);
+}
+.loader-track.ring-major{
+  stroke-dasharray:.735 .265;
+  stroke-dashoffset:.015;
+}
+.loader-track.ring-minor{
+  stroke-dasharray:.145 .855;
+  stroke-dashoffset:-.805;
 }
 .loader-progress{
   stroke:url(#brandStroke);
-  stroke-linecap:round;
-  stroke-dasharray:0 1;
   filter:
     drop-shadow(0 0 8px rgba(11,124,255,.22))
     drop-shadow(0 0 14px rgba(0,230,107,.10));
+}
+.loader-progress.ring-major{
+  stroke-dasharray:0 1;
+}
+.loader-progress.ring-minor{
+  stroke-dasharray:0 1;
+  stroke-dashoffset:-.805;
 }
 
 .brand-wordmark{
@@ -415,3 +427,9 @@ html.is-portrait .brand-wordmark{
 html.is-portrait .brand-stage{top:800px;}
 html.is-portrait .logo-build{left:-110px;top:-110px;}
 html.is-portrait .brand-wordmark{left:130px;top:-36px;}
+
+/* Denser point-field, less flat and more volumetric */
+.particle-waves{
+  opacity:.98;
+  filter:drop-shadow(0 18px 30px rgba(0,199,217,.045));
+}

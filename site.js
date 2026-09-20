@@ -25,8 +25,12 @@ const phrases=[...document.querySelectorAll("[data-phrase]")];
 const frame=document.getElementById("frame");
 const worldObject=document.getElementById("worldObject");
 const grid=document.querySelector(".space-grid");
-const particleCanvas=document.getElementById("particleWaves");
-const particleCtx=particleCanvas?.getContext("2d");
+const particleSvg=document.getElementById("particleWaves");
+const cloudA=document.getElementById("cloudA");
+const cloudB=document.getElementById("cloudB");
+const SVG_NS="http://www.w3.org/2000/svg";
+let cloudPoints=[];
+let cloudPortrait=null;
 
 const layers={
   tgbc:document.querySelector(".tgbc-layer"),
@@ -73,9 +77,9 @@ function setSceneScale(){
   const scale=Math.min(innerWidth/DESIGN_W,innerHeight/DESIGN_H);
   document.documentElement.style.setProperty("--scene-scale",String(scale));
 
-  if(particleCanvas){
-    particleCanvas.width=DESIGN_W;
-    particleCanvas.height=DESIGN_H;
+  if(particleSvg){
+    particleSvg.setAttribute("viewBox",`0 0 ${DESIGN_W} ${DESIGN_H}`);
+    if(cloudPortrait!==portrait)buildSvgCloud(portrait);
   }
 }
 
@@ -106,88 +110,117 @@ function gradient3(c1,c2,c3,t){
   return t<.5?rgbMix(c1,c2,t*2):rgbMix(c2,c3,(t-.5)*2);
 }
 
-function drawParticleSurface(cfg,build,visibility,portrait){
-  if(!particleCtx||build<=.001||visibility<=.001)return;
+function seeded(n){
+  const x=Math.sin(n*12.9898+78.233)*43758.5453;
+  return x-Math.floor(x);
+}
 
-  const cols=portrait?112:158;
-  const rows=portrait?68:54;
-  const c1=cfg.colors[0];
-  const c2=cfg.colors[1];
-  const c3=cfg.colors[2];
+function buildSvgSurface(group,surface,portrait){
+  if(!group)return [];
+  group.replaceChildren();
+
+  const cols=portrait?72:104;
+  const rows=portrait?34:28;
+  const points=[];
+  const frag=document.createDocumentFragment();
+  const cfg=surface===0
+    ? {reverse:false,colors:[[11,124,255],[0,199,217],[0,230,177]]}
+    : {reverse:true,colors:[[0,230,107],[0,199,217],[27,118,255]]};
 
   for(let row=0;row<rows;row++){
     const depth=row/(rows-1);
-    const depthEase=.18+depth*.82;
-    const depthShift=(depth-.5)*cfg.shear;
-    const perspectiveDrop=(depth-.5)*cfg.depthDrop;
-
     for(let col=0;col<cols;col++){
       const u=col/(cols-1);
-      const reveal=cfg.reverse?(1-u):u;
-      if(reveal>build*1.06)continue;
-
-      const wave1=Math.sin(u*cfg.freq1+depth*3.2+cfg.phase);
-      const wave2=Math.sin(u*cfg.freq2-depth*5.1+cfg.phase*.7);
-      const wave3=Math.cos(u*9.5+depth*6.4+cfg.phase*.5);
-
-      const x=u*DESIGN_W+depthShift+wave3*8;
-      const y=cfg.baseY
-        +wave1*cfg.amp
-        +wave2*cfg.amp*.24
-        +perspectiveDrop;
-
-      if(x<-20||x>DESIGN_W+20||y<-20||y>DESIGN_H+20)continue;
-
-      const edgeFade=Math.sin(Math.PI*clamp(u));
+      const seed=surface*100000+row*cols+col+1;
+      const jx=(seeded(seed)-.5)*7;
+      const jy=(seeded(seed+3107)-.5)*6;
+      const r=.62+depth*1.22+seeded(seed+991)*.44;
+      const revealBase=cfg.reverse?1-u:u;
+      const reveal=clamp(revealBase*.91+seeded(seed+171)*.09);
       const colorT=clamp(cfg.reverse?1-u:u);
-      const [r,g,b]=gradient3(c1,c2,c3,colorT);
-      const alpha=(.055+depth*.24)*visibility*edgeFade*(.35+build*.65);
-      const radius=.72+depthEase*1.55;
+      const [cr,cg,cb]=gradient3(cfg.colors[0],cfg.colors[1],cfg.colors[2],colorT);
 
-      particleCtx.beginPath();
-      particleCtx.fillStyle=`rgba(${r},${g},${b},${alpha.toFixed(4)})`;
-      particleCtx.arc(x,y,radius,0,Math.PI*2);
-      particleCtx.fill();
+      const circle=document.createElementNS(SVG_NS,"circle");
+      circle.setAttribute("r",r.toFixed(2));
+      circle.setAttribute("fill",`rgb(${cr} ${cg} ${cb})`);
+      circle.setAttribute("opacity","0");
+      frag.appendChild(circle);
+
+      points.push({
+        el:circle,surface,u,depth,jx,jy,reveal,
+        alpha:(.04+depth*.23)*(.58+seeded(seed+701)*.42),
+        phase:(seeded(seed+1337)-.5)*.42
+      });
     }
   }
+
+  group.appendChild(frag);
+  return points;
 }
 
-function drawParticleWaves(build,visibility){
-  if(!particleCtx)return;
+function buildSvgCloud(portrait){
+  cloudPortrait=portrait;
+  cloudPoints=[
+    ...buildSvgSurface(cloudA,0,portrait),
+    ...buildSvgSurface(cloudB,1,portrait)
+  ];
+}
 
-  particleCtx.clearRect(0,0,DESIGN_W,DESIGN_H);
-  if(visibility<=.001)return;
+function updateSvgCloud(build,visibility,flow){
+  if(!particleSvg||cloudPoints.length===0)return;
 
   const portrait=document.documentElement.classList.contains("is-portrait");
 
-  particleCtx.save();
-  particleCtx.globalCompositeOperation="lighter";
+  for(const pt of cloudPoints){
+    const isA=pt.surface===0;
+    const baseY=isA
+      ? (portrait?860:555)
+      : (portrait?1010:645);
+    const amp=isA
+      ? (portrait?118:92)
+      : (portrait?132:104);
+    const shear=isA
+      ? (portrait?120:170)
+      : (portrait?-135:-190);
+    const depthDrop=isA
+      ? (portrait?210:145)
+      : (portrait?235:160);
+    const freq1=isA?8.4:7.1;
+    const freq2=isA?16.8:15.2;
+    const phase=(isA?.3:2.05)+pt.phase;
 
-  drawParticleSurface({
-    baseY:portrait?860:555,
-    amp:portrait?118:92,
-    shear:portrait?120:170,
-    depthDrop:portrait?210:145,
-    freq1:8.4,
-    freq2:16.8,
-    phase:.3,
-    reverse:false,
-    colors:[[11,124,255],[0,199,217],[0,230,177]]
-  },build,visibility,portrait);
+    const born=smooth(clamp((build-pt.reveal*.91)/.12));
+    const life=visibility*(isA?1:.92);
+    const edgeFade=Math.sin(Math.PI*clamp(pt.u));
+    const alpha=pt.alpha*born*life*edgeFade;
 
-  drawParticleSurface({
-    baseY:portrait?1010:645,
-    amp:portrait?132:104,
-    shear:portrait?-135:-190,
-    depthDrop:portrait?235:160,
-    freq1:7.1,
-    freq2:15.2,
-    phase:2.05,
-    reverse:true,
-    colors:[[0,230,107],[0,199,217],[27,118,255]]
-  },build,visibility*.92,portrait);
+    if(alpha<=.001){
+      pt.el.setAttribute("opacity","0");
+      continue;
+    }
 
-  particleCtx.restore();
+    const drift=(flow-.5);
+    const wave1=Math.sin(pt.u*freq1+pt.depth*3.2+phase+flow*1.35);
+    const wave2=Math.sin(pt.u*freq2-pt.depth*5.1+phase*.7-flow*.72);
+    const wave3=Math.cos(pt.u*9.5+pt.depth*6.4+phase*.5+flow*.55);
+
+    const x=pt.u*DESIGN_W
+      +(pt.depth-.5)*shear
+      +wave3*8
+      +pt.jx
+      +drift*(isA?22:-18);
+
+    const y=baseY
+      +wave1*amp
+      +wave2*amp*.24
+      +(pt.depth-.5)*depthDrop
+      +pt.jy
+      +drift*(isA?-14:12);
+
+    pt.el.setAttribute("cx",x.toFixed(2));
+    pt.el.setAttribute("cy",y.toFixed(2));
+    pt.el.setAttribute("opacity",alpha.toFixed(4));
+  }
 }
 
 let ticking=false;
@@ -230,7 +263,8 @@ function render(){
   brandWordmark.style.transform=`translateX(${lerp(-96,0,word)}px)`;
   brandWordmark.style.clipPath=`inset(0 ${lerp(100,0,word)}% 0 0)`;
 
-  drawParticleWaves(build,waveFade);
+  const cloudFlow=mix(p,.005,.235);
+  updateSvgCloud(build,waveFade,cloudFlow);
 
   const portrait=document.documentElement.classList.contains("is-portrait");
   const baseX=portrait?450:720;

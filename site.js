@@ -15,6 +15,9 @@ const gearWindow=document.querySelector(".gear-window");
 const brandWord=document.getElementById("brandWord");
 const logoProgress=document.getElementById("logoProgress");
 const wipe=document.getElementById("brandWipe");
+const loadPercent=document.getElementById("loadPercent");
+const waveA=document.querySelector(".wave-a");
+const waveB=document.querySelector(".wave-b");
 const phrases=[...document.querySelectorAll("[data-phrase]")];
 const frame=document.getElementById("frame");
 const worldObject=document.getElementById("worldObject");
@@ -86,18 +89,30 @@ function render(){
 
   logoProgress.style.strokeDashoffset=String(circumference*(1-build));
   logoBuild.style.transform=`rotate(${lerp(0,760,build)}deg)`;
-  gearWindow.style.inset=`${lerp(18,0,complete)}px`;
+  gearWindow.style.inset=`${lerp(document.documentElement.classList.contains("is-portrait")?27:23,0,complete)}px`;
   gearWindow.querySelector("img").style.transform=`scale(${lerp(1.42,1,complete)})`;
   logoProgress.style.opacity=String(1-complete*.92);
+  loadPercent.textContent=`${Math.round(build*100)}%`;
+  loadPercent.style.opacity=String(1-mix(p,.145,.175));
+
+  const waveBuild=mix(p,.008,.145);
+  const waveDepth=mix(p,.04,.155);
+  waveA.style.opacity=String(.10 + waveBuild*.48);
+  waveB.style.opacity=String(.06 + waveBuild*.40);
+  waveA.style.clipPath=`inset(0 ${100-waveBuild*100}% 0 0)`;
+  waveB.style.clipPath=`inset(0 0 0 ${100-waveBuild*100}%)`;
+  waveA.style.transform=`translate3d(${lerp(-70,0,waveBuild)}px,${lerp(90,0,waveBuild)}px,${lerp(-100,80,waveDepth)}px) rotateX(${lerp(14,4,waveDepth)}deg) rotateZ(${lerp(-4,0,waveBuild)}deg) scaleY(${lerp(.88,1.02,waveBuild)})`;
+  waveB.style.transform=`translate3d(${lerp(80,0,waveBuild)}px,${lerp(120,0,waveBuild)}px,${lerp(-170,120,waveDepth)}px) rotateX(${lerp(18,6,waveDepth)}deg) rotateZ(${lerp(5,0,waveBuild)}deg) scaleY(${lerp(.82,1.06,waveBuild)})`;
 
   brandWord.style.opacity=String(word);
   brandWord.style.transform=`translateX(${lerp(-46,0,word)}px)`;
   brandWord.style.clipPath=`inset(0 ${lerp(100,0,word)}% 0 0)`;
 
-  const stageWidth=330;
-  const targetScale=.50;
-  const targetX=-DESIGN_W/2+22+(stageWidth*targetScale)/2;
-  const targetY=-DESIGN_H/2+36;
+  const portrait=document.documentElement.classList.contains("is-portrait");
+  const stageWidth=portrait?500:460;
+  const targetScale=portrait?.46:.46;
+  const targetX=-DESIGN_W/2+26+(stageWidth*targetScale)/2;
+  const targetY=-DESIGN_H/2+40;
   brandStage.style.transform=`translate(-50%,-50%) translate3d(${lerp(0,targetX,navMove)}px,${lerp(0,targetY,navMove)}px,0) scale(${lerp(1,targetScale,navMove)})`;
 
   const ranges=[[0,.040],[.035,.075],[.070,.110],[.105,.155]];

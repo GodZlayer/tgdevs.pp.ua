@@ -3,50 +3,57 @@ const lerp=(a,b,t)=>a+(b-a)*t;
 const smooth=t=>t*t*(3-2*t);
 const mix=(p,a,b)=>smooth(clamp((p-a)/(b-a)));
 
+const brandStage=document.getElementById("brandStage");
+const logoBuild=document.getElementById("logoBuild");
+const gearWindow=document.querySelector(".gear-window");
+const brandWord=document.getElementById("brandWord");
+const logoProgress=document.getElementById("logoProgress");
+const wipe=document.getElementById("brandWipe");
+const phrases=[...document.querySelectorAll("[data-phrase]")];
 const frame=document.getElementById("frame");
 const worldObject=document.getElementById("worldObject");
 const grid=document.querySelector(".space-grid");
 const layers={
-  brand:document.querySelector(".brand-layer"),
   tgbc:document.querySelector(".tgbc-layer"),
   desk:document.querySelector(".desk-layer"),
   browser:document.querySelector(".browser-layer"),
   demos:document.querySelector(".demos-layer")
 };
 const copies={
-  intro:document.querySelector(".intro-copy"),
   tgbc:document.querySelector(".tgbc-copy"),
   desk:document.querySelector(".tgdesk-copy"),
   partner:document.querySelector(".partner-copy"),
   demos:document.querySelector(".demos-copy")
 };
-const orbits=[...document.querySelectorAll(".orbit")];
 const frames=[...document.querySelectorAll(".browser-pages iframe")];
-const address=document.getElementById("browserAddress");
-const browserOpen=document.getElementById("browserOpen");
 const partnerName=document.getElementById("partnerName");
 const partnerIndex=document.getElementById("partnerIndex");
-const progressLine=document.getElementById("progressLine");
-const sceneNumber=document.getElementById("sceneNumber");
-
+const browserAddress=document.getElementById("browserAddress");
+const browserOpen=document.getElementById("browserOpen");
+const circumference=2*Math.PI*52;
 const partnerUrls=[
-"https://invoga.tgdevs.pp.ua/",
-"https://jvl.tgdevs.pp.ua/",
-"https://maxine.pp.ua/",
-"https://endodontia.pp.ua/",
-"https://profissionalcapilar.tgdevs.pp.ua/",
-"https://cosmedamiaofestas.com.br/"
+  "https://invoga.tgdevs.pp.ua/",
+  "https://jvl.tgdevs.pp.ua/",
+  "https://maxine.pp.ua/",
+  "https://endodontia.pp.ua/",
+  "https://profissionalcapilar.tgdevs.pp.ua/",
+  "https://cosmedamiaofestas.com.br/"
 ];
 
-function setOpacity(el,v){if(el)el.style.opacity=clamp(v)}
-function setCopy(el,v,x=0,y=0,z=0,ry=0){
+logoProgress.style.strokeDasharray=String(circumference);
+
+function setOpacity(el,v){if(el)el.style.opacity=String(clamp(v))}
+function setCopy(el,v,x=0,y=0,ry=0){
   if(!el)return;
-  el.style.opacity=clamp(v);
-  el.style.transform=`translate3d(${x}px,${y}px,${z}px) rotateY(${ry}deg)`;
+  el.style.opacity=String(clamp(v));
+  el.style.transform=`translate3d(${x}px,${y}px,0) rotateY(${ry}deg)`;
+}
+function phraseOpacity(p,start,end){
+  const fade=.006;
+  return Math.min(mix(p,start,start+fade),1-mix(p,end-fade,end));
 }
 function blendOpacity(p,start,hold,end){
-  const a=mix(p,start,hold), b=1-mix(p,hold,end);
-  return Math.min(a,b);
+  return Math.min(mix(p,start,hold),1-mix(p,hold,end));
 }
 
 let ticking=false;
@@ -54,134 +61,118 @@ function render(){
   ticking=false;
   const max=document.documentElement.scrollHeight-innerHeight;
   const p=max>0?clamp(scrollY/max):0;
+  const vw=innerWidth,vh=innerHeight;
 
-  progressLine.style.width=`${p*100}%`;
+  /* SCENE 01 — build the actual TGDevs mark */
+  const build=mix(p,.005,.145);
+  const complete=mix(p,.115,.16);
+  const navMove=mix(p,.145,.205);
+  const word=mix(p,.035,.14);
 
-  const intro=blendOpacity(p,0,.03,.13);
-  const tgbc=blendOpacity(p,.09,.18,.34);
-  const desk=blendOpacity(p,.30,.40,.52);
-  const partners=blendOpacity(p,.49,.62,.83);
-  const demos=blendOpacity(p,.80,.90,1);
+  logoProgress.style.strokeDashoffset=String(circumference*(1-build));
+  logoBuild.style.transform=`rotate(${lerp(0,760,build)}deg)`;
+  gearWindow.style.inset=`${lerp(18,0,complete)}px`;
+  gearWindow.querySelector("img").style.transform=`scale(${lerp(1.42,1,complete)})`;
+  logoProgress.style.opacity=String(1-complete*.92);
 
-  setCopy(copies.intro,intro,0,lerp(36,0,intro));
-  setCopy(copies.tgbc,tgbc,lerp(-40,0,tgbc),0,0,lerp(-10,0,tgbc));
-  setCopy(copies.desk,desk,lerp(40,0,desk),0,0,lerp(10,0,desk));
-  setCopy(copies.partner,partners,lerp(-45,0,partners),0);
-  setCopy(copies.demos,demos,lerp(-45,0,demos),0);
+  brandWord.style.opacity=String(word);
+  brandWord.style.transform=`translateX(${lerp(-46,0,word)}px)`;
+  brandWord.style.clipPath=`inset(0 ${lerp(100,0,word)}% 0 0)`;
 
-  const viewportW=innerWidth, viewportH=innerHeight;
+  const stageWidth=brandStage.offsetWidth||330;
+  const targetScale=vw<560?.56:.50;
+  const targetX=-vw/2+22+(stageWidth*targetScale)/2;
+  const targetY=-vh/2+36;
+  const brandScale=lerp(1,targetScale,navMove);
+  const brandX=lerp(0,targetX,navMove);
+  const brandY=lerp(0,targetY,navMove);
+  brandStage.style.transform=`translate(-50%,-50%) translate3d(${brandX}px,${brandY}px,0) scale(${brandScale})`;
 
-  // persistent object morph: logo -> TGBC core -> TGDesk window -> live partner browser -> two demos
-  let w=260,h=260,r=130,x=0,y=-8,z=0,rx=0,ry=0,rz=0,scale=1;
-  if(p<.14){
-    const t=mix(p,.02,.14);
-    w=lerp(260,320,t);h=lerp(260,320,t);r=h/2;
-    y=lerp(-8,-20,t);z=lerp(0,60,t);ry=lerp(0,-12,t);
-  }else if(p<.34){
-    const t=mix(p,.14,.34);
-    w=lerp(320,360,t);h=lerp(320,360,t);r=lerp(160,180,t);
-    x=lerp(viewportW*.18,viewportW*.19,t);y=lerp(-20,0,t);z=lerp(60,20,t);ry=lerp(-12,13,t);
-  }else if(p<.53){
-    const t=mix(p,.34,.53);
-    w=lerp(360,Math.min(viewportW*.50,720),t);
-    h=lerp(360,Math.min(viewportH*.55,430),t);
-    r=lerp(180,28,t);
-    x=lerp(viewportW*.19,-viewportW*.17,t);
-    y=lerp(0,-10,t);z=lerp(20,95,t);ry=lerp(13,-10,t);
-  }else if(p<.83){
-    const t=mix(p,.53,.64);
-    w=lerp(Math.min(viewportW*.50,720),Math.min(viewportW*.78,1180),t);
-    h=lerp(Math.min(viewportH*.55,430),Math.min(viewportH*.72,720),t);
-    r=lerp(28,22,t);
-    x=lerp(-viewportW*.17,viewportW*.11,t);
-    y=lerp(-10,20,t);z=lerp(95,25,t);ry=lerp(-10,4,t);
+  const ranges=[
+    [0,.040],
+    [.035,.075],
+    [.070,.110],
+    [.105,.155]
+  ];
+  phrases.forEach((el,i)=>{
+    const op=phraseOpacity(p,ranges[i][0],ranges[i][1]);
+    el.style.opacity=String(op);
+    el.style.transform=`translateY(${lerp(16,0,op)}px)`;
+  });
+  document.querySelector(".intro-copy").style.opacity=String(1-mix(p,.145,.19));
+
+  /* logo gradient becomes the transition itself */
+  const wipeIn=mix(p,.185,.225);
+  const wipeOut=mix(p,.225,.255);
+  wipe.style.transform=`scaleX(${wipeIn})`;
+  wipe.style.opacity=String(1-wipeOut);
+
+  /* SCENE 02+ retains the current world only after the wipe. It will be redesigned next. */
+  const q=clamp((p-.235)/.765);
+  const revealWorld=mix(p,.235,.265);
+  frame.style.opacity=String(revealWorld);
+
+  const tgbc=blendOpacity(q,.00,.09,.27);
+  const desk=blendOpacity(q,.23,.36,.50);
+  const partners=blendOpacity(q,.46,.63,.82);
+  const demos=blendOpacity(q,.78,.90,1);
+
+  setCopy(copies.tgbc,tgbc,lerp(-35,0,tgbc),0,lerp(-8,0,tgbc));
+  setCopy(copies.desk,desk,lerp(35,0,desk),0,lerp(8,0,desk));
+  setCopy(copies.partner,partners,lerp(-35,0,partners),0,0);
+  setCopy(copies.demos,demos,lerp(-35,0,demos),0,0);
+
+  let fw=360,fh=360,fr=180,fx=vw*.18,fy=0,ry=12;
+  if(q<.27){
+    const t=mix(q,.02,.27);
+    fw=lerp(360,390,t);fh=lerp(360,390,t);fr=lerp(180,195,t);fx=vw*.18;ry=lerp(12,7,t);
+  }else if(q<.50){
+    const t=mix(q,.27,.50);
+    fw=lerp(390,Math.min(vw*.50,720),t);fh=lerp(390,Math.min(vh*.55,430),t);fr=lerp(195,28,t);fx=lerp(vw*.18,-vw*.17,t);ry=lerp(7,-9,t);
+  }else if(q<.82){
+    const t=mix(q,.50,.62);
+    fw=lerp(Math.min(vw*.50,720),Math.min(vw*.78,1180),t);fh=lerp(Math.min(vh*.55,430),Math.min(vh*.72,720),t);fr=lerp(28,22,t);fx=lerp(-vw*.17,vw*.11,t);ry=lerp(-9,4,t);
   }else{
-    const t=mix(p,.83,.94);
-    w=lerp(Math.min(viewportW*.78,1180),Math.min(viewportW*.86,1320),t);
-    h=lerp(Math.min(viewportH*.72,720),Math.min(viewportH*.74,760),t);
-    r=lerp(22,18,t);
-    x=lerp(viewportW*.11,viewportW*.10,t);
-    y=lerp(20,12,t);z=lerp(25,0,t);ry=lerp(4,-3,t);
+    const t=mix(q,.82,.94);
+    fw=lerp(Math.min(vw*.78,1180),Math.min(vw*.86,1320),t);fh=lerp(Math.min(vh*.72,720),Math.min(vh*.74,760),t);fr=lerp(22,18,t);fx=vw*.10;ry=lerp(4,-3,t);
   }
+  if(vw<900){fw=Math.min(fw,vw*.92);fh=Math.min(fh,vh*.70);fx=0}
 
-  if(viewportW<900){
-    w=Math.min(w,viewportW*.92);
-    h=Math.min(h,viewportH*.70);
-    if(p>.34&&p<.53)x=0;
-    if(p>.53)x=0;
-  }
+  frame.style.width=`${fw}px`;frame.style.height=`${fh}px`;frame.style.borderRadius=`${fr}px`;
+  worldObject.style.transform=`translate3d(${fx}px,${fy}px,0) rotateY(${ry}deg)`;
 
-  frame.style.width=`${w}px`;
-  frame.style.height=`${h}px`;
-  frame.style.borderRadius=`${r}px`;
-  worldObject.style.transform=`translate3d(${x}px,${y}px,${z}px) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg) scale(${scale})`;
-
-  const brandOut=1-mix(p,.07,.16);
-  const tgbcIn=mix(p,.10,.18), tgbcOut=1-mix(p,.30,.40);
-  const deskIn=mix(p,.32,.41), deskOut=1-mix(p,.49,.58);
-  const browserIn=mix(p,.50,.60), browserOut=1-mix(p,.80,.87);
-  const demosIn=mix(p,.81,.90);
-
-  setOpacity(layers.brand,brandOut);
+  const tgbcIn=mix(q,.00,.09),tgbcOut=1-mix(q,.23,.31);
+  const deskIn=mix(q,.24,.34),deskOut=1-mix(q,.46,.54);
+  const browserIn=mix(q,.47,.58),browserOut=1-mix(q,.79,.86);
+  const demosIn=mix(q,.80,.90);
   setOpacity(layers.tgbc,Math.min(tgbcIn,tgbcOut));
   setOpacity(layers.desk,Math.min(deskIn,deskOut));
   setOpacity(layers.browser,Math.min(browserIn,browserOut));
   setOpacity(layers.demos,demosIn);
 
-  layers.brand.style.transform=`scale(${lerp(1,.72,mix(p,.07,.16))}) translateZ(${lerp(0,-100,mix(p,.07,.16))}px)`;
-  layers.tgbc.style.transform=`scale(${lerp(.72,1,tgbcIn)}) rotateZ(${lerp(-12,0,tgbcIn)}deg)`;
-  layers.desk.style.transform=`scale(${lerp(.84,1,deskIn)}) rotateY(${lerp(14,0,deskIn)}deg)`;
-  layers.browser.style.transform=`scale(${lerp(.88,1,browserIn)}) translateZ(${lerp(-120,0,browserIn)}px)`;
-  layers.demos.style.transform=`scale(${lerp(.91,1,demosIn)}) rotateY(${lerp(-8,0,demosIn)}deg)`;
+  grid.style.transform=`perspective(1200px) rotateX(${lerp(63,50,p)}deg) rotateZ(${lerp(0,-7,p)}deg) translateY(${lerp(27,11,p)}%) scale(${lerp(1.35,1.08,p)})`;
+  grid.style.opacity=String(lerp(.13,.30,p));
 
-  const orb=Math.min(tgbcIn,tgbcOut);
-  orbits.forEach((o,i)=>{
-    o.style.opacity=orb*.8;
-    o.style.transform=`translate(-50%,-50%) rotate(${(p*420*(i%2? -1:1)) + i*33}deg) scale(${1+orb*.18*i})`;
-  });
-
-  grid.style.transform=`perspective(1200px) rotateX(${lerp(63,49,p)}deg) rotateZ(${lerp(0,-8,p)}deg) translate3d(${lerp(0,-3,p)}%,${lerp(26,10,p)}%,${lerp(-200,120,p)}px) scale(${lerp(1.35,1.08,p)})`;
-  grid.style.opacity=String(lerp(.18,.38,Math.sin(p*Math.PI)));
-
-  document.querySelectorAll(".depth-field i").forEach((dot,i)=>{
-    const dx=Math.sin(p*9+i)*18,dy=Math.cos(p*7+i*.7)*14;
-    dot.style.transform=`translate3d(${dx}px,${dy}px,${lerp(-260,260,(i+1)/9)+p*120}px)`;
-  });
-
-  // partner pages occupy a single physical browser, changing with scroll instead of separate cards
-  if(p>=.55&&p<.86){
-    const local=clamp((p-.56)/.27);
+  if(q>=.50&&q<.86){
+    const local=clamp((q-.52)/.30);
     const raw=local*frames.length;
     const idx=Math.min(frames.length-1,Math.floor(raw));
     const frac=raw-idx;
     frames.forEach((f,i)=>{
       let op=0;
-      if(i===idx)op=1-clamp((frac-.55)/.45);
-      if(i===idx+1)op=clamp((frac-.35)/.45);
+      if(i===idx)op=1-clamp((frac-.58)/.42);
+      if(i===idx+1)op=clamp((frac-.38)/.42);
       if(idx===frames.length-1&&i===idx)op=1;
-      f.style.opacity=op;
+      f.style.opacity=String(op);
     });
-    const current=frames[idx];
     const url=partnerUrls[idx];
-    partnerName.textContent=current?.dataset.partner||"";
-    partnerIndex.textContent=`${String(idx+1).padStart(2,"0")} / ${String(frames.length).padStart(2,"0")}`;
-    address.textContent=url.replace("https://","").replace(/\/$/,"");
+    partnerName.textContent=frames[idx]?.dataset.partner||"";
+    partnerIndex.textContent=`${String(idx+1).padStart(2,"0")} / 06`;
+    browserAddress.textContent=url.replace("https://","").replace(/\/$/,"");
     browserOpen.href=url;
-  }else{
-    frames.forEach((f,i)=>f.style.opacity=i===0?1:0);
   }
-
-  let scene="01";
-  if(p>=.13)scene="02";
-  if(p>=.34)scene="03";
-  if(p>=.53)scene="04";
-  if(p>=.83)scene="05";
-  sceneNumber.textContent=scene;
 }
-
-function request(){
-  if(!ticking){ticking=true;requestAnimationFrame(render)}
-}
+function request(){if(!ticking){ticking=true;requestAnimationFrame(render)}}
 render();
 addEventListener("scroll",request,{passive:true});
 addEventListener("resize",request);

@@ -6,34 +6,47 @@
   <meta name="theme-color" content="#050708">
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="canonical" href="https://www.tgdevs.pp.ua/">
-  <title>TGDevs — Sistemas em transformação</title>
-  <meta name="description" content="TGDevs constrói sistemas, produtos e presença digital. Conheça o TGBusinessCenter, TGDesk e projetos aplicados a negócios reais.">
-  <meta property="og:title" content="TGDevs — Sistemas em transformação">
-  <meta property="og:description" content="Um ecossistema que se transforma em produto, operação e presença digital.">
+  <title>TGDevs — Sistemas que simplificam</title>
+  <meta name="description" content="TGDevs constrói sistemas sofisticados, prontos para o mundo moderno e para a sua empresa.">
+  <meta property="og:title" content="TGDevs — Sistemas que simplificam">
   <meta property="og:image" content="https://www.tgdevs.pp.ua/favicon.png">
   <meta property="og:url" content="https://www.tgdevs.pp.ua/">
-  <link rel="stylesheet" href="site.css?v=20260920b">
+  <link rel="stylesheet" href="site.css?v=20260920c">
 </head>
 <body>
-  <header class="topbar">
-    <a class="mini-brand" href="#top" aria-label="TGDevs">
-      <img src="favicon.png" alt="">
-      <span>TGDevs</span>
-    </a>
-    <a class="contact-link" href="mailto:contato@tgdevs.pp.ua">contato ↗</a>
-  </header>
-
   <main class="world" id="top">
     <div class="space-grid" aria-hidden="true"></div>
-    <div class="depth-field" aria-hidden="true">
-      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+
+    <section class="intro-copy" aria-live="polite">
+      <div class="phrase-stack">
+        <span data-phrase="0">Sistemas que simplificam</span>
+        <span data-phrase="1">Sofisticados</span>
+        <span data-phrase="2">Prontos para o mundo moderno</span>
+        <span data-phrase="3">Perfeito para sua empresa</span>
+      </div>
+    </section>
+
+    <div class="brand-stage" id="brandStage">
+      <div class="logo-build" id="logoBuild">
+        <svg class="logo-loader" viewBox="0 0 120 120" aria-hidden="true">
+          <defs>
+            <linearGradient id="brandStroke" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0" stop-color="#0b7cff"/>
+              <stop offset=".52" stop-color="#00c7d9"/>
+              <stop offset="1" stop-color="#00e66b"/>
+            </linearGradient>
+          </defs>
+          <circle class="loader-base" cx="60" cy="60" r="52"/>
+          <circle class="loader-progress" id="logoProgress" cx="60" cy="60" r="52"/>
+        </svg>
+        <div class="gear-window">
+          <img src="favicon.png" alt="TGDevs">
+        </div>
+      </div>
+      <strong class="brand-word" id="brandWord">TGDevs</strong>
     </div>
 
-    <section class="scene-copy intro-copy">
-      <span class="eyebrow">TGDevs</span>
-      <h1>Construímos sistemas.</h1>
-      <p>Produto, operação e presença digital conectados em uma mesma engenharia.</p>
-    </section>
+    <div class="brand-wipe" id="brandWipe" aria-hidden="true"></div>
 
     <section class="scene-copy tgbc-copy">
       <span class="eyebrow">Produto principal</span>
@@ -51,27 +64,16 @@
     <section class="scene-copy partner-copy">
       <span class="eyebrow">Parceiros</span>
       <h2>O sistema vira<br>negócio real.</h2>
-      <p>Os projetos deixam de ser portfólio estático e passam a ocupar o próprio mundo da TGDevs.</p>
     </section>
 
     <section class="scene-copy demos-copy">
       <span class="eyebrow">Demos</span>
-      <h2>Duas estruturas.<br>Duas leituras.</h2>
-      <p>E-commerce e cardápio como demonstrações diretas de construção digital.</p>
+      <h2>E-commerce.<br>Cardápio.</h2>
     </section>
 
     <div class="world-object" id="worldObject" aria-live="polite">
-      <div class="orbit orbit-a"></div>
-      <div class="orbit orbit-b"></div>
-      <div class="orbit orbit-c"></div>
-
       <div class="frame" id="frame">
         <div class="frame-glass"></div>
-
-        <div class="layer brand-layer">
-          <img class="brand-mark" src="favicon.png" alt="TGDevs">
-          <strong class="brand-word">TGDevs</strong>
-        </div>
 
         <div class="layer tgbc-layer">
           <div class="tg-core">TGBC<small>Business Center</small></div>
@@ -90,7 +92,7 @@
               <div class="desk-device main-device"><span></span></div>
               <div class="desk-device side-device a"><span></span></div>
               <div class="desk-device side-device b"><span></span></div>
-              <svg viewBox="0 0 800 450" preserveAspectRatio="none">
+              <svg viewBox="0 0 800 450" preserveAspectRatio="none" aria-hidden="true">
                 <path d="M170 125C310 170 320 220 400 230"/>
                 <path d="M170 330C320 280 340 250 400 230"/>
               </svg>
@@ -130,12 +132,9 @@
         </div>
       </div>
     </div>
-
-    <div class="progress-line" aria-hidden="true"><i id="progressLine"></i></div>
-    <div class="scene-number" id="sceneNumber" aria-hidden="true">01</div>
   </main>
 
   <div class="scroll-space" aria-hidden="true"></div>
-  <script src="site.js?v=20260920b" defer></script>
+  <script src="site.js?v=20260920c" defer></script>
 </body>
 </html>

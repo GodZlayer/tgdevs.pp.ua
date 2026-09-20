@@ -633,3 +633,126 @@ html.is-portrait .partner-copy p{
 html.is-portrait .demo-links{
   margin-top:20px;
 }
+
+
+/* TGDevs -> TGBC cinematic transformation */
+.tgbc-gradient-bg{
+  position:absolute;
+  inset:-8%;
+  z-index:3;
+  pointer-events:none;
+  opacity:0;
+  transform:scale(.16);
+  transform-origin:center center;
+  background:
+    radial-gradient(circle at 52% 48%,rgba(0,230,107,.44) 0 16%,rgba(0,199,217,.26) 34%,transparent 58%),
+    radial-gradient(circle at 38% 62%,rgba(11,124,255,.38),transparent 54%),
+    linear-gradient(120deg,#07111f 0%,#062f49 32%,#047982 66%,#0a7f57 100%);
+  filter:saturate(1.12);
+  will-change:opacity,transform,filter;
+}
+.tgbc-reveal{
+  position:absolute;
+  inset:0;
+  z-index:18;
+  pointer-events:none;
+  opacity:0;
+}
+.tgbc-lead{
+  position:absolute;
+  left:92px;
+  top:444px;
+  width:430px;
+  transform:translateY(-50%);
+  opacity:0;
+}
+.tgbc-lead span{
+  display:block;
+  font-size:39px;
+  line-height:1;
+  font-weight:760;
+  letter-spacing:-.045em;
+  color:#f5f7f8;
+}
+.tgbc-lead i{
+  display:block;
+  width:0;
+  height:3px;
+  margin-top:24px;
+  border-radius:999px;
+  background:linear-gradient(90deg,#0b7cff,#00c7d9,#00e66b);
+  box-shadow:0 0 18px rgba(0,199,217,.16);
+}
+.tgbc-lockup{
+  position:absolute;
+  left:720px;
+  top:450px;
+  width:640px;
+  height:230px;
+  transform:translateY(-50%);
+  display:flex;
+  align-items:center;
+  gap:24px;
+}
+.tgbc-fav{
+  width:210px;
+  height:210px;
+  object-fit:contain;
+  flex:0 0 auto;
+  opacity:0;
+  transform:scale(.86);
+  filter:drop-shadow(0 20px 42px rgba(0,199,217,.18));
+}
+.tgbc-word{
+  display:flex;
+  align-items:baseline;
+  white-space:nowrap;
+  opacity:0;
+  transform:translateX(-42px);
+  font-size:66px;
+  line-height:1;
+  letter-spacing:-.065em;
+}
+.tgbc-word b{
+  font-size:1em;
+  font-weight:950;
+  background:linear-gradient(100deg,#0b7cff,#00c7d9,#00e66b);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+.tgbc-word strong{
+  font-size:.78em;
+  font-weight:850;
+  color:#d7dee6;
+  letter-spacing:-.055em;
+}
+
+html.is-portrait .tgbc-lead{
+  left:90px;
+  top:345px;
+  width:720px;
+  transform:none;
+  text-align:center;
+}
+html.is-portrait .tgbc-lead span{
+  font-size:48px;
+}
+html.is-portrait .tgbc-lead i{
+  margin:24px auto 0;
+}
+html.is-portrait .tgbc-lockup{
+  left:450px;
+  top:800px;
+  width:760px;
+  height:250px;
+  transform:translate(-50%,-50%);
+  justify-content:center;
+}
+html.is-portrait .tgbc-fav{
+  width:220px;
+  height:220px;
+}
+html.is-portrait .tgbc-word{
+  font-size:66px;
+}

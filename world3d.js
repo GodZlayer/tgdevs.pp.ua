@@ -9,7 +9,6 @@
   uniform float u_build;
   uniform float u_visibility;
   uniform float u_flow;
-  uniform float u_surface;
   uniform float u_portrait;
 
   out vec4 v_color;
@@ -23,15 +22,17 @@
   }
 
   void main() {
-    const float COLS = 220.0;
-    const float ROWS = 72.0;
+    const float COLS = 256.0;
+    const float ROWS = 80.0;
+    const float SURFACE_POINTS = COLS * ROWS;
 
-    float id = float(gl_VertexID);
+    float globalId = float(gl_VertexID);
+    float surface = step(SURFACE_POINTS, globalId);
+    float id = mod(globalId, SURFACE_POINTS);
     float col = mod(id, COLS);
     float row = floor(id / COLS);
     float u = col / (COLS - 1.0);
     float depth = row / (ROWS - 1.0);
-    float surface = u_surface;
 
     float seed = id + surface * 20000.0 + 1.0;
     float jitterX = (hash(seed) - .5) * .018;
@@ -94,7 +95,7 @@
     gl_Position = vec4(clip, clamp((p.z + 1.2) / 3.0, 0.0, 1.0), 1.0);
 
     float edgeFade = sin(3.14159265 * clamp(u, 0.0, 1.0));
-    float depthAlpha = mix(.055, .38, depth);
+    float depthAlpha = mix(.065, .46, depth);
     float randomAlpha = mix(.55, 1.0, hash(seed + 701.0));
     float alpha = born * u_visibility * edgeFade * depthAlpha * randomAlpha;
     if (reverse) alpha *= .94;
@@ -107,7 +108,7 @@
       ? gradient3(green, cyan, blue, colorT)
       : gradient3(blue, cyan, vec3(0.0, .90, .70), colorT);
 
-    float size = mix(1.0, 3.45, depth) * mix(.85, 1.25, hash(seed + 991.0));
+    float size = mix(1.0, 3.85, depth) * mix(.82, 1.30, hash(seed + 991.0));
     gl_PointSize = size * u_pixelRatio;
     v_color = vec4(color, alpha);
   }`;
@@ -175,7 +176,7 @@
       const gl = this.gl;
       this.program = program(gl, VERTEX, FRAGMENT);
       this.vao = gl.createVertexArray();
-      this.count = 220 * 72;
+      this.count = 256 * 80 * 2;
 
       this.uniforms = {};
       [
@@ -184,7 +185,6 @@
         "u_build",
         "u_visibility",
         "u_flow",
-        "u_surface",
         "u_portrait"
       ].forEach(name => {
         this.uniforms[name] = gl.getUniformLocation(this.program, name);
@@ -193,8 +193,7 @@
       gl.bindVertexArray(this.vao);
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-      gl.enable(gl.DEPTH_TEST);
-      gl.depthFunc(gl.LEQUAL);
+      gl.disable(gl.DEPTH_TEST);
       gl.clearColor(0, 0, 0, 0);
 
       this.ready = true;
@@ -249,10 +248,7 @@
       gl.uniform1f(this.uniforms.u_flow, flow);
       gl.uniform1f(this.uniforms.u_portrait, portrait ? 1 : 0);
 
-      gl.uniform1f(this.uniforms.u_surface, 0);
-      gl.drawArrays(gl.POINTS, 0, this.count);
-
-      gl.uniform1f(this.uniforms.u_surface, 1);
+      /* Both 3D surfaces are generated from gl_VertexID in one GPU draw call. */
       gl.drawArrays(gl.POINTS, 0, this.count);
     }
 

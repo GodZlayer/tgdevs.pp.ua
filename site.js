@@ -1,6 +1,8 @@
-const DESIGN_W=1440;
-const DESIGN_H=900;
+const LANDSCAPE={w:1440,h:900};
+const PORTRAIT={w:900,h:1440};
 const SCROLL_DISTANCE=9600;
+let DESIGN_W=LANDSCAPE.w;
+let DESIGN_H=LANDSCAPE.h;
 const clamp=(v,min=0,max=1)=>Math.min(max,Math.max(min,v));
 const lerp=(a,b,t)=>a+(b-a)*t;
 const smooth=t=>t*t*(3-2*t);
@@ -47,6 +49,13 @@ const partnerUrls=[
 logoProgress.style.strokeDasharray=String(circumference);
 
 function setSceneScale(){
+  const portrait=innerHeight>innerWidth;
+  const preset=portrait?PORTRAIT:LANDSCAPE;
+  DESIGN_W=preset.w;
+  DESIGN_H=preset.h;
+  document.documentElement.classList.toggle("is-portrait",portrait);
+  document.documentElement.style.setProperty("--design-w",DESIGN_W+"px");
+  document.documentElement.style.setProperty("--design-h",DESIGN_H+"px");
   const scale=Math.min(innerWidth/DESIGN_W,innerHeight/DESIGN_H);
   document.documentElement.style.setProperty("--scene-scale",String(scale));
 }

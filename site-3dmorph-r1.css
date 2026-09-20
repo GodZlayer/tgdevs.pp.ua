@@ -1,0 +1,778 @@
+:root{
+  --bg:#050708;--ink:#f5f7f8;--muted:#8e979e;--blue:#0b7cff;--cyan:#00c7d9;--green:#00e66b;
+  --design-w:1440px;--design-h:900px;--scene-scale:1;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);overflow-x:hidden}
+html{scroll-behavior:auto}
+body{min-width:320px}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+
+.world{position:fixed;inset:0;overflow:hidden;background:#050708}
+.design-space{
+  position:absolute;left:50%;top:50%;
+  width:var(--design-w);height:var(--design-h);
+  transform:translate(-50%,-50%) scale(var(--scene-scale));
+  transform-origin:center center;
+  overflow:hidden;
+}
+.scroll-space{height:calc(100vh + 9600px)}
+
+.space-grid{
+  position:absolute;inset:-270px;
+  background-image:
+    linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-size:64px 64px;
+  opacity:.18;
+  transform-origin:center;
+  mask-image:radial-gradient(circle at center,#000 0 58%,transparent 86%)
+}
+
+.intro-copy{
+  position:absolute;left:72px;top:429px;
+  width:410px;height:42px;z-index:20;pointer-events:none
+}
+.phrase-stack{position:relative;width:100%;height:100%}
+.phrase-stack span{
+  position:absolute;left:0;top:0;width:100%;
+  font-size:28px;line-height:1.08;font-weight:650;letter-spacing:-.035em;text-align:left;
+  opacity:0;transform:translateY(18px);will-change:opacity,transform
+}
+
+.brand-stage{
+  position:absolute;left:720px;top:450px;
+  display:flex;align-items:center;gap:18px;
+  z-index:30;transform:translate(-50%,-50%);
+  transform-origin:left center;will-change:transform
+}
+.logo-build{position:relative;width:150px;height:150px;flex:0 0 auto}
+.logo-loader{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.loader-base,.loader-progress{fill:none;stroke-width:5}
+.loader-base{stroke:rgba(255,255,255,.08)}
+.loader-progress{
+  stroke:url(#brandStroke);stroke-linecap:round;stroke-dasharray:326.7256;stroke-dashoffset:326.7256;
+  filter:drop-shadow(0 0 10px rgba(0,199,217,.16))
+}
+.gear-window{position:absolute;inset:18px;border-radius:50%;overflow:hidden;display:grid;place-items:center}
+.gear-window img{width:100%;height:100%;object-fit:cover;transform:scale(1.42);transform-origin:center}
+.brand-word{
+  font-size:56px;line-height:1;font-weight:950;letter-spacing:-.07em;white-space:nowrap;
+  background:linear-gradient(105deg,var(--blue),var(--cyan),var(--green));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  opacity:0;transform:translateX(-42px);clip-path:inset(0 100% 0 0);
+  will-change:opacity,transform,clip-path
+}
+
+.brand-wipe{
+  position:absolute;inset:0;z-index:24;pointer-events:none;
+  background:linear-gradient(110deg,var(--blue) 0%,var(--cyan) 52%,var(--green) 100%);
+  transform:scaleX(0);transform-origin:left center;will-change:transform,opacity
+}
+
+.scene-copy{position:absolute;z-index:12;width:620px;opacity:0;pointer-events:none}
+.scene-copy .eyebrow{display:block;margin-bottom:16px;color:#7d878e;font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+.scene-copy h2{margin:0 0 18px;font-size:72px;line-height:.92;letter-spacing:-.06em}
+.scene-copy p{margin:0;max-width:560px;color:var(--muted);font-size:20px;line-height:1.48}
+.scene-copy a{display:inline-block;margin-top:22px;font-weight:700}
+.tgbc-copy,.partner-copy,.demos-copy{left:72px;top:450px;transform:translateY(-50%)}
+.tgdesk-copy{right:72px;top:450px;transform:translateY(-50%)}
+
+.world-object{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none}
+.frame{
+  position:absolute;left:720px;top:450px;width:360px;height:360px;
+  transform:translate(-50%,-50%);
+  border:1px solid rgba(255,255,255,.15);border-radius:50%;overflow:hidden;
+  background:rgba(8,12,14,.9);opacity:0
+}
+.frame-glass{
+  position:absolute;inset:0;
+  background:linear-gradient(145deg,rgba(255,255,255,.05),transparent 40%),radial-gradient(circle at 45% 34%,rgba(11,124,255,.13),transparent 45%);
+  pointer-events:none;z-index:30
+}
+.layer{position:absolute;inset:0;opacity:0}
+.tg-core{
+  position:absolute;inset:34%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-radius:50%;border:1px solid rgba(255,255,255,.13);
+  background:linear-gradient(145deg,rgba(11,124,255,.12),rgba(0,230,107,.06));
+  font-size:56px;font-weight:900;letter-spacing:-.06em
+}
+.tg-core small{margin-top:4px;color:#89939a;font-size:11px;font-weight:500;letter-spacing:0}
+.module{position:absolute;padding:8px 12px;border:1px solid rgba(255,255,255,.1);border-radius:999px;background:rgba(5,8,10,.78);color:#aab3b9;font-size:11px}
+.mod-1{left:9%;top:23%}.mod-2{right:11%;top:16%}.mod-3{right:5%;top:49%}.mod-4{left:3%;bottom:27%}.mod-5{right:15%;bottom:15%}.mod-6{left:37%;bottom:5%}
+
+.desk-window{position:absolute;inset:0;background:#090d10}
+.desk-toolbar{height:44px;border-bottom:1px solid rgba(255,255,255,.09);display:flex;align-items:center;gap:7px;padding:0 16px;color:#8f989f;font-size:11px}
+.desk-toolbar i{width:7px;height:7px;border-radius:50%;background:#34414a}.desk-toolbar span{margin-left:8px}
+.desk-main{position:absolute;inset:44px 0 0}
+.desk-device{position:absolute;border:1px solid rgba(255,255,255,.1);background:linear-gradient(150deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border-radius:18px}
+.desk-device span{position:absolute;inset:20%;border:1px solid rgba(0,199,217,.16);border-radius:10px}
+.main-device{width:31%;height:54%;left:34.5%;top:22%}
+.side-device{width:22%;height:36%}.side-device.a{left:6%;top:12%}.side-device.b{left:7%;bottom:9%}
+.desk-main svg{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke:rgba(0,199,217,.4);stroke-width:1.3;stroke-dasharray:8 12}
+
+.browser-chrome{height:46px;display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:0 14px;border-bottom:1px solid rgba(255,255,255,.09)}
+.browser-dots{display:flex;gap:6px}.browser-dots i{width:7px;height:7px;border-radius:50%;background:#39434a}
+.browser-address{height:25px;border:1px solid rgba(255,255,255,.08);border-radius:999px}
+.browser-pages{position:absolute;inset:46px 0 0}
+.browser-pages iframe{position:absolute;inset:0;width:100%;height:100%;border:0;opacity:0;background:#fff}
+.partner-meta{position:absolute;left:22px;bottom:18px;display:flex;gap:18px;align-items:end;z-index:10}
+.partner-meta span{font-size:11px;color:#a5adb2}.partner-meta strong{font-size:32px}
+.demos-layer{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(255,255,255,.08)}
+.demo-pane{position:relative;overflow:hidden;background:#fff;pointer-events:auto}
+.demo-pane iframe{width:100%;height:100%;border:0;pointer-events:none}
+.demo-pane span{position:absolute;left:18px;bottom:18px;padding:8px 10px;border-radius:999px;background:rgba(5,7,8,.78);color:#fff;font-size:12px}
+
+
+/* Fixed portrait composition: same scene, stacked instead of side-by-side. */
+html.is-portrait{
+  --design-w:900px;
+  --design-h:1440px;
+}
+html.is-portrait .intro-copy{
+  left:90px;
+  top:318px;
+  width:720px;
+  height:42px;
+}
+html.is-portrait .phrase-stack span{
+  width:720px;
+}
+html.is-portrait .brand-stage{
+  left:450px;
+  top:720px;
+}
+html.is-portrait .tgbc-copy,
+html.is-portrait .partner-copy,
+html.is-portrait .demos-copy{
+  left:90px;
+  top:320px;
+  width:720px;
+  transform:none;
+}
+html.is-portrait .tgdesk-copy{
+  left:90px;
+  right:auto;
+  top:1030px;
+  width:720px;
+  transform:none;
+}
+html.is-portrait .frame{
+  left:450px;
+  top:720px;
+}
+
+
+/* Scene 01 refinement: fixed orientation, stronger logo build and two 3D gradient waves */
+.color-waves{
+  position:absolute;
+  inset:0;
+  z-index:4;
+  pointer-events:none;
+  overflow:hidden;
+  transform-style:preserve-3d;
+}
+.wave{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  opacity:0;
+  transform-origin:center bottom;
+  will-change:transform,opacity,clip-path,filter;
+}
+.wave-a{
+  filter:blur(2px) drop-shadow(0 34px 54px rgba(0,126,255,.16));
+  mix-blend-mode:screen;
+}
+.wave-b{
+  filter:blur(3px) drop-shadow(0 46px 70px rgba(0,230,107,.13));
+  mix-blend-mode:screen;
+}
+
+.intro-copy{
+  left:72px;
+  top:423px;
+  width:500px;
+  height:50px;
+}
+.phrase-stack span{
+  width:500px;
+  font-size:34px;
+  line-height:1.06;
+  font-weight:680;
+}
+
+.brand-stage{
+  left:720px;
+  top:450px;
+  gap:24px;
+}
+.logo-build{
+  width:190px;
+  height:190px;
+}
+.loader-base,.loader-progress{
+  stroke-width:7;
+}
+.loader-base{
+  stroke:rgba(255,255,255,.12);
+}
+.loader-progress{
+  filter:
+    drop-shadow(0 0 10px rgba(11,124,255,.26))
+    drop-shadow(0 0 18px rgba(0,230,107,.12));
+}
+.gear-window{
+  inset:23px;
+}
+.brand-word{
+  font-size:68px;
+  letter-spacing:-.065em;
+}
+.load-percent{
+  position:absolute;
+  left:50%;
+  bottom:-28px;
+  transform:translateX(-50%);
+  font-size:12px;
+  line-height:1;
+  font-weight:700;
+  letter-spacing:.12em;
+  color:rgba(255,255,255,.56);
+}
+
+html.is-portrait .intro-copy{
+  left:90px;
+  top:285px;
+  width:720px;
+  height:58px;
+}
+html.is-portrait .phrase-stack span{
+  width:720px;
+  font-size:40px;
+}
+html.is-portrait .brand-stage{
+  left:450px;
+  top:760px;
+  gap:24px;
+}
+html.is-portrait .logo-build{
+  width:220px;
+  height:220px;
+}
+html.is-portrait .brand-word{
+  font-size:72px;
+}
+html.is-portrait .gear-window{
+  inset:27px;
+}
+
+
+/* Scene 01 v2 — exact TGDevs lockup + deterministic point-wave world */
+.particle-waves{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:4;
+  pointer-events:none;
+}
+
+.intro-copy{
+  left:72px;
+  top:420px;
+  width:540px;
+  height:54px;
+  z-index:20;
+}
+.phrase-stack span{
+  width:540px;
+  font-size:38px;
+  line-height:1.04;
+  font-weight:700;
+  letter-spacing:-.04em;
+}
+
+.brand-stage{
+  position:absolute;
+  left:720px;
+  top:450px;
+  width:720px;
+  height:240px;
+  display:block;
+  z-index:30;
+  transform:none;
+  transform-origin:0 50%;
+  will-change:transform;
+}
+.logo-build{
+  position:absolute;
+  left:-120px;
+  top:0;
+  width:240px;
+  height:240px;
+  margin:0;
+}
+.mark-final,
+.gear-core,
+.logo-loader{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+}
+.mark-final{
+  object-fit:contain;
+  opacity:0;
+  z-index:3;
+  filter:drop-shadow(0 16px 34px rgba(0,199,217,.11));
+}
+.gear-core{
+  z-index:2;
+  overflow:hidden;
+  clip-path:circle(32% at 50% 50%);
+  transform-origin:50% 50%;
+}
+.gear-core img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.logo-loader{
+  z-index:4;
+  overflow:visible;
+  transform:none;
+}
+.loader-track,
+.loader-progress{
+  fill:none;
+  stroke-width:14;
+  stroke-linecap:round;
+}
+.loader-track{
+  stroke:rgba(255,255,255,.05);
+}
+.loader-track.ring-major{
+  stroke-dasharray:.735 .265;
+  stroke-dashoffset:.015;
+}
+.loader-track.ring-minor{
+  stroke-dasharray:.145 .855;
+  stroke-dashoffset:-.805;
+}
+.loader-progress{
+  stroke:url(#brandStroke);
+  filter:
+    drop-shadow(0 0 8px rgba(11,124,255,.22))
+    drop-shadow(0 0 14px rgba(0,230,107,.10));
+}
+.loader-progress.ring-major{
+  stroke-dasharray:0 1;
+}
+.loader-progress.ring-minor{
+  stroke-dasharray:0 1;
+  stroke-dashoffset:-.805;
+}
+
+.brand-wordmark{
+  position:absolute;
+  left:142px;
+  top:74px;
+  width:390px;
+  height:92px;
+  opacity:0;
+  clip-path:inset(0 100% 0 0);
+  transform:translateX(-84px);
+  transform-origin:left center;
+  overflow:visible;
+  will-change:opacity,clip-path,transform;
+  filter:drop-shadow(0 12px 25px rgba(0,199,217,.06));
+}
+
+html.is-portrait .intro-copy{
+  left:90px;
+  top:288px;
+  width:720px;
+  height:62px;
+}
+html.is-portrait .phrase-stack span{
+  width:720px;
+  font-size:42px;
+}
+html.is-portrait .brand-stage{
+  left:450px;
+  top:800px;
+  width:520px;
+  height:220px;
+}
+html.is-portrait .logo-build{
+  left:-110px;
+  width:220px;
+  height:220px;
+}
+html.is-portrait .brand-wordmark{
+  left:130px;
+  top:75px;
+  width:320px;
+  height:72px;
+}
+
+/* Anchor the entire lockup on the exact center of the gear. */
+.brand-stage{top:450px;}
+.logo-build{left:-120px;top:-120px;}
+.brand-wordmark{left:142px;top:-46px;}
+html.is-portrait .brand-stage{top:800px;}
+html.is-portrait .logo-build{left:-110px;top:-110px;}
+html.is-portrait .brand-wordmark{left:130px;top:-36px;}
+
+/* Denser point-field, less flat and more volumetric */
+.particle-waves{
+  opacity:.98;
+  filter:drop-shadow(0 18px 30px rgba(0,199,217,.045));
+}
+
+
+/* Initial scroll affordance: visual only, driven by timeline */
+.scroll-cue{
+  position:absolute;
+  left:50%;
+  bottom:44px;
+  z-index:40;
+  width:48px;
+  height:86px;
+  transform:translateX(-50%);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  pointer-events:none;
+  opacity:1;
+  will-change:opacity,transform;
+}
+.scroll-mouse{
+  position:relative;
+  width:32px;
+  height:48px;
+  border:2px solid rgba(255,255,255,.78);
+  border-radius:18px;
+  box-shadow:0 10px 28px rgba(0,0,0,.24);
+}
+.scroll-wheel{
+  position:absolute;
+  left:50%;
+  top:9px;
+  width:3px;
+  height:10px;
+  border-radius:3px;
+  transform:translateX(-50%);
+  background:linear-gradient(180deg,#0b7cff,#00c7d9 55%,#00e66b);
+}
+.scroll-chevrons{
+  position:relative;
+  width:20px;
+  height:28px;
+  margin-top:7px;
+}
+.scroll-chevrons i{
+  position:absolute;
+  left:50%;
+  width:11px;
+  height:11px;
+  border-right:2px solid rgba(255,255,255,.72);
+  border-bottom:2px solid rgba(255,255,255,.72);
+  transform:translateX(-50%) rotate(45deg);
+}
+.scroll-chevrons i:first-child{top:0}
+.scroll-chevrons i:last-child{top:8px;opacity:.48}
+html.is-portrait .scroll-cue{
+  bottom:64px;
+}
+
+
+/* Scene 01 v3 — clean vector gear and leak-free SVG arc loading */
+.gear-core{
+  z-index:2;
+  overflow:visible;
+  clip-path:none;
+  transform:none;
+}
+.gear-core img{display:none}
+.gear-svg{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  overflow:visible;
+  filter:drop-shadow(0 10px 22px rgba(0,199,217,.08));
+}
+.gear-spin{
+  will-change:transform;
+}
+.gear-pointer{
+  pointer-events:none;
+}
+.logo-loader{
+  opacity:1;
+}
+.loader-track,
+.loader-progress{
+  fill:none;
+  stroke-width:14;
+  stroke-linecap:round;
+}
+.loader-track{
+  stroke:rgba(255,255,255,.045);
+}
+.loader-progress{
+  stroke:url(#brandStroke);
+  stroke-dasharray:1 1;
+  stroke-dashoffset:1;
+}
+.loader-progress.ring-major,
+.loader-progress.ring-minor,
+.loader-track.ring-major,
+.loader-track.ring-minor{
+  stroke-dasharray:unset;
+  stroke-dashoffset:unset;
+}
+.loader-progress.ring-major,
+.loader-progress.ring-minor{
+  stroke-dasharray:1 1;
+  stroke-dashoffset:1;
+}
+
+
+/* Gear geometry: the approved mark is centered inside the ring, never stretched. */
+.gear-fit{pointer-events:none}
+.gear-svg{preserve-aspect-ratio:xMidYMid meet}
+
+
+/* Scene 01 v4 — original single open ring, no stray terminal bar */
+.loader-track.ring-main,
+.loader-progress.ring-main{
+  stroke-dasharray:1 1;
+  stroke-dashoffset:1;
+}
+
+
+/* Scene 01 v5 — real SVG particle cloud. Each point is an independent circle. */
+.particle-waves{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:4;
+  pointer-events:none;
+  overflow:visible;
+  opacity:1;
+  filter:drop-shadow(0 18px 30px rgba(0,199,217,.035));
+}
+.particle-waves circle{
+  shape-rendering:geometricPrecision;
+  will-change:opacity,transform;
+}
+#cloudA,#cloudB{
+  mix-blend-mode:screen;
+}
+
+
+/* Scene 02+ v1 — one GPU world, DOM is only semantic/interactive overlay */
+.world-object{display:none!important}
+
+canvas.particle-waves{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:4;
+  pointer-events:none;
+  opacity:1;
+  filter:none;
+}
+
+.scene-copy{
+  z-index:14;
+}
+.scene-copy p{
+  max-width:520px;
+}
+.partner-copy p{
+  max-width:610px;
+  font-size:17px;
+}
+.demos-copy{
+  pointer-events:auto;
+}
+.demo-links{
+  display:flex;
+  gap:10px;
+  margin-top:24px;
+}
+.demo-links a{
+  display:inline-flex;
+  align-items:center;
+  min-height:42px;
+  padding:0 16px;
+  margin:0;
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:999px;
+  background:rgba(5,8,10,.58);
+  backdrop-filter:blur(10px);
+  font-size:13px;
+  font-weight:700;
+}
+.demo-links a:hover{
+  border-color:rgba(0,199,217,.5);
+}
+
+html.is-portrait .partner-copy p{
+  max-width:680px;
+}
+html.is-portrait .demo-links{
+  margin-top:20px;
+}
+
+
+/* TGDevs -> TGBC cinematic transformation */
+.tgbc-gradient-bg{
+  position:absolute;
+  inset:-8%;
+  z-index:3;
+  pointer-events:none;
+  opacity:0;
+  transform:scale(.16);
+  transform-origin:center center;
+  background:
+    radial-gradient(circle at 52% 48%,rgba(0,230,107,.44) 0 16%,rgba(0,199,217,.26) 34%,transparent 58%),
+    radial-gradient(circle at 38% 62%,rgba(11,124,255,.38),transparent 54%),
+    linear-gradient(120deg,#07111f 0%,#062f49 32%,#047982 66%,#0a7f57 100%);
+  filter:saturate(1.12);
+  will-change:opacity,transform,filter;
+}
+.tgbc-reveal{
+  position:absolute;
+  inset:0;
+  z-index:18;
+  pointer-events:none;
+  opacity:0;
+}
+.tgbc-lead{
+  position:absolute;
+  left:92px;
+  top:444px;
+  width:430px;
+  transform:translateY(-50%);
+  opacity:0;
+}
+.tgbc-lead span{
+  display:block;
+  font-size:39px;
+  line-height:1;
+  font-weight:760;
+  letter-spacing:-.045em;
+  color:#f5f7f8;
+}
+.tgbc-lead i{
+  display:block;
+  width:0;
+  height:3px;
+  margin-top:24px;
+  border-radius:999px;
+  background:linear-gradient(90deg,#0b7cff,#00c7d9,#00e66b);
+  box-shadow:0 0 18px rgba(0,199,217,.16);
+}
+.tgbc-lockup{
+  position:absolute;
+  left:720px;
+  top:450px;
+  width:640px;
+  height:230px;
+  transform:translateY(-50%);
+  display:flex;
+  align-items:center;
+  gap:24px;
+}
+.tgbc-fav{
+  width:210px;
+  height:210px;
+  object-fit:contain;
+  flex:0 0 auto;
+  opacity:0;
+  transform:scale(.86);
+  filter:drop-shadow(0 20px 42px rgba(0,199,217,.18));
+}
+.tgbc-word{
+  display:flex;
+  align-items:baseline;
+  white-space:nowrap;
+  opacity:0;
+  transform:translateX(-42px);
+  font-size:66px;
+  line-height:1;
+  letter-spacing:-.065em;
+}
+.tgbc-word b{
+  font-size:1em;
+  font-weight:950;
+  background:linear-gradient(100deg,#0b7cff,#00c7d9,#00e66b);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+.tgbc-word strong{
+  font-size:.78em;
+  font-weight:850;
+  color:#d7dee6;
+  letter-spacing:-.055em;
+}
+
+html.is-portrait .tgbc-lead{
+  left:90px;
+  top:345px;
+  width:720px;
+  transform:none;
+  text-align:center;
+}
+html.is-portrait .tgbc-lead span{
+  font-size:48px;
+}
+html.is-portrait .tgbc-lead i{
+  margin:24px auto 0;
+}
+html.is-portrait .tgbc-lockup{
+  left:450px;
+  top:800px;
+  width:760px;
+  height:250px;
+  transform:translate(-50%,-50%);
+  justify-content:center;
+}
+html.is-portrait .tgbc-fav{
+  width:220px;
+  height:220px;
+}
+html.is-portrait .tgbc-word{
+  font-size:66px;
+}
+
+
+/* Persistent 3D identity: 2D lockups are only bootstrap/reference sources. */
+.logo3d-ready .tgbc-lockup{
+  opacity:0!important;
+  visibility:hidden!important;
+}
+.logo3d-ready .tgbc-fav,
+.logo3d-ready .tgbc-word{
+  opacity:0!important;
+}
+.tgbc-lead{
+  transform-style:preserve-3d;
+  perspective:900px;
+  will-change:opacity,transform;
+}
+.tgbc-lead span,
+.tgbc-lead i{
+  transform-style:preserve-3d;
+}

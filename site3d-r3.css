@@ -44,7 +44,7 @@ body{
   width:100%;
   height:100%;
   background:#030607;
-  touch-action:none;
+  touch-action:pan-y;
 }
 
 .scroll-space{

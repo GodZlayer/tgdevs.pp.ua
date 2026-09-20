@@ -234,9 +234,12 @@
 
   async function rasterSvg(svg,w,h){
     const clone=svg.cloneNode(true);
+    clone.setAttribute("xmlns","http://www.w3.org/2000/svg");
+    clone.setAttribute("xmlns:xlink","http://www.w3.org/1999/xlink");
     clone.setAttribute("width",String(w));
     clone.setAttribute("height",String(h));
-    const source=new XMLSerializer().serializeToString(clone);
+    clone.setAttribute("viewBox",svg.getAttribute("viewBox")||("0 0 "+w+" "+h));
+    const source='<?xml version="1.0" encoding="UTF-8"?>'+new XMLSerializer().serializeToString(clone);
     const url="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(source);
     const img=new Image();
     await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url;});

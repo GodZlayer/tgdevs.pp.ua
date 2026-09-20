@@ -407,3 +407,11 @@ html.is-portrait .brand-wordmark{
   width:320px;
   height:72px;
 }
+
+/* Anchor the entire lockup on the exact center of the gear. */
+.brand-stage{top:450px;}
+.logo-build{left:-120px;top:-120px;}
+.brand-wordmark{left:142px;top:-46px;}
+html.is-portrait .brand-stage{top:800px;}
+html.is-portrait .logo-build{left:-110px;top:-110px;}
+html.is-portrait .brand-wordmark{left:130px;top:-36px;}

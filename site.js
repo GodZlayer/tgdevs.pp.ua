@@ -13,6 +13,7 @@ const blendOpacity=(p,start,hold,end)=>Math.min(mix(p,start,hold),1-mix(p,hold,e
 
 const brandStage=document.getElementById("brandStage");
 const gearCore=document.getElementById("gearCore");
+const gearSpin=document.querySelector(".gear-spin");
 const markFinal=document.getElementById("markFinal");
 const brandWordmark=document.getElementById("brandWordmark");
 const logoLoader=document.getElementById("logoLoader");
@@ -214,21 +215,19 @@ function render(){
   const majorBuild=clamp(build/.82);
   const minorBuild=clamp((build-.82)/.18);
 
-  const majorLen=.735*majorBuild;
-  const minorLen=.145*minorBuild;
+  logoProgressMajor.style.strokeDasharray="1 1";
+  logoProgressMajor.style.strokeDashoffset=String(1-majorBuild);
+  logoProgressMajor.style.opacity=majorBuild<=.001||ringVisible<=.001?"0":String(ringVisible);
 
-  logoProgressMajor.style.strokeDasharray=`${majorLen} ${Math.max(.0001,1-majorLen)}`;
-  logoProgressMajor.style.strokeDashoffset=".015";
-  logoProgressMajor.style.opacity=String(ringVisible);
+  logoProgressMinor.style.strokeDasharray="1 1";
+  logoProgressMinor.style.strokeDashoffset=String(1-minorBuild);
+  logoProgressMinor.style.opacity=minorBuild<=.001||ringVisible<=.001?"0":String(ringVisible);
 
-  logoProgressMinor.style.strokeDasharray=`${minorLen} ${Math.max(.0001,1-minorLen)}`;
-  logoProgressMinor.style.strokeDashoffset="-.805";
-  logoProgressMinor.style.opacity=String(ringVisible);
+  loaderTracks.forEach(track=>track.style.opacity=String(.52*ringVisible));
+  logoLoader.style.opacity=ringVisible<=.001?"0":"1";
 
-  loaderTracks.forEach(track=>track.style.opacity=String(.72*ringVisible));
-
-  gearCore.style.transform=`rotate(${lerp(0,720,build)}deg)`;
-  gearCore.style.opacity=String(1-complete*.95);
+  if(gearSpin)gearSpin.style.transform=`rotate(${lerp(0,720,build)}deg)`;
+  gearCore.style.opacity=String(1-complete*.98);
 
   markFinal.style.opacity=String(complete);
 

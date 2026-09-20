@@ -756,3 +756,23 @@ html.is-portrait .tgbc-fav{
 html.is-portrait .tgbc-word{
   font-size:66px;
 }
+
+
+/* Persistent 3D identity: 2D lockups are only bootstrap/reference sources. */
+.logo3d-ready .tgbc-lockup{
+  opacity:0!important;
+  visibility:hidden!important;
+}
+.logo3d-ready .tgbc-fav,
+.logo3d-ready .tgbc-word{
+  opacity:0!important;
+}
+.tgbc-lead{
+  transform-style:preserve-3d;
+  perspective:900px;
+  will-change:opacity,transform;
+}
+.tgbc-lead span,
+.tgbc-lead i{
+  transform-style:preserve-3d;
+}

@@ -582,6 +582,7 @@ export class TGWorld3D{
 
     this.textReady=false;
     this.last={p:0,portrait:false,width:1440,height:900};
+    this._sizeKey="";
     this.initText();
   }
 
@@ -626,7 +627,11 @@ export class TGWorld3D{
   }
 
   resize(w,h,portrait){
-    const dpr=Math.min(devicePixelRatio||1,portrait?1.15:1.35);
+    const dpr=Math.min(devicePixelRatio||1,portrait?1.0:1.2);
+    const key=w+"x"+h+"@"+dpr+"|"+(portrait?1:0);
+    if(this._sizeKey===key)return;
+    this._sizeKey=key;
+
     this.renderer.setPixelRatio(dpr);
     this.renderer.setSize(w,h,false);
     this.camera.aspect=w/h;

@@ -269,3 +269,141 @@ html.is-portrait .brand-word{
 html.is-portrait .gear-window{
   inset:27px;
 }
+
+
+/* Scene 01 v2 — exact TGDevs lockup + deterministic point-wave world */
+.particle-waves{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:4;
+  pointer-events:none;
+}
+
+.intro-copy{
+  left:72px;
+  top:420px;
+  width:540px;
+  height:54px;
+  z-index:20;
+}
+.phrase-stack span{
+  width:540px;
+  font-size:38px;
+  line-height:1.04;
+  font-weight:700;
+  letter-spacing:-.04em;
+}
+
+.brand-stage{
+  position:absolute;
+  left:720px;
+  top:450px;
+  width:720px;
+  height:240px;
+  display:block;
+  z-index:30;
+  transform:none;
+  transform-origin:0 50%;
+  will-change:transform;
+}
+.logo-build{
+  position:absolute;
+  left:-120px;
+  top:0;
+  width:240px;
+  height:240px;
+  margin:0;
+}
+.mark-final,
+.gear-core,
+.logo-loader{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+}
+.mark-final{
+  object-fit:contain;
+  opacity:0;
+  z-index:3;
+  filter:drop-shadow(0 16px 34px rgba(0,199,217,.11));
+}
+.gear-core{
+  z-index:2;
+  overflow:hidden;
+  clip-path:circle(32% at 50% 50%);
+  transform-origin:50% 50%;
+}
+.gear-core img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.logo-loader{
+  z-index:4;
+  overflow:visible;
+  transform:none;
+}
+.loader-track,
+.loader-progress{
+  fill:none;
+  stroke-width:14;
+}
+.loader-track{
+  stroke:rgba(255,255,255,.055);
+  stroke-linecap:round;
+  stroke-dasharray:.972 .028;
+}
+.loader-progress{
+  stroke:url(#brandStroke);
+  stroke-linecap:round;
+  stroke-dasharray:0 1;
+  filter:
+    drop-shadow(0 0 8px rgba(11,124,255,.22))
+    drop-shadow(0 0 14px rgba(0,230,107,.10));
+}
+
+.brand-wordmark{
+  position:absolute;
+  left:142px;
+  top:74px;
+  width:390px;
+  height:92px;
+  opacity:0;
+  clip-path:inset(0 100% 0 0);
+  transform:translateX(-84px);
+  transform-origin:left center;
+  overflow:visible;
+  will-change:opacity,clip-path,transform;
+  filter:drop-shadow(0 12px 25px rgba(0,199,217,.06));
+}
+
+html.is-portrait .intro-copy{
+  left:90px;
+  top:288px;
+  width:720px;
+  height:62px;
+}
+html.is-portrait .phrase-stack span{
+  width:720px;
+  font-size:42px;
+}
+html.is-portrait .brand-stage{
+  left:450px;
+  top:800px;
+  width:520px;
+  height:220px;
+}
+html.is-portrait .logo-build{
+  left:-110px;
+  width:220px;
+  height:220px;
+}
+html.is-portrait .brand-wordmark{
+  left:130px;
+  top:75px;
+  width:320px;
+  height:72px;
+}

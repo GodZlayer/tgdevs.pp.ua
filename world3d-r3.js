@@ -452,11 +452,12 @@ function sampleTargetMark(count){
 
 function collectTextPoints(root,count,offsetX){
   root.updateMatrixWorld(true);
+  const invRoot=root.matrixWorld.clone().invert();
   const points=[];
   root.traverse(o=>{
     if(!o.isMesh)return;
     const p=o.geometry.getAttribute('position');
-    const m=o.matrixWorld;
+    const m=new THREE.Matrix4().multiplyMatrices(invRoot,o.matrixWorld);
     const v=new THREE.Vector3();
     for(let i=0;i<p.count;i+=2){
       v.fromBufferAttribute(p,i).applyMatrix4(m);

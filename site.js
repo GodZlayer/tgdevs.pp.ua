@@ -20,6 +20,7 @@ const logoProgressMajor=document.getElementById("logoProgressMajor");
 const logoProgressMinor=document.getElementById("logoProgressMinor");
 const loaderTracks=[...document.querySelectorAll(".loader-track")];
 const wipe=document.getElementById("brandWipe");
+const scrollCue=document.getElementById("scrollCue");
 const phrases=[...document.querySelectorAll("[data-phrase]")];
 const frame=document.getElementById("frame");
 const worldObject=document.getElementById("worldObject");
@@ -195,6 +196,12 @@ function render(){
   ticking=false;
 
   const p=clamp(scrollY/SCROLL_DISTANCE);
+
+  if(scrollCue){
+    const cueOut=mix(p,.004,.028);
+    scrollCue.style.opacity=String(1-cueOut);
+    scrollCue.style.transform=`translateX(-50%) translateY(${lerp(0,14,cueOut)}px)`;
+  }
 
   /* SCENE 01 — the mark builds itself. No textual loading. */
   const build=mix(p,.005,.145);

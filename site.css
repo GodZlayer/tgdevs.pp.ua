@@ -508,8 +508,6 @@ html.is-portrait .scroll-cue{
   filter:drop-shadow(0 10px 22px rgba(0,199,217,.08));
 }
 .gear-spin{
-  transform-box:view-box;
-  transform-origin:center;
   will-change:transform;
 }
 .gear-pointer{
@@ -544,3 +542,8 @@ html.is-portrait .scroll-cue{
   stroke-dasharray:1 1;
   stroke-dashoffset:1;
 }
+
+
+/* Gear geometry: the approved mark is centered inside the ring, never stretched. */
+.gear-fit{pointer-events:none}
+.gear-svg{preserve-aspect-ratio:xMidYMid meet}

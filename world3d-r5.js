@@ -43,8 +43,8 @@ function addGradientColors(g,minX,maxX){
 function physicalGradient(){
   return new THREE.MeshPhysicalMaterial({
     color:0xffffff,vertexColors:true,
-    roughness:.46,metalness:.025,
-    clearcoat:.20,clearcoatRoughness:.38,
+    roughness:.58,metalness:.012,
+    clearcoat:.10,clearcoatRoughness:.48,
     transparent:true,opacity:1
   });
 }
@@ -94,7 +94,8 @@ function svgExtruded(svgText,targetHeight,depth=.045,bevel=.003){
     raw.add(new THREE.Mesh(geo,physicalGradient()));
   }
   raw.position.set(-center.x,-center.y,0);
-  raw.scale.set(scale,-scale,scale);
+  // Flip Y to convert SVG coordinates, and Z as well to preserve face winding.
+  raw.scale.set(scale,-scale,-scale);
   const root=new THREE.Group();root.add(raw);
   root.userData={width:size.x*scale,height:targetHeight};
   return root;
@@ -777,9 +778,9 @@ export class TGWorld3D{
           const width=s.children[0].userData.width*s.scale.x;
           s.position.x=-width/2;
         }else{
-          s.position.set(-4.82,.06,0);
-          s.rotation.y=.035;
-          s.scale.setScalar(.86);
+          s.position.set(-5.18,.06,0);
+          s.rotation.y=.025;
+          s.scale.setScalar(.76);
         }
         s.position.z=lerp(-.10,.05,a);
       });

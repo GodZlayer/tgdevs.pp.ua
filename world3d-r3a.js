@@ -99,7 +99,7 @@ function createTGDevsMark(){
   for(let i=0;i<seg;i++){
     const a=i/seg*TAU;
     const tooth=i%4;
-    const r=(tooth===1||tooth===2)?.76:.60;
+    const r=(tooth===1||tooth===2) ? .76 : .60;
     const x=Math.cos(a)*r,y=Math.sin(a)*r;
     if(i===0)shape.moveTo(x,y);else shape.lineTo(x,y);
   }
@@ -390,7 +390,7 @@ function sampleSourceMark(count){
       x=Math.cos(a)*r;y=Math.sin(a)*r;z=(seeded(i*9.7)-.5)*.13;
     }else if(q<.84){
       const sector=((a/TAU)*32)%4;
-      const ro=(sector>=1&&sector<3)?.76:.60;
+      const ro=(sector>=1&&sector<3) ? .76 : .60;
       const r=lerp(.30,ro,Math.sqrt(seeded(i*1.37)));
       x=Math.cos(a)*r;y=Math.sin(a)*r;z=(seeded(i*5.2)-.5)*.22;
     }else{
@@ -684,7 +684,7 @@ export class TGWorld3D{
     this.sourceMark.userData.gear.rotation.z=lerp(0,Math.PI*4,build);
 
     this.identity.position.set(0,portrait?-.60:0,0);
-    this.identity.scale.setScalar(portrait?.77:1);
+    this.identity.scale.setScalar(portrait ? .77 : 1);
     this.identity.position.x+=portrait?0:lerp(0,1.18,stageShift);
     this.identity.rotation.y=lerp(0,-.10,stageShift);
 
@@ -710,9 +710,9 @@ export class TGWorld3D{
 
       materialOpacity(this.targetWord,targetSolid);
 
-      const sourceWordScale=portrait?.70:1;
+      const sourceWordScale=portrait ? .70 : 1;
       this.sourceWord.scale.multiplyScalar(sourceWordScale);
-      this.targetWord.scale.setScalar(portrait?.62:.88);
+      this.targetWord.scale.setScalar(portrait ? .62 : .88);
       this.targetWord.position.set(1.14,-.02,0);
 
       const ranges=[[0,.040],[.035,.075],[.070,.110],[.105,.185]];

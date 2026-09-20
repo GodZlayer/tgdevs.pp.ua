@@ -32,6 +32,19 @@ const tgbcLead=document.querySelector(".tgbc-lead");
 const tgbcLeadLine=document.querySelector(".tgbc-lead i");
 const tgbcFav=document.getElementById("tgbcFav");
 const tgbcWord=document.querySelector(".tgbc-word");
+let logo3dReady=false;
+
+if(world3d){
+  world3d.prepareLogoMorph({
+    sourceMark:markFinal,
+    sourceWord:brandWordmark,
+    targetMark:tgbcFav
+  }).then(()=>{
+    logo3dReady=true;
+    document.documentElement.classList.add("logo3d-ready");
+    request();
+  }).catch(()=>{});
+}
 
 const laterCopies=[
   document.querySelector(".tgbc-copy"),
@@ -86,11 +99,11 @@ function render(){
   if(gearSpin)gearSpin.setAttribute("transform",`rotate(${lerp(0,720,build)} 205 203.5)`);
   gearCore.style.opacity=String(1-vectorOut);
 
-  const wordOut=1-mix(p,.19,.235);
-  const tgMarkOut=1-mix(p,.285,.33);
+  const meshIn=logo3dReady?mix(p,.158,.182):0;
+  const domLogoAlpha=1-meshIn;
 
-  markFinal.style.opacity=String(finalIn*tgMarkOut);
-  brandWordmark.style.opacity=String(wordBuild*wordOut);
+  markFinal.style.opacity=String(finalIn*domLogoAlpha);
+  brandWordmark.style.opacity=String(wordBuild*domLogoAlpha);
   brandWordmark.style.transform=`translateX(${lerp(-96,0,wordBuild)}px)`;
   brandWordmark.style.clipPath=`inset(0 ${lerp(100,0,wordBuild)}% 0 0)`;
 
@@ -120,6 +133,8 @@ function render(){
       flow,
       orbMorph,
       orbExpand,
+      logoAlpha:meshIn,
+      logoMorph,
       tour:0,
       portrait
     });
@@ -134,20 +149,11 @@ function render(){
   }
 
   /* 04 — TGDevs becomes TGBC. */
-  const tgbcIconIn=mix(p,.295,.35);
-  const tgbcWordIn=mix(p,.335,.395);
+  const logoMorph=mix(p,.285,.395);
   const leadIn=mix(p,.35,.415);
   const lineIn=mix(p,.37,.435);
 
-  if(tgbcReveal)tgbcReveal.style.opacity=String(Math.max(tgbcIconIn,leadIn));
-  if(tgbcFav){
-    tgbcFav.style.opacity=String(tgbcIconIn);
-    tgbcFav.style.transform=`scale(${lerp(.84,1,tgbcIconIn)})`;
-  }
-  if(tgbcWord){
-    tgbcWord.style.opacity=String(tgbcWordIn);
-    tgbcWord.style.transform=`translateX(${lerp(-42,0,tgbcWordIn)}px)`;
-  }
+  if(tgbcReveal)tgbcReveal.style.opacity=String(leadIn);
   if(tgbcLead){
     tgbcLead.style.opacity=String(leadIn);
     tgbcLead.style.transform=portrait

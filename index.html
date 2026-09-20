@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#050708">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#030607">
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="canonical" href="https://www.tgdevs.pp.ua/">
   <title>TGDevs — Sistemas que simplificam</title>
@@ -14,79 +14,25 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="site3d-r2.css">
+  <link rel="stylesheet" href="site3d-r3.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three.module.min.js",
+        "three/addons/loaders/FontLoader.js": "./vendor/FontLoader.js",
+        "three/addons/geometries/TextGeometry.js": "./vendor/TextGeometry.js"
+      }
+    }
+  </script>
 </head>
 <body>
   <main class="world" id="top">
-    <div class="design-space" id="designSpace">
-    <div class="space-grid" aria-hidden="true"></div>
-    <canvas class="particle-waves" id="particleWaves" width="1440" height="900" aria-hidden="true"></canvas>
-
-    <section class="intro-copy" aria-live="polite">
-      <div class="phrase-stack">
-        <span data-phrase="0">Sistemas que simplificam</span>
-        <span data-phrase="1">Sofisticados</span>
-        <span data-phrase="2">Prontos para o mundo moderno</span>
-        <span data-phrase="3">Perfeito para sua empresa</span>
-      </div>
-    </section>
-
-    <div class="tgbc-gradient-bg" id="tgbcGradientBg" aria-hidden="true"></div>
-    <section class="tgbc-reveal" id="tgbcReveal">
-      <div class="tgbc-lead"><span>Sua empresa merece :</span><i></i></div>
-    </section>
-    <div class="brand-wipe" id="brandWipe" aria-hidden="true"></div>
-
-    <div class="scroll-cue" id="scrollCue" aria-hidden="true">
-      <div class="scroll-mouse">
-        <span class="scroll-wheel"></span>
-      </div>
-      <div class="scroll-chevrons">
-        <i></i><i></i>
-      </div>
-    </div>
-
-    <section class="scene-copy tgbc-copy">
-      <span class="eyebrow">Produto principal</span>
-      <h2>Um centro.<br>Múltiplas operações.</h2>
-      <p>O TGBC concentra a rotina empresarial. APIs, automações e integrações existem dentro do próprio ecossistema.</p>
-      <a href="https://bc.tgdevs.pp.ua/" target="_blank" rel="noreferrer">Abrir TGBC ↗</a>
-    </section>
-
-    <section class="scene-copy tgdesk-copy">
-      <span class="eyebrow">Produto secundário</span>
-      <h2>Chegar ao dispositivo.<br>Entender o problema.</h2>
-      <p>TGDesk transforma acesso remoto em uma plataforma de suporte empresarial.</p>
-    </section>
-
-    <section class="scene-copy partner-copy">
-      <span class="eyebrow">Parceiros</span>
-      <h2>Projetos reais.</h2>
-      <p>Invoga · JVL · Maxine · Endodontia · Profissional Capilar · Cosme e Damião</p>
-    </section>
-
-    <section class="scene-copy demos-copy">
-      <span class="eyebrow">Demos</span>
-      <h2>E-commerce.<br>Cardápio.</h2>
-      <div class="demo-links">
-        <a href="https://ecomerce.tgdevs.pp.ua/" target="_blank" rel="noreferrer">E-commerce ↗</a>
-        <a href="https://cardapio.tgdevs.pp.ua/" target="_blank" rel="noreferrer">Cardápio ↗</a>
-      </div>
-    </section>
-
-    <div class="world-object" id="worldObject" aria-hidden="true"></div>
+    <div class="design-space">
+      <canvas id="worldCanvas" width="1440" height="900" aria-label="Apresentação 3D TGDevs"></canvas>
     </div>
   </main>
 
   <div class="scroll-space" aria-hidden="true"></div>
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
-      }
-    }
-  </script>
-  <script type="module" src="site3d-r2.js"></script>
+  <script type="module" src="site3d-r3.js"></script>
 </body>
 </html>

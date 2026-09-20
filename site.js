@@ -226,7 +226,7 @@ function render(){
   loaderTracks.forEach(track=>track.style.opacity=String(.52*ringVisible));
   logoLoader.style.opacity=ringVisible<=.001?"0":"1";
 
-  if(gearSpin)gearSpin.style.transform=`rotate(${lerp(0,720,build)}deg)`;
+  if(gearSpin)gearSpin.setAttribute("transform",`rotate(${lerp(0,720,build)} 205 203.5)`);
   gearCore.style.opacity=String(1-complete*.98);
 
   markFinal.style.opacity=String(complete);

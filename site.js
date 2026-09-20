@@ -16,8 +16,9 @@ const gearCore=document.getElementById("gearCore");
 const markFinal=document.getElementById("markFinal");
 const brandWordmark=document.getElementById("brandWordmark");
 const logoLoader=document.getElementById("logoLoader");
-const logoProgress=document.getElementById("logoProgress");
-const loaderTrack=document.querySelector(".loader-track");
+const logoProgressMajor=document.getElementById("logoProgressMajor");
+const logoProgressMinor=document.getElementById("logoProgressMinor");
+const loaderTracks=[...document.querySelectorAll(".loader-track")];
 const wipe=document.getElementById("brandWipe");
 const phrases=[...document.querySelectorAll("[data-phrase]")];
 const frame=document.getElementById("frame");
@@ -107,8 +108,8 @@ function gradient3(c1,c2,c3,t){
 function drawParticleSurface(cfg,build,visibility,portrait){
   if(!particleCtx||build<=.001||visibility<=.001)return;
 
-  const cols=portrait?84:124;
-  const rows=portrait?50:40;
+  const cols=portrait?112:158;
+  const rows=portrait?68:54;
   const c1=cfg.colors[0];
   const c2=cfg.colors[1];
   const c3=cfg.colors[2];
@@ -203,12 +204,21 @@ function render(){
   const waveFade=1-mix(p,.16,.225);
 
   const ringVisible=1-complete;
-  const ringProgress=RING_SPAN*build;
+  const majorBuild=clamp(build/.82);
+  const minorBuild=clamp((build-.82)/.18);
 
-  logoProgress.style.strokeDasharray=`${ringProgress} ${Math.max(.0001,1-ringProgress)}`;
-  logoProgress.style.strokeDashoffset="0";
-  logoProgress.style.opacity=String(ringVisible);
-  loaderTrack.style.opacity=String(.8*ringVisible);
+  const majorLen=.735*majorBuild;
+  const minorLen=.145*minorBuild;
+
+  logoProgressMajor.style.strokeDasharray=`${majorLen} ${Math.max(.0001,1-majorLen)}`;
+  logoProgressMajor.style.strokeDashoffset=".015";
+  logoProgressMajor.style.opacity=String(ringVisible);
+
+  logoProgressMinor.style.strokeDasharray=`${minorLen} ${Math.max(.0001,1-minorLen)}`;
+  logoProgressMinor.style.strokeDashoffset="-.805";
+  logoProgressMinor.style.opacity=String(ringVisible);
+
+  loaderTracks.forEach(track=>track.style.opacity=String(.72*ringVisible));
 
   gearCore.style.transform=`rotate(${lerp(0,720,build)}deg)`;
   gearCore.style.opacity=String(1-complete*.95);

@@ -150,10 +150,22 @@ function render(){
 
   /* 04 — TGDevs becomes TGBC. */
   const logoMorph=mix(p,.285,.395);
+  const tgbcIconIn=mix(p,.295,.35);
+  const tgbcWordIn=mix(p,.335,.395);
   const leadIn=mix(p,.35,.415);
   const lineIn=mix(p,.37,.435);
 
-  if(tgbcReveal)tgbcReveal.style.opacity=String(leadIn);
+  if(tgbcReveal)tgbcReveal.style.opacity=String(Math.max(leadIn,logo3dReady?0:tgbcIconIn));
+  if(!logo3dReady){
+    if(tgbcFav){
+      tgbcFav.style.opacity=String(tgbcIconIn);
+      tgbcFav.style.transform=`scale(${lerp(.84,1,tgbcIconIn)})`;
+    }
+    if(tgbcWord){
+      tgbcWord.style.opacity=String(tgbcWordIn);
+      tgbcWord.style.transform=`translateX(${lerp(-42,0,tgbcWordIn)}px)`;
+    }
+  }
   if(tgbcLead){
     tgbcLead.style.opacity=String(leadIn);
     tgbcLead.style.transform=portrait

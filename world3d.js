@@ -14,6 +14,8 @@
   uniform float u_visibility;
   uniform float u_flow;
   uniform float u_portrait;
+  uniform float u_orbMorph;
+  uniform float u_orbExpand;
   out vec4 v_color;
 
   float hash(float n){return fract(sin(n*12.9898+78.233)*43758.5453);}
@@ -54,6 +56,19 @@
     p.y=baseY+w1*amp+w2*amp*.24+(d-.5)*.34+(hash(seed+3107.0)-.5)*.016+(u_flow-.5)*(reverse ? .035 : -.04);
     p.z=mix(-.92,.72,d)+w2*.075+w3*.045;
 
+    /* The world collapses into a real spherical point cloud around the brand. */
+    float theta=u*6.28318530718+surface*3.14159265359;
+    float phi=(d*.94+.03)*3.14159265359;
+    vec3 sphere=vec3(sin(phi)*cos(theta),cos(phi),sin(phi)*sin(theta));
+    float sphereRadius=mix(.86,.96,u_portrait);
+    sphere*=sphereRadius;
+    sphere.y+=mix(0.0,-.16,u_portrait);
+    sphere.z*=.78;
+
+    p=mix(p,sphere,u_orbMorph);
+    p.xy*=mix(1.0,3.65,u_orbExpand);
+    p.z*=mix(1.0,2.15,u_orbExpand);
+
     float yaw=mix(-.055,.045,u_flow);
     float cy=cos(yaw),sy=sin(yaw);
     p.xz=mat2(cy,-sy,sy,cy)*p.xz;
@@ -66,13 +81,14 @@
 
     float edge=sin(3.14159265*clamp(u,0.0,1.0));
     float alpha=born*u_visibility*edge*mix(.06,.46,d)*mix(.55,1.0,hash(seed+701.0));
+    alpha*=mix(1.0,.16,u_orbExpand);
     if(reverse)alpha*=.94;
 
     vec3 blue=vec3(.043,.486,1.0),cyan=vec3(0.0,.78,.85),green=vec3(0.0,.90,.42);
     float ct=reverse?1.0-u:u;
     vec3 color=reverse?grad3(green,cyan,blue,ct):grad3(blue,cyan,vec3(0.0,.90,.70),ct);
 
-    gl_PointSize=mix(1.0,3.9,d)*mix(.82,1.30,hash(seed+991.0))*u_dpr;
+    gl_PointSize=mix(1.0,3.9,d)*mix(.82,1.30,hash(seed+991.0))*mix(1.0,1.32,u_orbMorph)*u_dpr;
     v_color=vec4(color,alpha);
   }`;
 
@@ -275,7 +291,7 @@
       this.particleCount=256*78*2;
 
       this.pu={};
-      ["u_resolution","u_dpr","u_build","u_visibility","u_flow","u_portrait"].forEach(n=>this.pu[n]=gl.getUniformLocation(this.particleProgram,n));
+      ["u_resolution","u_dpr","u_build","u_visibility","u_flow","u_portrait","u_orbMorph","u_orbExpand"].forEach(n=>this.pu[n]=gl.getUniformLocation(this.particleProgram,n));
 
       gl.bindVertexArray(this.geoVAO);
       gl.bindBuffer(gl.ARRAY_BUFFER,this.geoBuffer);
@@ -310,6 +326,8 @@
       gl.uniform1f(this.pu.u_visibility,state.introVisibility);
       gl.uniform1f(this.pu.u_flow,state.flow);
       gl.uniform1f(this.pu.u_portrait,state.portrait?1:0);
+      gl.uniform1f(this.pu.u_orbMorph,state.orbMorph||0);
+      gl.uniform1f(this.pu.u_orbExpand,state.orbExpand||0);
       gl.drawArrays(gl.POINTS,0,this.particleCount);
     }
 

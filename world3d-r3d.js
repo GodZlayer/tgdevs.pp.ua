@@ -639,7 +639,7 @@ export class TGWorld3D{
     this.camera.updateProjectionMatrix();
 
     this.cloud.geometry.setDrawRange(0,portrait?9000:16000);
-    this.markFragments.geometry.instanceCount=portrait?1500:2800;
+    this.markFragments.geometry.instanceCount=portrait?1300:2200;
     if(this.wordFragments)this.wordFragments.geometry.instanceCount=portrait?2200:4200;
   }
 
@@ -677,52 +677,60 @@ export class TGWorld3D{
 
     const track=this.sourceMark.userData.track;
     const progress=this.sourceMark.userData.progress;
+    const finalRing=this.sourceMark.userData.finalRing;
     const full=progress.userData.fullCount||0;
     progress.geometry.setDrawRange(0,Math.floor(full*build));
-    track.material.opacity=.30*(1-build*.92);
     this.sourceMark.userData.gear.rotation.z=lerp(0,Math.PI*4,build);
 
-    this.identity.position.set(0,portrait ? -.68 : 0,0);
-    this.identity.scale.setScalar(portrait ? .70 : .92);
-    this.identity.position.x+=portrait ? 0 : lerp(0,1.36,stageShift);
-    this.identity.rotation.y=lerp(0,-.04,stageShift);
+    this.identity.position.set(0,portrait ? -.70 : 0,0);
+    this.identity.scale.setScalar(portrait ? .72 : 1);
+    this.identity.position.x+=portrait ? 0 : lerp(0,.78,stageShift);
+    this.identity.rotation.y=lerp(0,-.025,stageShift);
 
     materialOpacity(this.sourceMark,1-markCloud);
+    const ringFinal=mix(build,.86,.985);
+    materialOpacity(finalRing,ringFinal*(1-markCloud));
+    materialOpacity(progress,(1-ringFinal)*(1-markCloud));
+    track.material.opacity=.18*(1-markCloud)*(1-build*.82);
 
     this.markFragments.material.uniforms.uMorph.value=morph;
     this.markFragments.material.uniforms.uAlpha.value=markCloud*(1-targetSolid);
     this.markFragments.visible=markCloud>.001&&targetSolid<.999;
 
     materialOpacity(this.targetMark,targetSolid);
-    this.targetMark.scale.setScalar(lerp(.90,.80,targetSolid));
+
+    const wordExit=mix(p,.19,.235);
+    if(portrait){
+      this.sourceWord.position.set(0,lerp(-.62,-1.22,wordIn),lerp(-.15,-.50,wordExit));
+      this.sourceWord.scale.setScalar(.46*lerp(1,.88,wordExit));
+      this.sourceWord.rotation.y=0;
+      this.sourceWord.rotation.x=lerp(0,-.08,wordExit);
+    }else{
+      this.sourceWord.position.set(lerp(.92,2.15,wordIn),-.02,lerp(-.15,-.55,wordExit));
+      this.sourceWord.scale.setScalar(.58*lerp(1,.88,wordExit));
+      this.sourceWord.rotation.y=lerp(-.08,.12,wordExit);
+      this.sourceWord.rotation.x=lerp(0,-.07,wordExit);
+    }
+    materialOpacity(this.sourceWord,wordIn*(1-wordExit)*(1-markCloud));
+
+    const targetWordIn=mix(p,.392,.425);
+    materialOpacity(this.targetWord,targetWordIn);
+    if(portrait){
+      this.targetWord.scale.setScalar(.22*lerp(.90,1,targetWordIn));
+      this.targetWord.position.set(0,-1.22,lerp(-.45,0,targetWordIn));
+      this.targetWord.rotation.y=0;
+    }else{
+      this.targetWord.scale.setScalar(.32*lerp(.90,1,targetWordIn));
+      this.targetWord.position.set(2.18,-.01,lerp(-.45,0,targetWordIn));
+      this.targetWord.rotation.y=lerp(-.10,0,targetWordIn);
+    }
+
+    if(this.wordFragments){
+      this.wordFragments.visible=false;
+      this.wordFragments.material.uniforms.uAlpha.value=0;
+    }
 
     if(this.textReady){
-      const wordExit=mix(p,.19,.235);
-      this.sourceWord.position.set(
-        lerp(.18,1.14,wordIn),
-        -.03,
-        lerp(-.22,-.72,wordExit)
-      );
-      this.sourceWord.rotation.y=lerp(-.28,.22,wordExit);
-      this.sourceWord.rotation.x=lerp(0,-.10,wordExit);
-      this.sourceWord.scale.setScalar((portrait ? .70 : 1)*lerp(1,.78,wordExit));
-      materialOpacity(this.sourceWord,wordIn*(1-wordExit));
-
-      if(this.wordFragments){
-        this.wordFragments.visible=false;
-        this.wordFragments.material.uniforms.uAlpha.value=0;
-      }
-
-      const targetWordIn=mix(p,.392,.425);
-      materialOpacity(this.targetWord,targetWordIn);
-      this.targetWord.scale.setScalar((portrait ? .50 : .68)*lerp(.90,1,targetWordIn));
-      this.targetWord.position.set(
-        portrait ? .20 : .93,
-        -.02,
-        lerp(-.55,0,targetWordIn)
-      );
-      this.targetWord.rotation.y=lerp(-.14,0,targetWordIn);
-
       const ranges=[[0,.040],[.035,.075],[.070,.110],[.105,.185]];
       this.slogans.forEach((s,i)=>{
         const fade=.006;

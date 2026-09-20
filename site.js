@@ -17,8 +17,7 @@ const gearSpin=document.querySelector(".gear-spin");
 const markFinal=document.getElementById("markFinal");
 const brandWordmark=document.getElementById("brandWordmark");
 const logoLoader=document.getElementById("logoLoader");
-const logoProgressMajor=document.getElementById("logoProgressMajor");
-const logoProgressMinor=document.getElementById("logoProgressMinor");
+const logoProgress=document.getElementById("logoProgress");
 const loaderTracks=[...document.querySelectorAll(".loader-track")];
 const wipe=document.getElementById("brandWipe");
 const scrollCue=document.getElementById("scrollCue");
@@ -205,31 +204,27 @@ function render(){
   }
 
   /* SCENE 01 — the mark builds itself. No textual loading. */
-  const build=mix(p,.005,.145);
-  const complete=mix(p,.118,.155);
+  const build=mix(p,.005,.13);
   const word=mix(build,.54,.96);
-  const navMove=mix(p,.145,.205);
-  const waveFade=1-mix(p,.16,.225);
 
-  const ringVisible=1-complete;
-  const majorBuild=clamp(build/.82);
-  const minorBuild=clamp((build-.82)/.18);
+  /* Safe keyframes: build -> hold -> exact final mark -> hold -> navigation. */
+  const finalIn=mix(p,.15,.158);
+  const vectorOut=mix(p,.16,.168);
+  const navMove=mix(p,.19,.235);
+  const waveFade=1-mix(p,.17,.235);
 
-  logoProgressMajor.style.strokeDasharray="1 1";
-  logoProgressMajor.style.strokeDashoffset=String(1-majorBuild);
-  logoProgressMajor.style.opacity=majorBuild<=.001||ringVisible<=.001?"0":String(ringVisible);
+  logoProgress.style.strokeDasharray="1 1";
+  logoProgress.style.strokeDashoffset=String(1-build);
+  logoProgress.style.opacity=build<=.001?"0":"1";
 
-  logoProgressMinor.style.strokeDasharray="1 1";
-  logoProgressMinor.style.strokeDashoffset=String(1-minorBuild);
-  logoProgressMinor.style.opacity=minorBuild<=.001||ringVisible<=.001?"0":String(ringVisible);
-
-  loaderTracks.forEach(track=>track.style.opacity=String(.52*ringVisible));
-  logoLoader.style.opacity=ringVisible<=.001?"0":"1";
+  loaderTracks.forEach(track=>track.style.opacity=".52");
+  logoLoader.style.opacity=String(1-vectorOut);
 
   if(gearSpin)gearSpin.setAttribute("transform",`rotate(${lerp(0,720,build)} 205 203.5)`);
-  gearCore.style.opacity=String(1-complete*.98);
+  gearCore.style.opacity=String(1-vectorOut);
 
-  markFinal.style.opacity=String(complete);
+  /* The exact approved favicon reaches full opacity before the vector layer can fade. */
+  markFinal.style.opacity=String(finalIn);
 
   brandWordmark.style.opacity=String(word);
   brandWordmark.style.transform=`translateX(${lerp(-96,0,word)}px)`;
@@ -255,8 +250,8 @@ function render(){
 
   document.querySelector(".intro-copy").style.opacity=String(1-mix(p,.145,.19));
 
-  const wipeIn=mix(p,.185,.225);
-  const wipeOut=mix(p,.225,.255);
+  const wipeIn=mix(p,.215,.255);
+  const wipeOut=mix(p,.255,.285);
   wipe.style.transform=`scaleX(${wipeIn})`;
   wipe.style.opacity=String(1-wipeOut);
 

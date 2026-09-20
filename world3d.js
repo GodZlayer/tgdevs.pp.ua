@@ -119,6 +119,81 @@
   void main(){outColor=v_color;}
   `;
 
+  const LOGO_VS=`#version 300 es
+  precision highp float;
+  layout(location=0) in vec3 a_from;
+  layout(location=1) in vec3 a_to;
+  layout(location=2) in vec3 a_colorFrom;
+  layout(location=3) in vec3 a_colorTo;
+  layout(location=4) in float a_seed;
+
+  uniform float u_morph;
+  uniform float u_alpha;
+  uniform float u_dpr;
+  uniform float u_aspect;
+  uniform float u_portrait;
+  uniform float u_kind;
+
+  out vec3 v_color;
+  out float v_alpha;
+  out float v_light;
+
+  void main(){
+    float m=smoothstep(0.0,1.0,u_morph);
+    vec3 p=mix(a_from,a_to,m);
+
+    float arc=sin(m*3.14159265);
+    float yaw=arc*(.22+(a_seed-.5)*.34);
+    float cy=cos(yaw),sy=sin(yaw);
+    p.xz=mat2(cy,-sy,sy,cy)*p.xz;
+    p.z+=arc*(.16+.10*a_seed);
+
+    float portrait=u_portrait;
+    vec2 fromOffset=u_kind<.5
+      ? mix(vec2(-.05,.00),vec2(-.22,.10),portrait)
+      : mix(vec2(.63,.00),vec2(.22,-.10),portrait);
+    vec2 toOffset=u_kind<.5
+      ? mix(vec2(.05,.00),vec2(-.20,.02),portrait)
+      : mix(vec2(.72,.00),vec2(.25,-.02),portrait);
+
+    float fromScale=u_kind<.5
+      ? mix(.43,.32,portrait)
+      : mix(.27,.20,portrait);
+    float toScale=u_kind<.5
+      ? mix(.47,.34,portrait)
+      : mix(.22,.15,portrait);
+
+    float scale=mix(fromScale,toScale,m);
+    vec2 offset=mix(fromOffset,toOffset,m);
+    p.xy=p.xy*scale+offset;
+
+    float camZ=3.25;
+    float persp=1.65/max(.8,camZ-p.z);
+    vec2 clip=vec2(p.x*persp/max(.72,u_aspect*.72),p.y*persp*1.72);
+    gl_Position=vec4(clip,clamp((p.z+1.2)/3.6,0.0,1.0),1.0);
+
+    gl_PointSize=mix(1.65,2.65,a_seed)*u_dpr*(u_kind<.5?1.18:1.0);
+    v_color=mix(a_colorFrom,a_colorTo,m);
+    v_alpha=u_alpha;
+    v_light=.78+.22*clamp((p.z+.18)/.36,0.0,1.0);
+  }`;
+
+  const LOGO_FS=`#version 300 es
+  precision highp float;
+  in vec3 v_color;
+  in float v_alpha;
+  in float v_light;
+  out vec4 outColor;
+  void main(){
+    vec2 d=gl_PointCoord*2.0-1.0;
+    float r2=dot(d,d);
+    if(r2>1.0)discard;
+    float edge=1.0-smoothstep(.55,1.0,r2);
+    float spec=pow(max(0.0,1.0-r2),5.0)*.18;
+    vec3 c=v_color*v_light+spec;
+    outColor=vec4(c,v_alpha*edge);
+  }`;
+
   function compile(gl,type,src){
     const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);
     if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s)||"shader compile failed");
@@ -131,6 +206,103 @@
     gl.linkProgram(p);
     if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p)||"program link failed");
     return p;
+  }
+
+  function hash01(n){
+    const x=Math.sin(n*12.9898+78.233)*43758.5453;
+    return x-Math.floor(x);
+  }
+
+  function waitImage(img){
+    if(!img)return Promise.reject(new Error("image missing"));
+    if(img.complete&&img.naturalWidth)return Promise.resolve(img);
+    return new Promise((resolve,reject)=>{
+      img.addEventListener("load",()=>resolve(img),{once:true});
+      img.addEventListener("error",reject,{once:true});
+    });
+  }
+
+  function rasterImage(img,w,h){
+    const c=document.createElement("canvas");c.width=w;c.height=h;
+    const x=c.getContext("2d",{willReadFrequently:true});
+    x.clearRect(0,0,w,h);
+    const s=Math.min(w/img.naturalWidth,h/img.naturalHeight);
+    const dw=img.naturalWidth*s,dh=img.naturalHeight*s;
+    x.drawImage(img,(w-dw)/2,(h-dh)/2,dw,dh);
+    return c;
+  }
+
+  async function rasterSvg(svg,w,h){
+    const clone=svg.cloneNode(true);
+    clone.setAttribute("width",String(w));
+    clone.setAttribute("height",String(h));
+    const source=new XMLSerializer().serializeToString(clone);
+    const url="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(source);
+    const img=new Image();
+    await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url;});
+    return rasterImage(img,w,h);
+  }
+
+  function rasterTargetWord(w=900,h=190){
+    const c=document.createElement("canvas");c.width=w;c.height=h;
+    const x=c.getContext("2d",{willReadFrequently:true});
+    x.clearRect(0,0,w,h);
+    x.textBaseline="middle";
+    x.font="900 126px Arial Black, Arial, sans-serif";
+    x.letterSpacing="-5px";
+    const y=h*.51;
+    const tg="TG",rest="BusinessCenter";
+    const tgW=x.measureText(tg).width;
+    const total=tgW+x.measureText(rest).width;
+    const start=(w-total)/2;
+    const g=x.createLinearGradient(start,0,start+tgW,0);
+    g.addColorStop(0,"#0b7cff");g.addColorStop(.55,"#00c7d9");g.addColorStop(1,"#00e66b");
+    x.fillStyle=g;x.fillText(tg,start,y);
+    x.fillStyle="#d7dee6";x.fillText(rest,start+tgW,y);
+    return c;
+  }
+
+  function sampleCanvas(canvas,count,mode){
+    const ctx=canvas.getContext("2d",{willReadFrequently:true});
+    const {width:w,height:h}=canvas;
+    const data=ctx.getImageData(0,0,w,h).data;
+    const pts=[];
+    for(let y=0;y<h;y+=1){
+      for(let x=0;x<w;x+=1){
+        const i=(y*w+x)*4,a=data[i+3];
+        if(a<42)continue;
+        pts.push({x,y,r:data[i],g:data[i+1],b:data[i+2],a});
+      }
+    }
+    if(!pts.length)return new Float32Array(count*6);
+
+    let minX=w,maxX=0,minY=h,maxY=0;
+    for(const p of pts){if(p.x<minX)minX=p.x;if(p.x>maxX)maxX=p.x;if(p.y<minY)minY=p.y;if(p.y>maxY)maxY=p.y;}
+    const cx=(minX+maxX)/2,cy=(minY+maxY)/2;
+    if(mode==="mark"){
+      pts.sort((a,b)=>{
+        const aa=Math.atan2(a.y-cy,a.x-cx),bb=Math.atan2(b.y-cy,b.x-cx);
+        if(Math.abs(aa-bb)>.002)return aa-bb;
+        const ar=(a.x-cx)*(a.x-cx)+(a.y-cy)*(a.y-cy);
+        const br=(b.x-cx)*(b.x-cx)+(b.y-cy)*(b.y-cy);
+        return ar-br;
+      });
+    }else{
+      pts.sort((a,b)=>a.x===b.x?a.y-b.y:a.x-b.x);
+    }
+
+    const span=Math.max(1,maxY-minY);
+    const out=new Float32Array(count*6);
+    for(let n=0;n<count;n++){
+      const src=pts[Math.min(pts.length-1,Math.floor(n*(pts.length-1)/Math.max(1,count-1)))];
+      const x=(src.x-cx)/span*2;
+      const y=(cy-src.y)/span*2;
+      const z=(hash01(n*17.17+(mode==="mark"?3:9))-.5)*(mode==="mark"?.22:.13);
+      const o=n*6;
+      out[o]=x;out[o+1]=y;out[o+2]=z;
+      out[o+3]=src.r/255;out[o+4]=src.g/255;out[o+5]=src.b/255;
+    }
+    return out;
   }
 
   function rgba(hex,a=1){
@@ -285,13 +457,21 @@
       const gl=this.gl;
       this.particleProgram=makeProgram(gl,PARTICLE_VS,PARTICLE_FS);
       this.geoProgram=makeProgram(gl,GEO_VS,GEO_FS);
+      this.logoProgram=makeProgram(gl,LOGO_VS,LOGO_FS);
       this.particleVAO=gl.createVertexArray();
       this.geoVAO=gl.createVertexArray();
       this.geoBuffer=gl.createBuffer();
+      this.logoVAO=gl.createVertexArray();
+      this.logoBuffer=gl.createBuffer();
+      this.logoCountMark=0;
+      this.logoCountWord=0;
+      this.logoReady=false;
       this.particleCount=256*78*2;
 
       this.pu={};
       ["u_resolution","u_dpr","u_build","u_visibility","u_flow","u_portrait","u_orbMorph","u_orbExpand"].forEach(n=>this.pu[n]=gl.getUniformLocation(this.particleProgram,n));
+      this.lu={};
+      ["u_morph","u_alpha","u_dpr","u_aspect","u_portrait","u_kind"].forEach(n=>this.lu[n]=gl.getUniformLocation(this.logoProgram,n));
 
       gl.bindVertexArray(this.geoVAO);
       gl.bindBuffer(gl.ARRAY_BUFFER,this.geoBuffer);
@@ -302,6 +482,70 @@
       gl.enable(gl.BLEND);
       gl.clearColor(0,0,0,0);
       this.ready=true;
+    }
+
+    async prepareLogoMorph({sourceMark,sourceWord,targetMark}){
+      if(!this.gl||this.logoReady)return;
+      await Promise.all([waitImage(sourceMark),waitImage(targetMark)]);
+      const sourceMarkCanvas=rasterImage(sourceMark,320,320);
+      const targetMarkCanvas=rasterImage(targetMark,320,320);
+      const sourceWordCanvas=await rasterSvg(sourceWord,960,220);
+      const targetWordCanvas=rasterTargetWord(960,220);
+
+      const markCount=10500;
+      const wordCount=12500;
+      const markA=sampleCanvas(sourceMarkCanvas,markCount,"mark");
+      const markB=sampleCanvas(targetMarkCanvas,markCount,"mark");
+      const wordA=sampleCanvas(sourceWordCanvas,wordCount,"word");
+      const wordB=sampleCanvas(targetWordCanvas,wordCount,"word");
+
+      const stride=13;
+      const packed=new Float32Array((markCount+wordCount)*stride);
+      const pack=(a,b,start,count)=>{
+        for(let i=0;i<count;i++){
+          const po=(start+i)*stride,ao=i*6;
+          packed[po]=a[ao];packed[po+1]=a[ao+1];packed[po+2]=a[ao+2];
+          packed[po+3]=b[ao];packed[po+4]=b[ao+1];packed[po+5]=b[ao+2];
+          packed[po+6]=a[ao+3];packed[po+7]=a[ao+4];packed[po+8]=a[ao+5];
+          packed[po+9]=b[ao+3];packed[po+10]=b[ao+4];packed[po+11]=b[ao+5];
+          packed[po+12]=hash01(i*9.731+start*.137);
+        }
+      };
+      pack(markA,markB,0,markCount);
+      pack(wordA,wordB,markCount,wordCount);
+
+      const gl=this.gl;
+      gl.bindVertexArray(this.logoVAO);
+      gl.bindBuffer(gl.ARRAY_BUFFER,this.logoBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER,packed,gl.STATIC_DRAW);
+      const strideBytes=stride*4;
+      gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,3,gl.FLOAT,false,strideBytes,0);
+      gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,3,gl.FLOAT,false,strideBytes,3*4);
+      gl.enableVertexAttribArray(2);gl.vertexAttribPointer(2,3,gl.FLOAT,false,strideBytes,6*4);
+      gl.enableVertexAttribArray(3);gl.vertexAttribPointer(3,3,gl.FLOAT,false,strideBytes,9*4);
+      gl.enableVertexAttribArray(4);gl.vertexAttribPointer(4,1,gl.FLOAT,false,strideBytes,12*4);
+      this.logoCountMark=markCount;
+      this.logoCountWord=wordCount;
+      this.logoReady=true;
+    }
+
+    renderLogoMorph(state){
+      if(!this.logoReady||state.logoAlpha<=.001)return;
+      const gl=this.gl;
+      gl.disable(gl.DEPTH_TEST);
+      gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+      gl.useProgram(this.logoProgram);
+      gl.bindVertexArray(this.logoVAO);
+      gl.uniform1f(this.lu.u_morph,state.logoMorph||0);
+      gl.uniform1f(this.lu.u_alpha,state.logoAlpha||0);
+      gl.uniform1f(this.lu.u_dpr,Math.min(devicePixelRatio||1,1.5));
+      gl.uniform1f(this.lu.u_aspect,(this.canvas.width||1)/(this.canvas.height||1));
+      gl.uniform1f(this.lu.u_portrait,state.portrait?1:0);
+
+      gl.uniform1f(this.lu.u_kind,0);
+      gl.drawArrays(gl.POINTS,0,this.logoCountMark);
+      gl.uniform1f(this.lu.u_kind,1);
+      gl.drawArrays(gl.POINTS,this.logoCountMark,this.logoCountWord);
     }
 
     resize(w,h){
@@ -417,6 +661,7 @@
       const gl=this.gl;
       gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
       this.renderParticles(state);
+      this.renderLogoMorph(state);
       this.renderGeometry(state);
     }
 

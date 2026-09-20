@@ -124,3 +124,42 @@ img{display:block;max-width:100%}
 .demo-pane{position:relative;overflow:hidden;background:#fff;pointer-events:auto}
 .demo-pane iframe{width:100%;height:100%;border:0;pointer-events:none}
 .demo-pane span{position:absolute;left:18px;bottom:18px;padding:8px 10px;border-radius:999px;background:rgba(5,7,8,.78);color:#fff;font-size:12px}
+
+
+/* Fixed portrait composition: same scene, stacked instead of side-by-side. */
+html.is-portrait{
+  --design-w:900px;
+  --design-h:1440px;
+}
+html.is-portrait .intro-copy{
+  left:90px;
+  top:318px;
+  width:720px;
+  height:42px;
+}
+html.is-portrait .phrase-stack span{
+  width:720px;
+}
+html.is-portrait .brand-stage{
+  left:450px;
+  top:720px;
+}
+html.is-portrait .tgbc-copy,
+html.is-portrait .partner-copy,
+html.is-portrait .demos-copy{
+  left:90px;
+  top:320px;
+  width:720px;
+  transform:none;
+}
+html.is-portrait .tgdesk-copy{
+  left:90px;
+  right:auto;
+  top:1030px;
+  width:720px;
+  transform:none;
+}
+html.is-portrait .frame{
+  left:450px;
+  top:720px;
+}

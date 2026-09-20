@@ -564,17 +564,28 @@ export class TGWorld3D{
 
     this.sourceMark=createTGDevsMark();
     this.targetMark=createTGBCMark();
-    this.identity.add(this.sourceMark,this.targetMark);
-    materialOpacity(this.targetMark,0);
+    this.sourceWord=createSourceWord();
+    this.targetWord=createTargetWord();
 
-    const markCount=2800;
+    this.sourceMark.scale.setScalar(2.0);
+    this.targetMark.scale.setScalar(2.0);
+    this.sourceWord.scale.setScalar(.58);
+    this.targetWord.scale.setScalar(.32);
+
+    this.identity.add(this.sourceMark,this.sourceWord,this.targetMark,this.targetWord);
+    materialOpacity(this.targetMark,0);
+    materialOpacity(this.targetWord,0);
+
+    const markCount=2200;
     this.markFragments=createFragmentMorph(
-      sampleSourceMark(markCount),
-      sampleTargetMark(markCount),
-      markCount,.020
+      sampleContourBrand(BRAND.tgdevsMark,markCount,2.0,0,0),
+      sampleContourBrand(BRAND.tgbcMark,markCount,2.0,0,0),
+      markCount,.014
     );
     this.identity.add(this.markFragments);
     this.markFragments.visible=false;
+
+    this.wordFragments=null;
 
     this.scrollCue=createScrollCue();
     this.scene.add(this.scrollCue);
@@ -592,13 +603,6 @@ export class TGWorld3D{
         return r.json();
       });
       const font=new FontLoader().parse(json);
-
-      this.sourceWord=createSourceWord(font);
-      this.targetWord=createTargetWord(font);
-      this.identity.add(this.sourceWord,this.targetWord);
-      materialOpacity(this.targetWord,0);
-
-      this.wordFragments=null;
 
       this.slogans=[
         createSlogan('Sistemas que simplificam',font,.34),

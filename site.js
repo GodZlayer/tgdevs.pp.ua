@@ -187,7 +187,7 @@ function updateSvgCloud(build,visibility,flow){
       : (portrait?235:160);
     const freq1=isA?8.4:7.1;
     const freq2=isA?16.8:15.2;
-    const phase=(isA?.3:2.05)+pt.phase;
+    const phase=(isA ? .3 : 2.05)+pt.phase;
 
     const born=smooth(clamp((build-pt.reveal*.91)/.12));
     const life=visibility*(isA?1:.92);

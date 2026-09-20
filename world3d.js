@@ -46,12 +46,12 @@
 
     float portrait=u_portrait;
     float baseY=mix(reverse?-.37:-.13,reverse?-.28:-.08,portrait);
-    float amp=mix(reverse?.28:.25,reverse?.23:.21,portrait);
+    float amp=mix(reverse ? .28 : .25,reverse ? .23 : .21,portrait);
     float shear=reverse?-.43:.39;
 
     vec3 p;
     p.x=mix(-1.55,1.55,u)+(d-.5)*shear+w3*.025+(hash(seed)-.5)*.018+(u_flow-.5)*(reverse?-.055:.065);
-    p.y=baseY+w1*amp+w2*amp*.24+(d-.5)*.34+(hash(seed+3107.0)-.5)*.016+(u_flow-.5)*(reverse?.035:-.04);
+    p.y=baseY+w1*amp+w2*amp*.24+(d-.5)*.34+(hash(seed+3107.0)-.5)*.016+(u_flow-.5)*(reverse ? .035 : -.04);
     p.z=mix(-.92,.72,d)+w2*.075+w3*.045;
 
     float yaw=mix(-.055,.045,u_flow);
@@ -183,7 +183,7 @@
     const p=portrait?1:0;
     return {
       x:lerp(a.x,b.x,t),y:lerp(a.y,b.y,t)+p*.08,z:lerp(a.z,b.z,t)+p*.55,
-      yaw:lerp(a.yaw,b.yaw,t),pitch:lerp(a.pitch,b.pitch,t),fov:lerp(a.fov,b.fov,t)*(portrait?.92:1)
+      yaw:lerp(a.yaw,b.yaw,t),pitch:lerp(a.pitch,b.pitch,t),fov:lerp(a.fov,b.fov,t)*(portrait ? .92 : 1)
     };
   }
 
@@ -328,7 +328,7 @@
         const t=lerpTr(A[i],B[i],sb.t);
         const ct=(i%6)/5;
         const accent=colorMix(palette[0],palette[1],ct,1);
-        const alpha=i<6?.90:.58;
+        const alpha=i<6 ? .90 : .58;
         let kind=0;
         if(sb.phase==="desk")kind=1;
         else if(sb.phase==="partners")kind=2;

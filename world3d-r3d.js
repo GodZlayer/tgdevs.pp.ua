@@ -416,11 +416,11 @@ function sampleSourceMark(count){
     const a=seeded(i*7.33)*TAU;
     let x,y,z;
     if(q<.34){
-      const r=1.03+(seeded(i*2.11)-.5)*.12;
+      const r=1.03+(seeded(i*2.11)-.5)*.10;
       x=Math.cos(a)*r;y=Math.sin(a)*r;z=(seeded(i*9.7)-.5)*.13;
     }else if(q<.84){
       const sector=((a/TAU)*32)%4;
-      const ro=(sector>=1&&sector<3) ? .76 : .60;
+      const ro=(sector>=1&&sector<3) ? .775 : .575;
       const r=lerp(.30,ro,Math.sqrt(seeded(i*1.37)));
       x=Math.cos(a)*r;y=Math.sin(a)*r;z=(seeded(i*5.2)-.5)*.22;
     }else{
@@ -447,29 +447,29 @@ function sampleTargetMark(count){
     if(q<.28){
       const u=seeded(i*4.31)*2-1;
       const rr=Math.sqrt(1-u*u);
-      const r=.61;
+      const r=.49;
       x=Math.cos(a)*rr*r;y=u*r;z=Math.sin(a)*rr*r;
     }else if(q<.48){
-      const r=.91+(seeded(i*3.1)-.5)*.11;
+      const r=.78+(seeded(i*3.1)-.5)*.085;
       x=Math.cos(a)*r;y=Math.sin(a)*r;z=(seeded(i*6.8)-.5)*.11;
     }else{
       const k=Math.floor(seeded(i*5.77)*6)%6;
       const ak=angles[k];
       if(q<.62){
-        const r=.155*Math.cbrt(seeded(i*9.9));
+        const r=.118*Math.cbrt(seeded(i*9.9));
         const aa=seeded(i*10.7)*TAU;
-        x=Math.cos(ak)*1.55+Math.cos(aa)*r;
-        y=Math.sin(ak)*1.55+Math.sin(aa)*r;
+        x=Math.cos(ak)*1.24+Math.cos(aa)*r;
+        y=Math.sin(ak)*1.24+Math.sin(aa)*r;
         z=(seeded(i*1.91)-.5)*.22;
       }else if(q<.80){
         const t=seeded(i*8.17);
-        const r=lerp(.98,1.40,t);
+        const r=lerp(.83,1.10,t);
         x=Math.cos(ak)*r;y=Math.sin(ak)*r;z=(seeded(i*2.55)-.5)*.06;
       }else{
         const pa=ak-Math.PI/6;
-        const cx=Math.cos(pa)*1.29,cy=Math.sin(pa)*1.29;
-        const lx=(seeded(i*3.21)-.5)*.80;
-        const ly=(seeded(i*4.93)-.5)*.34;
+        const cx=Math.cos(pa)*1.055,cy=Math.sin(pa)*1.055;
+        const lx=(seeded(i*3.21)-.5)*.60;
+        const ly=(seeded(i*4.93)-.5)*.24;
         x=cx+Math.cos(pa)*lx-Math.sin(pa)*ly;
         y=cy+Math.sin(pa)*lx+Math.cos(pa)*ly;
         z=(seeded(i*7.41)-.5)*.14;
@@ -598,11 +598,11 @@ export class TGWorld3D{
     this.identity.add(this.sourceMark,this.targetMark);
     materialOpacity(this.targetMark,0);
 
-    const markCount=3600;
+    const markCount=2800;
     this.markFragments=createFragmentMorph(
       sampleSourceMark(markCount),
       sampleTargetMark(markCount),
-      markCount,.024
+      markCount,.020
     );
     this.identity.add(this.markFragments);
     this.markFragments.visible=false;
@@ -666,7 +666,7 @@ export class TGWorld3D{
     this.camera.updateProjectionMatrix();
 
     this.cloud.geometry.setDrawRange(0,portrait?9000:16000);
-    this.markFragments.geometry.instanceCount=portrait?1900:3600;
+    this.markFragments.geometry.instanceCount=portrait?1500:2800;
     if(this.wordFragments)this.wordFragments.geometry.instanceCount=portrait?2200:4200;
   }
 

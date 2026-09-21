@@ -780,16 +780,18 @@ export class TGWorld3D extends TGWorld3DBase{
       m.uAlpha.value=1;
     }
 
-    // TGBC itself becomes TGDesk underneath that moving particle veil.
+    // Same grammar as TGDevs -> TGBC:
+    // solid mark dissolves into a small-particle field, that field flows,
+    // and only after it has completed the new silhouette does the solid target return.
     const breakFav=
-      mix(p,1.970,2.085);
+      mix(p,1.970,2.090);
 
     const morph=
-      mix(p,2.025,2.205);
+      mix(p,2.015,2.235);
 
     const particleA=
-      mix(p,1.965,2.030)*
-      (1-mix(p,2.175,2.245));
+      mix(p,1.955,2.025)*
+      (1-mix(p,2.285,2.355));
 
     opacity(
       this.targetMark,
@@ -803,53 +805,44 @@ export class TGWorld3D extends TGWorld3DBase{
     );
 
     const favIn=
-      mix(p,2.115,2.255);
+      mix(p,2.245,2.345);
 
     const wordIn=
-      mix(p,2.245,2.405);
+      mix(p,2.315,2.445);
 
     const sloganIn=
-      mix(p,2.275,2.430);
-
-    const lineIn=
       mix(p,2.325,2.455);
 
+    const lineIn=
+      mix(p,2.355,2.475);
+
     const settle=
-      mix(p,2.180,2.470);
+      mix(p,2.235,2.430);
 
     const markX=portrait?0:1.12;
     const markY=portrait?.28:.06;
     const markScale=portrait?.80:.92;
 
+    // No arbitrary wobble here. The opening scene feels alive because
+    // the PARTICLES move; the resolved object is calm and precise.
     this.deskMark3D.position.set(
-      markX+
-        Math.sin((p-1.92)*7.3)*
-        .035*
-        (1-settle),
-      markY+
-        Math.cos((p-1.92)*6.1)*
-        .026*
-        (1-settle),
-      lerp(.06,.34,favIn)
+      markX,
+      markY,
+      lerp(-.18,.34,favIn)
     );
 
     this.deskMark3D.scale.setScalar(
       lerp(
-        markScale*.73,
+        markScale*.94,
         markScale,
         favIn
-      )+
-      Math.sin(favIn*Math.PI)*
-      .045
+      )
     );
 
     this.deskMark3D.rotation.set(
-      lerp(.085,0,settle),
-      lerp(-.120,0,settle),
-      lerp(.105,0,settle)+
-        Math.sin((p-1.90)*5.4)*
-        .018*
-        (1-settle)
+      lerp(.045,0,settle),
+      lerp(-.055,0,settle),
+      0
     );
 
     opacity(
@@ -866,16 +859,14 @@ export class TGWorld3D extends TGWorld3DBase{
 
       this.deskWord.material.uniforms
         .uReveal.value=
-          mix(p,2.245,2.405);
+          mix(p,2.315,2.445);
 
       if(portrait){
         this.deskWord.position.set(
           0,
           -1.18+
-            Math.sin((p-2.22)*4.8)*
-            .025*
-            (1-settle),
-          lerp(-.26,.36,wordIn)
+            0,
+          lerp(-.24,.36,wordIn)
         );
 
         this.deskWord.scale
@@ -887,12 +878,9 @@ export class TGWorld3D extends TGWorld3DBase{
         // Derived from the real favicon half-width + exact wordmark width:
         // there is now an intentional gap, so "TGDesk" is always complete.
         this.deskWord.position.set(
-          3.68+
-            Math.sin((p-2.22)*4.6)*
-            .030*
-            (1-settle),
+          3.68,
           .06,
-          lerp(-.26,.36,wordIn)
+          lerp(-.24,.36,wordIn)
         );
 
         this.deskWord.scale
@@ -916,7 +904,7 @@ export class TGWorld3D extends TGWorld3DBase{
 
     this.deskSlogan.material.uniforms
       .uReveal.value=
-        mix(p,2.275,2.430);
+        mix(p,2.325,2.455);
 
     if(portrait){
       this.deskSlogan.position.set(
@@ -929,12 +917,9 @@ export class TGWorld3D extends TGWorld3DBase{
         .setScalar(.68);
     }else{
       this.deskSlogan.position.set(
-        -2.55+
-          Math.sin((p-2.24)*3.8)*
-          .028*
-          (1-settle),
+        -2.55,
         .18,
-        lerp(-.22,.33,sloganIn)
+        lerp(-.20,.33,sloganIn)
       );
 
       this.deskSlogan.scale
@@ -975,7 +960,7 @@ export class TGWorld3D extends TGWorld3DBase{
 
     if(this.deskFav)this.deskFav.visible=false;
 
-    if(p>2.255){
+    if(p>2.345){
       opacity(this.targetMark,0);
     }
   }

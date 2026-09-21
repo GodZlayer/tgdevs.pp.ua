@@ -128,7 +128,7 @@ export function createSurfaceParticlePhase(surface,count=5200){
 
         p.z+=
           sin(
-            aSeed*TAU+
+            aSeed*6.2831853+
             uFlow+
             p.x*1.7
           )*

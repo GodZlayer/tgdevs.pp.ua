@@ -1233,8 +1233,7 @@ function createAppTour(font){
   sideBorder.position.set(-W/2+sideW,-headerH/2,-.40);shell.add(sideBorder);
 
   // Header data copied from TGBusinessCenter's real ExecutiveHub layout.
-  addUiText(shell,'TGBusinessCenter',font,.145,0x1e293b,-5.30,3.31,.08);
-  addUiText(shell,'11.222.333/0001-81',font,.075,0x64748b,-3.55,3.31,.08);
+  addUiText(shell,'11.222.333/0001-81',font,.075,0x64748b,-3.35,3.31,.08);
   const env=uiCard(.86,.22,0xe2e8f0,.06,.012);
   env.position.set(-2.15,3.31,.05);shell.add(env);
   addUiText(shell,'HOMOLOGACAO',font,.061,0x475569,-2.15,3.31,.08,'center');
@@ -1257,9 +1256,9 @@ function createAppTour(font){
     holder.add(back);
     const icon=createModuleGlyph(active?0xffffff:0x64748b);
     icon.position.set(-.54,0,.04);holder.add(icon);
-    addUiText(holder,label,font,.095,active?0xffffff:0x475569,-.34,0,.06);
+    const labelMesh=addUiText(holder,label,font,.095,active?0xffffff:0x475569,-.34,0,.06);
     shell.add(holder);
-    navMeshes.push({holder,back,label});
+    navMeshes.push({holder,back,label,labelMesh});
   });
 
   const contentRoot=new THREE.Group();
@@ -1768,6 +1767,7 @@ export class TGWorld3D{
         const activeCustomers=toClients;
         const active=(i===0?activeDash:(i===1?activeCustomers:0));
         n.back.material.color.setHex(active>.5?0x2563eb:0xf8fafc);
+        n.labelMesh.material.color.setHex(active>.5?0xffffff:0x475569);
       });
 
       // Dashboard content reflows into the customer screen.

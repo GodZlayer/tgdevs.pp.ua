@@ -337,3 +337,74 @@ export function staggeredResolve(
     }
   );
 }
+
+
+export function resolveTGDeskSolid(
+  root,
+  resolve
+){
+  if(!root)return;
+
+  const r=clamp(resolve);
+  root.visible=r>.001;
+
+  const {
+    core,
+    nodes,
+    guide
+  }=root.userData;
+
+  const smoothLocal=(v,a,b)=>{
+    const t=clamp((v-a)/(b-a));
+    return t*t*(3-2*t);
+  };
+
+  // The central TGDesk system resolves first because it is the absorber.
+  const coreA=
+    smoothLocal(
+      r,
+      .08,
+      .62
+    );
+
+  core.userData.mesh.material.opacity=
+    coreA;
+
+  core.userData.shell.material.uniforms
+    .uAlpha.value=
+      coreA;
+
+  core.userData.highlight.material.opacity=
+    .56*coreA;
+
+  // Technical actors materialize from the particle path one after another,
+  // but with heavy overlap so it reads as one continuous event.
+  nodes.forEach(
+    (node,i)=>{
+      const start=
+        .18+i*.08;
+
+      const a=
+        smoothLocal(
+          r,
+          start,
+          start+.52
+        );
+
+      node.userData.mesh.material.opacity=a;
+      node.userData.shell.material.uniforms
+        .uAlpha.value=a;
+
+      node.userData.highlight.material.opacity=
+        .56*a;
+    }
+  );
+
+  guide.material.opacity=
+    .11*
+    smoothLocal(
+      r,
+      .34,
+      .88
+    );
+}

@@ -255,6 +255,8 @@ function createOfficialTGDevsSurface(){
   texture.colorSpace=THREE.SRGBColorSpace;
   texture.minFilter=THREE.LinearMipmapLinearFilter;
   texture.magFilter=THREE.LinearFilter;
+  texture.generateMipmaps=true;
+  texture.anisotropy=tgdevsPremium?8:1;
 
   const material=new THREE.ShaderMaterial({
     uniforms:{
@@ -530,10 +532,10 @@ function createTextMesh(text,font,size,kind='gradient',depth=.105){
   return mesh;
 }
 
-function createContourWordSurface(data,targetHeight,{businessLight=false}={}){
+function createContourWordSurface(data,targetHeight,{businessLight=false,tgdevsPremium=false}={}){
   const ratio=data.ratio;
   const canvas=document.createElement('canvas');
-  const H=512;
+  const H=tgdevsPremium?1024:512;
   const W=Math.max(256,Math.round(H*ratio));
   canvas.width=W;canvas.height=H;
   const ctx=canvas.getContext('2d',{alpha:true});
@@ -558,9 +560,43 @@ function createContourWordSurface(data,targetHeight,{businessLight=false}={}){
     }
 
     const box=contourBBox(rec);
-    const light=businessLight && box.cx>1.8;
-    ctx.fillStyle=light ? '#f0f5f7' : `rgb(${rec.c[0]},${rec.c[1]},${rec.c[2]})`;
-    ctx.fill(path,'evenodd');
+
+    if(tgdevsPremium){
+      // Visual language calibrated from the supplied TGDesk master:
+      // TG = cyan -> electric blue, Devs = white -> ice blue.
+      // The glyph contours remain the exact TGDevs brand geometry.
+      const isTG=box.cx<ratio*.39;
+      const grad=ctx.createLinearGradient(0,0,0,H);
+
+      if(isTG){
+        grad.addColorStop(0,'#24E4FF');
+        grad.addColorStop(.34,'#08CFF4');
+        grad.addColorStop(.68,'#009BEE');
+        grad.addColorStop(1,'#096BFF');
+        ctx.shadowColor='rgba(0,145,255,.30)';
+        ctx.shadowBlur=18*(H/1024);
+      }else{
+        grad.addColorStop(0,'#FFFFFF');
+        grad.addColorStop(.42,'#F9FCFF');
+        grad.addColorStop(.72,'#EAF4FF');
+        grad.addColorStop(1,'#CDE4FF');
+        ctx.shadowColor='rgba(130,205,255,.16)';
+        ctx.shadowBlur=10*(H/1024);
+      }
+
+      ctx.fillStyle=grad;
+      ctx.fill(path,'evenodd');
+
+      // Fine polished edge taken from the same TGDesk text treatment.
+      ctx.shadowBlur=0;
+      ctx.strokeStyle=isTG?'rgba(220,251,255,.46)':'rgba(255,255,255,.58)';
+      ctx.lineWidth=Math.max(1,1.45*(H/1024));
+      ctx.stroke(path);
+    }else{
+      const light=businessLight && box.cx>1.8;
+      ctx.fillStyle=light ? '#f0f5f7' : `rgb(${rec.c[0]},${rec.c[1]},${rec.c[2]})`;
+      ctx.fill(path,'evenodd');
+    }
   }
 
   const texture=new THREE.CanvasTexture(canvas);
@@ -647,7 +683,11 @@ function applyClockBuild(root){
 }
 
 function createSourceWord(){
-  return createContourWordSurface(BRAND.tgdevsWord,.46);
+  return createContourWordSurface(
+    BRAND.tgdevsWord,
+    .46,
+    {tgdevsPremium:true}
+  );
 }
 
 

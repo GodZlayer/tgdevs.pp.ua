@@ -209,6 +209,7 @@ export function createContinuityField({
       uVeil:{value:0},
       uFlow:{value:0},
       uAlpha:{value:0},
+      uLogoAlpha:{value:1},
       uLogoFraction:{value:logoFraction}
     },
     transparent:true,
@@ -232,6 +233,7 @@ export function createContinuityField({
       uniform float uVeil;
       uniform float uFlow;
       uniform float uAlpha;
+      uniform float uLogoAlpha;
       uniform float uLogoFraction;
 
       varying vec3 vColor;
@@ -441,8 +443,16 @@ export function createContinuityField({
             isLogo
           );
 
+        float roleAlpha=
+          mix(
+            1.0,
+            uLogoAlpha,
+            isLogo
+          );
+
         vAlpha=
           uAlpha*
+          roleAlpha*
           local*
           (
             isLogo>.5
@@ -506,7 +516,8 @@ export function setContinuity(
     veil=0,
     flow=0,
     alpha=1,
-    foreground=false
+    foreground=false,
+    logoAlpha=1
   }={}
 ){
   if(!field)return;
@@ -521,6 +532,7 @@ export function setContinuity(
   u.uVeil.value=clamp(veil);
   u.uFlow.value=flow;
   u.uAlpha.value=clamp(alpha);
+  u.uLogoAlpha.value=clamp(logoAlpha);
 
   field.renderOrder=
     foreground?70:28;

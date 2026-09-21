@@ -367,9 +367,7 @@ function makeRamModule(label){
   for(let i=0;i<6;i++){
     box(g,.34,.34,.09,-1.08+i*.43,.03,.10,0x11191a,0x00110d);
   }
-  const lm=new THREE.MeshBasicMaterial({map:canvasLabel(label),transparent:true,depthWrite:false});
-  lm.map=canvasLabel(label);
-  lm.toneMapped=false;
+  const lm=canvasLabel(label);
   const t=new THREE.Mesh(new THREE.PlaneGeometry(1.65,.34),lm);
   t.position.set(0,.02,.17);g.add(t);
   return g;

@@ -15,7 +15,7 @@ import {
 } from './r23/surface-phase.js';
 import {
   updateTGDeskSystemR22
-} from './r24/tgdesk-system.js';
+} from './r25/tgdesk-system.js';
 
 export class TGWorld3D extends TGWorld3DBase{
   constructor(canvas){
@@ -168,15 +168,18 @@ export class TGWorld3D extends TGWorld3DBase{
     const {
       core,
       nodes,
-      guide
+      blades
     }=desk.userData;
 
+    // The particle-resolved favicon now samples the actual solid logo:
+    // core + three agents + the three exact comet blades.
+    // No generic triangle guide is allowed to define the silhouette.
     const deskSurface=
       sampleWorldRoots(
         [
           core,
           ...nodes,
-          guide
+          ...blades
         ],
         count
       );

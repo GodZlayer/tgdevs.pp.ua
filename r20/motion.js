@@ -89,14 +89,20 @@ export function sampleWorldRoots(roots,count){
 }
 
 export function createMorph(from,to,count,size=.012,{ui=false}={}){
-  const base=new THREE.TetrahedronGeometry(size,0);
-  const geo=new THREE.InstancedBufferGeometry();
-  geo.index=base.index;
-  geo.setAttribute('position',base.getAttribute('position'));
-  geo.setAttribute('normal',base.getAttribute('normal'));
-  geo.instanceCount=count;
-  geo.setAttribute('iFrom',new THREE.InstancedBufferAttribute(from,3));
-  geo.setAttribute('iTo',new THREE.InstancedBufferAttribute(to,3));
+  // Canonical particle grammar copied from the opening TGDevs scene:
+  // small points, staggered birth, two-frequency flow, deterministic motion,
+  // and no glowing ribbons / tetrahedron fragments.
+  const geo=new THREE.BufferGeometry();
+
+  geo.setAttribute(
+    'position',
+    new THREE.BufferAttribute(from,3)
+  );
+
+  geo.setAttribute(
+    'aTo',
+    new THREE.BufferAttribute(to,3)
+  );
 
   const seed=new Float32Array(count);
   const order=new Float32Array(count);
@@ -104,90 +110,261 @@ export function createMorph(from,to,count,size=.012,{ui=false}={}){
   for(let i=0;i<count;i++){
     const sd=seeded(i*8.71);
     seed[i]=sd;
-    const x=from[i*3],y=from[i*3+1];
-    const tx=to[i*3],ty=to[i*3+1];
-    const angle=Math.atan2(ty-y,tx-x);
+
+    const x=from[i*3];
+    const tx=to[i*3];
+    const ty=to[i*3+1];
+    const y=from[i*3+1];
+
+    const angle=Math.atan2(
+      ty-y,
+      tx-x
+    );
+
     order[i]=ui
-      ? clamp((x+6.0)/12.0+sd*.08)
-      : ((Math.PI/2-angle+TAU)%TAU)/TAU*.88+sd*.05;
+      ? clamp(
+          (x+6.0)/12.0+
+          sd*.055
+        )
+      : (
+          (
+            Math.PI/2-
+            angle+
+            TAU
+          )%TAU
+        )/TAU*.88+
+        sd*.045;
   }
 
-  geo.setAttribute('iSeed',new THREE.InstancedBufferAttribute(seed,1));
-  geo.setAttribute('iOrder',new THREE.InstancedBufferAttribute(order,1));
+  geo.setAttribute(
+    'aSeed',
+    new THREE.BufferAttribute(seed,1)
+  );
+
+  geo.setAttribute(
+    'aOrder',
+    new THREE.BufferAttribute(order,1)
+  );
+
+  const pointScale=
+    clamp(
+      size/.012,
+      .72,
+      1.22
+    );
 
   const mat=new THREE.ShaderMaterial({
     uniforms:{
       uProgress:{value:0},
       uAlpha:{value:0},
+      uFlow:{value:0},
+      uPointScale:{value:pointScale},
       uUi:{value:ui?1:0}
     },
     transparent:true,
     depthWrite:false,
-    blending:THREE.NormalBlending,
+    blending:THREE.AdditiveBlending,
     vertexShader:`
-      attribute vec3 iFrom;
-      attribute vec3 iTo;
-      attribute float iSeed;
-      attribute float iOrder;
+      attribute vec3 aTo;
+      attribute float aSeed;
+      attribute float aOrder;
+
       uniform float uProgress;
-      varying vec3 vP;
-      varying vec3 vN;
-      varying float vSeed;
+      uniform float uAlpha;
+      uniform float uFlow;
+      uniform float uPointScale;
+      uniform float uUi;
+
+      varying vec3 vColor;
+      varying float vAlpha;
 
       void main(){
-        float local=smoothstep(iOrder-.10,iOrder+.17,uProgress);
-        float phase=iSeed*6.28318530718;
-        vec3 arc=vec3(cos(phase),sin(phase),sin(phase*1.73));
-        vec3 c=mix(iFrom,iTo,local);
-        float lift=sin(local*3.14159265);
-        c+=arc*lift*(.055+.18*iSeed);
-        c.z+=lift*(.08+.22*iSeed);
+        float local=smoothstep(
+          aOrder-.12,
+          aOrder+.19,
+          uProgress
+        );
 
-        vec3 p=c+position*(1.0+lift*.50);
-        gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0);
+        float phase=
+          aSeed*6.28318530718;
 
-        vP=c;
-        vN=normalize(normalMatrix*normal);
-        vSeed=iSeed;
+        vec3 base=
+          mix(
+            position,
+            aTo,
+            local
+          );
+
+        float life=
+          sin(local*3.14159265);
+
+        // Same visual DNA as the original TGDevs cloud:
+        // two frequencies crossing each other instead of one obvious spiral.
+        float w1=sin(
+          base.x*1.41+
+          base.y*.77+
+          phase+
+          uFlow*1.30
+        );
+
+        float w2=sin(
+          base.x*2.63-
+          base.y*1.17+
+          phase*.70-
+          uFlow*.72
+        );
+
+        vec3 flow=vec3(
+          w1,
+          w2,
+          sin(
+            phase*1.73+
+            uFlow*.84+
+            base.x*.54
+          )
+        );
+
+        // Mid-flight turbulence, exact endpoints.
+        base+=
+          flow*
+          life*
+          (.018+.082*aSeed)*
+          mix(1.0,.64,uUi);
+
+        base.z+=
+          life*
+          (.035+.14*aSeed);
+
+        vec4 mv=
+          modelViewMatrix*
+          vec4(base,1.0);
+
+        gl_Position=
+          projectionMatrix*
+          mv;
+
+        gl_PointSize=
+          (1.00+aSeed*1.85)*
+          uPointScale*
+          (1.0+life*.28);
+
+        vec3 blue=
+          vec3(.043,.486,1.0);
+
+        vec3 cyan=
+          vec3(.00,.78,.85);
+
+        vec3 green=
+          vec3(.00,.90,.42);
+
+        float ct=
+          clamp(
+            aSeed*.70+
+            .30*
+            clamp(
+              (base.x+4.0)/8.0,
+              0.0,
+              1.0
+            ),
+            0.0,
+            1.0
+          );
+
+        vec3 brand=
+          ct<.55
+          ? mix(
+              blue,
+              cyan,
+              ct/.55
+            )
+          : mix(
+              cyan,
+              green,
+              (ct-.55)/.45
+            );
+
+        vec3 uiColor=
+          mix(
+            vec3(.70,.90,.96),
+            brand,
+            .72
+          );
+
+        vColor=
+          mix(
+            brand,
+            uiColor,
+            uUi
+          );
+
+        // Small independent points; no thick additive line.
+        vAlpha=
+          uAlpha*
+          (.10+aSeed*.34)*
+          (.72+life*.28);
       }
     `,
     fragmentShader:`
-      uniform float uAlpha;
-      uniform float uUi;
-      varying vec3 vP;
-      varying vec3 vN;
-      varying float vSeed;
+      varying vec3 vColor;
+      varying float vAlpha;
 
       void main(){
-        vec3 blue=vec3(.035,.42,1.0);
-        vec3 cyan=vec3(.00,.82,.96);
-        vec3 green=vec3(.00,.91,.49);
-        float t=clamp(vSeed*.80+(vP.x+5.0)/10.0*.20,0.0,1.0);
+        vec2 q=
+          gl_PointCoord*2.0-1.0;
 
-        vec3 brand=t<.55
-          ? mix(blue,cyan,t/.55)
-          : mix(cyan,green,(t-.55)/.45);
+        float r=
+          dot(q,q);
 
-        vec3 uiCol=mix(vec3(.78,.92,.98),brand,.58);
-        vec3 col=mix(brand,uiCol,uUi);
+        if(r>1.0)discard;
 
-        vec3 L=normalize(vec3(-.35,.72,1.0));
-        float lit=.72+.35*max(0.0,dot(normalize(vN),L));
-        gl_FragColor=vec4(min(col*lit,vec3(1.0)),uAlpha);
+        float soft=
+          1.0-
+          smoothstep(
+            .40,
+            1.0,
+            r
+          );
+
+        gl_FragColor=
+          vec4(
+            vColor,
+            vAlpha*soft
+          );
       }
     `
   });
 
   mat.toneMapped=false;
-  const mesh=new THREE.Mesh(geo,mat);
-  mesh.frustumCulled=false;
-  mesh.renderOrder=24;
-  return mesh;
+
+  const points=
+    new THREE.Points(
+      geo,
+      mat
+    );
+
+  points.frustumCulled=false;
+  points.renderOrder=24;
+  return points;
 }
 
 export function setMorph(mesh,progress,alpha){
   if(!mesh)return;
-  mesh.visible=alpha>.001;
-  mesh.material.uniforms.uProgress.value=clamp(progress);
-  mesh.material.uniforms.uAlpha.value=clamp(alpha);
+
+  const t=clamp(progress);
+
+  mesh.visible=
+    alpha>.001;
+
+  mesh.material.uniforms
+    .uProgress.value=t;
+
+  mesh.material.uniforms
+    .uAlpha.value=
+      clamp(alpha);
+
+  if(mesh.material.uniforms.uFlow){
+    mesh.material.uniforms
+      .uFlow.value=
+        t*3.35;
+  }
 }

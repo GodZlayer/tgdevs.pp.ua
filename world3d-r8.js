@@ -834,7 +834,8 @@ export class TGWorld3D{
     officialSurface.material.uniforms.uAngle.value=lerp(0,Math.PI*4,build);
     officialSurface.material.uniforms.uFull.value=finalMark;
 
-    this.identity.position.set(0,portrait ? -.70 : 0,0);
+    const centerTarget=mix(p,.34,.425);
+    this.identity.position.set(0,portrait ? lerp(-.70,0,centerTarget) : 0,0);
     this.identity.scale.setScalar(portrait ? .72 : 1);
     this.identity.rotation.y=lerp(0,-.018,stageShift);
 

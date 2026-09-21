@@ -164,69 +164,109 @@ function addSoftHighlight(parent,x,y,z,sx,sy,opacity=.50){
   return h;
 }
 
+function polarPoint(angle,radius){
+  return [
+    Math.cos(angle)*radius,
+    Math.sin(angle)*radius
+  ];
+}
+
 export function createTGDeskMark3D(){
   const root=new THREE.Group();
 
-  // Central orb.
-  const core=sphere(.435,'full',-.05);
+  // Canonical three-fold symmetry. Every comet is the same geometry rotated
+  // exactly 120 degrees; only the brand gradient changes across the mark.
+  const core=sphere(.420,'full',-.04);
   core.position.set(0,0,.035);
   root.add(core);
 
-  // Three comet blades. Their paths and taper follow the supplied TGDesk mark:
-  // head at each outer orb, tail tapering away around the central orb.
-  const topTail=taperedRibbon([
-    [-.78,.25],
-    [-.68,.49],
-    [-.49,.68],
-    [-.25,.81],
-    [-.035,.865]
-  ],.022,.185,.090,'blue',-.03);
+  const headAngles=[
+    Math.PI/2,
+    Math.PI/2+Math.PI*2/3,
+    Math.PI/2+Math.PI*4/3
+  ];
 
-  const leftTail=taperedRibbon([
-    [.43,-.67],
-    [.16,-.77],
-    [-.17,-.79],
-    [-.50,-.71],
-    [-.755,-.535]
-  ],.020,.178,.090,'blue',.05);
+  const modes=['blue','blue','green'];
+  const biases=[.02,.055,-.025];
 
-  const rightTail=taperedRibbon([
-    [.36,.67],
-    [.57,.54],
-    [.72,.33],
-    [.80,.05],
-    [.785,-.315]
-  ],.020,.180,.090,'green',-.03);
+  const tails=[];
+  const heads=[];
 
-  root.add(topTail,leftTail,rightTail);
+  for(let i=0;i<3;i++){
+    const a=headAngles[i];
 
-  // Outer comet heads.
-  const top=sphere(.188,'blue',.03);
-  top.position.set(-.015,.875,.075);
+    // Far tip -> thick neck under the sphere.
+    // The angular sweep is identical for all three comets.
+    const points=[
+      polarPoint(a+THREE.MathUtils.degToRad(80),.820),
+      polarPoint(a+THREE.MathUtils.degToRad(63),.838),
+      polarPoint(a+THREE.MathUtils.degToRad(47),.855),
+      polarPoint(a+THREE.MathUtils.degToRad(32),.875),
+      polarPoint(a+THREE.MathUtils.degToRad(18),.888),
+      polarPoint(a+THREE.MathUtils.degToRad(8),.858)
+    ];
 
-  const left=sphere(.190,'blue',.06);
-  left.position.set(-.810,-.455,.075);
+    const tail=taperedRibbon(
+      points,
+      .014,
+      .183,
+      .088,
+      modes[i],
+      biases[i]
+    );
 
-  const right=sphere(.190,'green',-.02);
-  right.position.set(.805,-.430,.075);
+    tails.push(tail);
+    root.add(tail);
 
-  root.add(top,left,right);
+    const head=sphere(
+      .205,
+      modes[i],
+      biases[i]
+    );
 
-  // High quality specular accents reproduce the clean rendered identity
-  // without baking the raster into the geometry.
-  addSoftHighlight(core,-.16,.17,.435,.115,.052,.44);
-  addSoftHighlight(top,-.075,.940,.250,.050,.022,.50);
-  addSoftHighlight(left,-.875,-.385,.250,.050,.022,.46);
-  addSoftHighlight(right,.742,-.360,.250,.050,.022,.44);
+    head.position.set(
+      Math.cos(a)*.915,
+      Math.sin(a)*.915,
+      .082
+    );
+
+    heads.push(head);
+    root.add(head);
+  }
+
+  // One global light direction, so the highlights stay physically coherent
+  // while the geometry itself remains perfectly symmetric.
+  addSoftHighlight(
+    core,
+    -.155,
+    .165,
+    .430,
+    .108,
+    .048,
+    .44
+  );
+
+  for(const head of heads){
+    addSoftHighlight(
+      root,
+      head.position.x-.052,
+      head.position.y+.060,
+      .262,
+      .052,
+      .022,
+      .47
+    );
+  }
 
   root.userData={
-    halfWidth:1.02,
-    halfHeight:1.08,
-    canonicalHeight:2.16
+    halfWidth:1.05,
+    halfHeight:1.10,
+    canonicalHeight:2.20,
+    headRadius:.915
   };
 
-  root.rotation.x=-.035;
-  root.rotation.y=.045;
+  // No baked asymmetry in the canonical resting state.
+  root.rotation.set(0,0,0);
 
   return root;
 }

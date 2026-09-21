@@ -581,6 +581,7 @@ export class TGWorld3D extends TGWorld3DBase{
     }
 
     this.systemGroup.visible=true;
+    this.systemGroup.scale.setScalar(portrait?.72:1);
 
     // 1) The opaque TGBC world does not jump to a PCB texture.
     // It becomes the original TGDevs particle cloud again.
@@ -639,12 +640,12 @@ export class TGWorld3D extends TGWorld3DBase{
     const coreSettle=mix(p,2.10,2.28);
     if(this.deskExactFav){
       this.deskExactFav.position.set(0,lerp(0,.36,coreSettle),.38);
-      this.deskExactFav.scale.setScalar(lerp(1,.94,coreSettle));
+      this.deskExactFav.scale.setScalar(lerp(1,portrait?.82:.94,coreSettle));
       opacity(this.deskExactFav,exactFavIn);
     }
     if(this.deskExactWord){
       this.deskExactWord.position.set(0,portrait?-1.05:-1.02,.40);
-      this.deskExactWord.scale.setScalar(portrait?.88:.92);
+      this.deskExactWord.scale.setScalar(portrait?.76:.92);
       opacity(this.deskExactWord,wordIn);
     }
 

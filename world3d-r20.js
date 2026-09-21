@@ -887,6 +887,18 @@ export class TGWorld3D extends TGWorld3DBase{
     this._snapshot();
     this._buildR20(portrait,p);
 
+    // Every r20 object is reset before the current scroll frame is evaluated.
+    // This is what keeps reverse scrolling perfectly deterministic.
+    this.apiCycle.visible=false;
+    this.galleryMorphs.forEach(m=>setMorph(m,0,0));
+    this.closeMorphs.forEach(m=>setMorph(m,0,0));
+    if(this.matter)this.matter.visible=false;
+    if(this.deskMorph)setMorph(this.deskMorph,0,0);
+    if(this.deskFav)this.deskFav.visible=false;
+    if(this.deskWord)this.deskWord.visible=false;
+    this.deskSlogan.visible=false;
+    this.deskLine.visible=false;
+
     // Opening:
     // line = fiscal/API path;
     // modules are born only when the path reaches them.

@@ -1284,7 +1284,7 @@ function createAppTour(font){
   const cargosBack=uiCard(1.46,.33,0xf8fafc,.065,.014);
   cargos.add(cargosBack);
   const cargosIcon=createModuleGlyph(0x8b5cf6);cargosIcon.position.set(-.55,0,.04);cargos.add(cargosIcon);
-  addUiText(cargos,'Cargos',font,.086,0x7c3aed,-.34,0,.06);
+  const cargosLabel=addUiText(cargos,'Cargos',font,.086,0x7c3aed,-.34,0,.06);
   shell.add(cargos);
   addUiText(shell,'v1.0  •  TGBC',font,.053,0x94a3b8,-5.92,-3.25,.05);
 
@@ -1736,7 +1736,7 @@ function createAppTour(font){
     form,dim,modal,pfCard,pjCard,step1,step2,step3,stepDots,stepLineA,stepLineB,
     fieldValues,addressValues,actionBtn,action1,action2,action3,
     stockScreen,fiscalScreen,statsScreen,servicesScreen,tiersScreen,
-    searchStock,searchGeneric,cargosBack,
+    searchStock,searchGeneric,cargosBack,cargosIcon,cargosLabel,
     W,H
   };
   return root;
@@ -2333,6 +2333,98 @@ export class TGWorld3D{
       materialOpacity(this.targetWordLight,appIn);
 
       materialOpacity(this.lead,(1-appIn)*targetTextIn);
+    }
+
+
+    // ------------------------------------------------------------
+    // PHASE 3 — gallery of remaining TGBC modules.
+    // No modal/function demos here: only the real module screens.
+    // p > 1 is intentional; site3d-r16 extends the scroll beyond
+    // the original 12,000px while preserving every r15 timestamp.
+    // ------------------------------------------------------------
+    if(this.appTour && this.textReady && p>.955){
+      const u=this.appTour.userData;
+      const {
+        customers,newBtnGroup,subheader,searchDash,searchClients,searchStock,searchGeneric,
+        navMeshes,cargos,cargosBack,cargosIcon,cargosLabel,
+        stockScreen,fiscalScreen,statsScreen,servicesScreen,tiersScreen
+      }=u;
+
+      const afterClients=mix(p,.965,1.015);
+
+      // Clients remains fully readable first, then exits as one completed state.
+      materialOpacity(customers,1-afterClients);
+      materialOpacity(newBtnGroup,1-afterClients);
+
+      const stockIn=mix(p,.985,1.025);
+      const stockOut=mix(p,1.105,1.135);
+      const fiscalIn=mix(p,1.115,1.145);
+      const fiscalOut=mix(p,1.235,1.265);
+      const statsIn=mix(p,1.245,1.275);
+      const statsOut=mix(p,1.365,1.395);
+      const servicesIn=mix(p,1.375,1.405);
+      const servicesOut=mix(p,1.495,1.525);
+      const tiersIn=mix(p,1.505,1.535);
+
+      const aStock=stockIn*(1-stockOut);
+      const aFiscal=fiscalIn*(1-fiscalOut);
+      const aStats=statsIn*(1-statsOut);
+      const aServices=servicesIn*(1-servicesOut);
+      const aTiers=tiersIn;
+
+      const animateModule=(g,a,enter,leave)=>{
+        materialOpacity(g,a);
+        g.position.x=lerp(.30,0,enter)+lerp(0,-.25,leave);
+        g.position.y=lerp(-.08,0,enter);
+        g.position.z=lerp(-.18,.08,enter)-leave*.16;
+        g.scale.setScalar(lerp(.965,1,enter));
+      };
+
+      animateModule(stockScreen,aStock,stockIn,stockOut);
+      animateModule(fiscalScreen,aFiscal,fiscalIn,fiscalOut);
+      animateModule(statsScreen,aStats,statsIn,statsOut);
+      animateModule(servicesScreen,aServices,servicesIn,servicesOut);
+      animateModule(tiersScreen,aTiers,tiersIn,0);
+
+      // Contextual shell follows the current module, as in ExecutiveHubView.
+      const genericPhase=Math.max(aFiscal,aStats);
+      materialOpacity(searchDash,0);
+      materialOpacity(searchClients,(1-afterClients));
+      materialOpacity(searchStock,aStock);
+      materialOpacity(searchGeneric,genericPhase);
+
+      // Services and Cargos use their own module headers, so the global subheader disappears.
+      const hideSub=Math.max(aServices,aTiers);
+      materialOpacity(subheader,1-hideSub);
+
+      let activeIndex=1; // Clientes
+      if(p>=1.00)activeIndex=2;      // Estoque
+      if(p>=1.12)activeIndex=3;      // Notas Fiscais
+      if(p>=1.24)activeIndex=4;      // Estatisticas
+      if(p>=1.37)activeIndex=5;      // Servicos
+      const cargosActive=p>=1.50;
+
+      navMeshes.forEach((n,i)=>{
+        const active=!cargosActive && i===activeIndex;
+        n.back.material.color.setHex(active?0x2563eb:0xf8fafc);
+        n.labelMesh.material.color.setHex(active?0xffffff:0x475569);
+        n.icon.traverse(o=>{
+          if(o.isMesh)o.material.color.setHex(active?0xffffff:0x64748b);
+        });
+      });
+
+      cargosBack.material.color.setHex(cargosActive?0x2563eb:0xf8fafc);
+      cargosLabel.material.color.setHex(cargosActive?0xffffff:0x7c3aed);
+      cargosIcon.traverse(o=>{
+        if(o.isMesh)o.material.color.setHex(cargosActive?0xffffff:0x8b5cf6);
+      });
+      cargos.position.z=cargosActive?.09:.03;
+      cargos.scale.setScalar(cargosActive?1.03:1);
+
+      // Keep the application identity locked to the shell for the entire gallery.
+      this.appBackdrop.visible=true;
+      this.appBackdrop.material.opacity=1;
+      materialOpacity(this.targetWordLight,1);
     }
 
     const cueOut=mix(p,.004,.028);

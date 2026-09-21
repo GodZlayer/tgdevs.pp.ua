@@ -256,7 +256,7 @@ function createOfficialTGDevsSurface(){
   texture.minFilter=THREE.LinearMipmapLinearFilter;
   texture.magFilter=THREE.LinearFilter;
   texture.generateMipmaps=true;
-  texture.anisotropy=tgdevsPremium?8:1;
+  texture.anisotropy=8;
 
   const material=new THREE.ShaderMaterial({
     uniforms:{
@@ -603,6 +603,8 @@ function createContourWordSurface(data,targetHeight,{businessLight=false,tgdevsP
   texture.colorSpace=THREE.SRGBColorSpace;
   texture.minFilter=THREE.LinearMipmapLinearFilter;
   texture.magFilter=THREE.LinearFilter;
+  texture.generateMipmaps=true;
+  texture.anisotropy=tgdevsPremium?8:1;
 
   const width=targetHeight*ratio;
   const root=new THREE.Group();

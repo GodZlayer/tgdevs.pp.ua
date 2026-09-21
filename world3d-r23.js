@@ -15,7 +15,7 @@ import {
 } from './r23/surface-phase.js';
 import {
   updateTGDeskSystemR22
-} from './r22/tgdesk-system.js';
+} from './r24/tgdesk-system.js';
 
 export class TGWorld3D extends TGWorld3DBase{
   constructor(canvas){

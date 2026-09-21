@@ -218,9 +218,11 @@ export function createMatterMorph(source,count=15000){
 
         gl_Position=projectionMatrix*mv;
 
+        // Keep the cloud visibly particulate. The previous scale turned
+        // thousands of particles into one opaque cyan slab.
         gl_PointSize=
-          (1.0+aSeed*2.20)*
-          (255.0/max(1.0,-mv.z+9.0));
+          (.72+aSeed*1.35)*
+          (82.0/max(4.0,-mv.z+9.0));
 
         vec3 blue=vec3(.043,.486,1.0);
         vec3 cyan=vec3(.00,.80,.90);
@@ -232,7 +234,7 @@ export function createMatterMorph(source,count=15000){
           ? mix(blue,cyan,t/.55)
           : mix(cyan,green,(t-.55)/.45);
 
-        vAlpha=.12+aSeed*.34;
+        vAlpha=.045+aSeed*.135;
       }
     `,
     fragmentShader:`

@@ -15,7 +15,7 @@ import {
   setTGDeskSystemOpacity,
   createPremiumWordmarkR22,
   updatePremiumWordmarkR22
-} from './r24/tgdesk-system.js';
+} from './r25/tgdesk-system.js';
 
 export class TGWorld3D extends TGWorld3DBase{
   constructor(canvas){

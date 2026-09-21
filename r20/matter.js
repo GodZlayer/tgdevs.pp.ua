@@ -101,64 +101,49 @@ export function createApiCycle(){
 }
 
 export function createMatterMorph(source,count=15000){
-  const cloud=new Float32Array(count*3);
+  // This field intentionally follows the exact grammar of createCloud()
+  // from the opening TGDevs scene: two structured wave sheets, reveal order,
+  // two sine frequencies, tiny circular points and scroll-driven flow.
+  const data=new Float32Array(count*4);
   const prism=new Float32Array(count*3);
-  const seed=new Float32Array(count);
 
   for(let i=0;i<count;i++){
-    const u=seeded(i*2.317);
-    const v=seeded(i*5.731+.31);
-    const side=i%2;
-    const sd=seeded(i*11.17+.7);
+    const surface=i%2;
+    const pair=i>>1;
+    const u=(pair%180)/179;
+    const d=(Math.floor(pair/180)%45)/44;
+    const seed=seeded(i*1.73);
 
-    seed[i]=sd;
+    data[i*4]=u;
+    data[i*4+1]=d;
+    data[i*4+2]=surface;
+    data[i*4+3]=seed;
 
-    // Two opposing procedural wave sheets, centered behind the identity.
-    // They deliberately reuse the same visual DNA as the opening cloud.
-    const phase=(side?2.05:.28)+(sd-.5)*.72;
-
-    const w1=Math.sin(
-      u*(side?7.0:8.3)+
-      v*3.1+
-      phase
-    );
-
-    const w2=Math.sin(
-      u*(side?15.0:16.2)-
-      v*5.0+
-      phase*.7
-    );
-
-    cloud[i*3]=
-      lerp(-3.35,3.35,u)+
-      (v-.5)*(side?-.82:.82);
-
-    cloud[i*3+1]=
-      (side?.18:-.18)+
-      w1*.54+
-      w2*.14+
-      (v-.5)*.62;
-
-    cloud[i*3+2]=
-      -1.92+
-      lerp(-.70,.32,v)+
-      w2*.12;
-
-    // Endless octagonal prism, formed by the same particle set.
-    const face=Math.floor(sd*8.0)%8;
-    const ft=v;
+    const face=Math.floor(seed*8.0)%8;
     const a0=face/8*TAU+Math.PI/8;
     const a1=(face+1)/8*TAU+Math.PI/8;
-    const r=3.82+(seeded(i*4.71)-.5)*.16;
+    const r=3.82+(seeded(i*4.71)-.5)*.15;
 
     prism[i*3]=
-      lerp(Math.cos(a0),Math.cos(a1),ft)*r;
+      lerp(
+        Math.cos(a0),
+        Math.cos(a1),
+        d
+      )*r;
 
     prism[i*3+1]=
-      lerp(Math.sin(a0),Math.sin(a1),ft)*r;
+      lerp(
+        Math.sin(a0),
+        Math.sin(a1),
+        d
+      )*r;
 
     prism[i*3+2]=
-      lerp(-16.0,1.15,u);
+      lerp(
+        -16.0,
+        1.10,
+        u
+      );
   }
 
   const geo=new THREE.BufferGeometry();
@@ -169,18 +154,13 @@ export function createMatterMorph(source,count=15000){
   );
 
   geo.setAttribute(
-    'aCloud',
-    new THREE.BufferAttribute(cloud,3)
+    'aData',
+    new THREE.BufferAttribute(data,4)
   );
 
   geo.setAttribute(
     'aPrism',
     new THREE.BufferAttribute(prism,3)
-  );
-
-  geo.setAttribute(
-    'aSeed',
-    new THREE.BufferAttribute(seed,1)
   );
 
   const mat=new THREE.ShaderMaterial({
@@ -197,12 +177,12 @@ export function createMatterMorph(source,count=15000){
     depthWrite:false,
     blending:THREE.AdditiveBlending,
     vertexShader:`
-      attribute vec3 aCloud;
+      attribute vec4 aData;
       attribute vec3 aPrism;
-      attribute float aSeed;
 
       uniform float uCloud;
       uniform float uPrism;
+      uniform float uAlpha;
       uniform float uBirth;
       uniform float uFlow;
       uniform float uCover;
@@ -210,165 +190,254 @@ export function createMatterMorph(source,count=15000){
 
       varying vec3 vColor;
       varying float vAlpha;
-      varying float vCover;
-
-      float sat(float x){
-        return clamp(x,0.0,1.0);
-      }
 
       void main(){
-        float phase=aSeed*6.28318530718;
-        float born=smoothstep(
-          aSeed*.52,
-          aSeed*.52+.34,
-          uBirth
-        );
+        float u=aData.x;
+        float d=aData.y;
+        float s=aData.z;
+        float seed=aData.w;
 
-        // Each particle detaches on its own schedule instead of the whole cloud
-        // fading in as one PNG-like object.
-        float localCloud=smoothstep(
-          aSeed*.22,
-          aSeed*.22+.68,
-          uCloud
-        );
+        float reveal=
+          s>.5
+          ? 1.0-u
+          : u;
 
-        // Blender-like procedural drift: a deterministic pseudo turbulence field.
-        // uFlow comes exclusively from scroll, so stopping the scroll freezes it.
-        vec3 flowA=vec3(
-          sin(uFlow*1.37+phase+aCloud.y*1.73),
-          cos(uFlow*.91+phase*1.71+aCloud.x*1.31),
-          sin(uFlow*.63+phase*2.13+aCloud.x*.72-aCloud.y*.48)
-        );
+        float born=
+          smoothstep(
+            reveal*.86,
+            reveal*.86+.16,
+            uBirth
+          );
 
-        vec3 flowB=vec3(
-          cos(uFlow*.47+phase*2.41+aCloud.z*2.8),
-          sin(uFlow*1.11+phase*.83+aCloud.x*.91),
-          cos(uFlow*.79+phase*1.27+aCloud.y*1.64)
-        );
+        float cloudT=
+          smoothstep(
+            reveal*.80,
+            reveal*.80+.22,
+            uCloud
+          );
 
-        vec3 turbulence=
-          flowA*(.035+.090*aSeed)+
-          flowB*(.018+.052*(1.0-aSeed));
+        float phase=
+          (s>.5?2.1:.3)+
+          (seed-.5)*.55;
 
-        vec3 cloudPos=aCloud+turbulence;
-
-        // The trip from the UI into the cloud is curved, never a straight lerp.
-        vec3 travel=mix(position,cloudPos,localCloud);
-        float arc=sin(localCloud*3.14159265);
-
-        travel.xy+=
-          vec2(cos(phase),sin(phase))*
-          arc*
-          (.08+.32*aSeed);
-
-        travel.z+=
-          arc*
-          (.12+.58*aSeed);
-
-        // During TGBC -> TGDesk the same cloud physically advances toward camera,
-        // crosses the logo, then returns behind it. This creates the wipe from matter,
-        // not from opacity.
-        float veilRadius=.30+1.62*fract(aSeed*7.371);
-        float veilAngle=
+        // EXACT visual DNA of the opening scene.
+        float w1=sin(
+          u*(s>.5?7.0:8.3)+
+          d*3.1+
           phase+
-          uFlow*1.28+
-          sin(phase*1.9+uFlow*.72)*.30;
+          uFlow*1.3
+        );
 
-        vec3 veil=vec3(
+        float w2=sin(
+          u*(s>.5?15.0:16.2)-
+          d*5.0+
+          phase*.7-
+          uFlow*.72
+        );
+
+        vec3 wave=vec3(
+          mix(-3.55,3.55,u)+
+          (d-.5)*(s>.5?-.95:.85),
+
+          // The two sheets share the same visual center in this second use.
+          (s>.5?.16:-.16)+
+          w1*.62+
+          w2*.16+
+          (d-.5)*.82,
+
+          mix(-1.28,.58,d)+
+          w2*.15
+        );
+
+        // Interface matter follows curved paths into the living cloud.
+        vec3 pos=
+          mix(
+            position,
+            wave,
+            cloudT
+          );
+
+        float travel=
+          sin(
+            cloudT*3.14159265
+          );
+
+        pos.xy+=
+          vec2(
+            cos(phase*2.2),
+            sin(phase*1.7)
+          )*
+          travel*
+          (.025+.090*seed);
+
+        pos.z+=
+          travel*
+          (.05+.18*seed);
+
+        // Particle cover is still the same wave field.
+        // It folds toward the identity and comes closer to camera;
+        // it NEVER becomes circular neon strands.
+        float fold=
+          smoothstep(
+            .0,
+            1.0,
+            uCover
+          );
+
+        vec3 coverPos=wave;
+
+        coverPos.xy=
           uCoverCenter+
-          vec2(cos(veilAngle),sin(veilAngle))*veilRadius,
-          .74+.52*aSeed
-        );
+          (coverPos.xy-uCoverCenter)*
+          mix(1.0,.43,fold);
 
-        veil.xy+=vec2(
-          sin(uFlow*2.03+phase*2.7),
-          cos(uFlow*1.77+phase*1.8)
-        )*.12;
+        coverPos.x+=
+          (s>.5?-1.0:1.0)*
+          sin(
+            d*3.14159265+
+            uFlow*.74+
+            phase
+          )*
+          fold*
+          .18;
 
-        vec3 pos=mix(
-          travel,
-          veil,
-          smoothstep(.0,1.0,uCover)
-        );
+        coverPos.y+=
+          cos(
+            u*8.0+
+            uFlow*.92+
+            phase
+          )*
+          fold*
+          .12;
 
-        // Only after the foreground veil returns to the background does the
-        // background itself harden into the prism.
-        float prismLocal=smoothstep(
-          aSeed*.08,
-          aSeed*.08+.82,
-          uPrism
-        );
+        coverPos.z=
+          mix(
+            wave.z,
+            .62+
+            (d-.5)*.32,
+            fold
+          );
+
+        pos=
+          mix(
+            pos,
+            coverPos,
+            fold
+          );
+
+        // The SAME particles become the prism after returning to background.
+        float prismLocal=
+          smoothstep(
+            reveal*.72,
+            reveal*.72+.32,
+            uPrism
+          );
 
         vec3 prismPos=aPrism;
 
-        // Tiny living electrical/granular motion survives while the prism forms.
-        prismPos.xy+=vec2(
-          sin(uFlow*.83+phase+aPrism.z*.42),
-          cos(uFlow*.71+phase*1.3+aPrism.z*.31)
-        )*(.018+.032*aSeed);
+        prismPos.xy+=
+          vec2(
+            sin(
+              uFlow*.83+
+              phase+
+              aPrism.z*.42
+            ),
+            cos(
+              uFlow*.71+
+              phase*1.3+
+              aPrism.z*.31
+            )
+          )*
+          (.010+.020*d);
 
-        pos=mix(pos,prismPos,prismLocal);
+        pos=
+          mix(
+            pos,
+            prismPos,
+            prismLocal
+          );
 
-        vec4 mv=modelViewMatrix*vec4(pos,1.0);
-        gl_Position=projectionMatrix*mv;
+        vec4 mv=
+          modelViewMatrix*
+          vec4(pos,1.0);
 
-        float coverBoost=1.0+uCover*(.75+aSeed*.75);
+        gl_Position=
+          projectionMatrix*
+          mv;
 
+        // Keep the exact delicate scale from the opening scene.
         gl_PointSize=
-          (.72+aSeed*1.42)*
-          coverBoost*
-          (86.0/max(4.0,-mv.z+9.0));
+          (1.15+d*2.60)*
+          mix(
+            1.0,
+            1.08,
+            fold
+          );
 
-        vec3 blue=vec3(.043,.486,1.0);
-        vec3 cyan=vec3(.00,.80,.90);
-        vec3 green=vec3(.00,.92,.46);
-
-        float ct=sat(
-          .72*aSeed+
-          .28*sat((cloudPos.x+3.4)/6.8)
-        );
-
-        vColor=ct<.55
-          ? mix(blue,cyan,ct/.55)
-          : mix(cyan,green,(ct-.55)/.45);
+        float edge=
+          sin(
+            3.14159265*u
+          );
 
         vAlpha=
           born*
-          (.040+aSeed*.145)*
-          mix(1.0,2.65,uCover);
+          uAlpha*
+          edge*
+          (.06+d*.38);
 
-        vCover=uCover;
+        vec3 blue=
+          vec3(.043,.486,1.0);
+
+        vec3 cyan=
+          vec3(0.0,.78,.85);
+
+        vec3 green=
+          vec3(0.0,.90,.42);
+
+        float ct=
+          s>.5
+          ? 1.0-u
+          : u;
+
+        vColor=
+          ct<.55
+          ? mix(
+              blue,
+              cyan,
+              ct/.55
+            )
+          : mix(
+              cyan,
+              green,
+              (ct-.55)/.45
+            );
       }
     `,
     fragmentShader:`
-      uniform float uAlpha;
       varying vec3 vColor;
       varying float vAlpha;
-      varying float vCover;
 
       void main(){
-        vec2 q=gl_PointCoord*2.0-1.0;
-        float r=dot(q,q);
+        vec2 q=
+          gl_PointCoord*2.0-1.0;
+
+        float r=
+          dot(q,q);
 
         if(r>1.0)discard;
 
         float soft=
           1.0-
-          smoothstep(.30,1.0,r);
-
-        float hot=
-          (1.0-smoothstep(.0,.24,r))*
-          vCover*.28;
-
-        vec3 col=min(
-          vec3(1.0),
-          vColor+hot
-        );
+          smoothstep(
+            .40,
+            1.0,
+            r
+          );
 
         gl_FragColor=
           vec4(
-            col,
-            uAlpha*vAlpha*soft
+            vColor,
+            vAlpha*soft
           );
       }
     `
@@ -376,7 +445,12 @@ export function createMatterMorph(source,count=15000){
 
   mat.toneMapped=false;
 
-  const pts=new THREE.Points(geo,mat);
+  const pts=
+    new THREE.Points(
+      geo,
+      mat
+    );
+
   pts.renderOrder=-2;
   pts.frustumCulled=false;
 

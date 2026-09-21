@@ -1518,7 +1518,7 @@ function createAppTour(font){
     searchDash,searchClients,newBtnGroup,
     contentRoot,dashboard,metricCards,
     customers,tableHead,tableRows,newRow,baseRows,shiftedRows,
-    form,modal,pfCard,pjCard,step1,step2,step3,stepDots,stepLineA,stepLineB,
+    form,dim,modal,pfCard,pjCard,step1,step2,step3,stepDots,stepLineA,stepLineB,
     fieldValues,addressValues,actionBtn,action1,action2,action3,
     W,H
   };
@@ -1861,140 +1861,260 @@ export class TGWorld3D{
 
 
     // ------------------------------------------------------------
-    // PHASE 2 — TGBC identity becomes the actual TGBusinessCenter UI.
+    // PHASE 2 — dense, deterministic TGBC product preview.
+    // Every short scroll interval changes a real interface object.
     // ------------------------------------------------------------
-    const appIn=mix(p,.445,.525);
-    const dashboardHold=1-mix(p,.615,.675);
-    const clientsIn=mix(p,.615,.685);
-    const formIn=mix(p,.715,.785);
-    const saveClient=mix(p,.815,.885);
-    const clientsReturn=mix(p,.825,.895);
+    const appIn=mix(p,.440,.480);
+    const headerIn=mix(p,.448,.486);
+    const sidebarIn=mix(p,.456,.505);
+    const subheaderIn=mix(p,.472,.510);
+
+    const metricIn=[
+      mix(p,.482,.505),
+      mix(p,.497,.520),
+      mix(p,.512,.535),
+      mix(p,.527,.550)
+    ];
+
+    const clientsSelect=mix(p,.552,.580);
+    const clientsIn=mix(p,.566,.612);
+
+    const rowIn=[
+      mix(p,.580,.598),
+      mix(p,.590,.608),
+      mix(p,.600,.618),
+      mix(p,.610,.628),
+      mix(p,.620,.638),
+      mix(p,.630,.648)
+    ];
+
+    const buttonFocus=mix(p,.638,.658);
+    const formOpen=mix(p,.650,.680);
+    const choosePF=mix(p,.674,.700);
+    const step2In=mix(p,.698,.730);
+    const step3In=mix(p,.752,.785);
+    const savePress=mix(p,.812,.832);
+    const formClose=mix(p,.828,.858);
+    const clientsReturn=mix(p,.842,.872);
+    const newRowIn=mix(p,.858,.900);
+    const settleNewRow=mix(p,.900,.955);
 
     if(this.appTour && this.textReady){
+      const u=this.appTour.userData;
+      const {
+        shell,headerDetails,sidebarTitle,cargos,navMeshes,subheader,
+        searchDash,searchClients,newBtnGroup,
+        dashboard,metricCards,
+        customers,tableHead,tableRows,newRow,baseRows,shiftedRows,
+        form,dim,pfCard,pjCard,step1,step2,step3,stepDots,stepLineA,stepLineB,
+        fieldValues,addressValues,actionBtn,action1,action2,action3
+      }=u;
+
       this.appBackdrop.visible=appIn>.001;
       this.appBackdrop.material.opacity=appIn;
 
       this.appTour.visible=appIn>.001;
       materialOpacity(this.appTour,appIn);
-      this.appTour.position.z=lerp(-.75,0,appIn);
-      this.appTour.rotation.x=lerp(.075,0,appIn);
-      this.appTour.rotation.y=lerp(-.055,0,appIn);
+      this.appTour.position.z=lerp(-.62,0,appIn);
+      this.appTour.rotation.x=lerp(.052,0,appIn);
+      this.appTour.rotation.y=lerp(-.038,0,appIn);
 
-      const shell=this.appTour.userData.shell;
-      const dashboard=this.appTour.userData.dashboard;
-      const customers=this.appTour.userData.customers;
-      const form=this.appTour.userData.form;
-      const newCustomer=this.appTour.userData.newCustomer;
-      const navMeshes=this.appTour.userData.navMeshes;
-
+      // Shell itself materializes in physical layers rather than appearing at once.
       materialOpacity(shell,appIn);
+      materialOpacity(headerDetails,headerIn);
+      headerDetails.position.z=lerp(-.16,.02,headerIn);
 
-      // Dashboard is the first stable system state.
-      const dashAlpha=appIn*dashboardHold;
-      materialOpacity(dashboard,dashAlpha);
-      dashboard.position.set(
-        lerp(0,-.14,clientsIn),
-        lerp(0,.18,clientsIn),
-        lerp(.06,-.20,clientsIn)
-      );
-      dashboard.scale.setScalar(lerp(.94,1,appIn)*(1-.06*clientsIn));
-
-      // Shared sidebar changes its selected module instead of being replaced.
+      materialOpacity(sidebarTitle,sidebarIn);
       navMeshes.forEach((n,i)=>{
-        const toClients=clientsIn;
-        const activeDash=1-toClients;
-        const activeCustomers=toClients;
-        const active=(i===0?activeDash:(i===1?activeCustomers:0));
+        const local=mix(p,.458+i*.006,.485+i*.006);
+        materialOpacity(n.holder,local);
+        n.holder.position.x=lerp(-5.68,-5.48,local);
+        n.holder.position.z=lerp(-.12,.03,local);
+      });
+      const cargosIn=mix(p,.490,.515);
+      materialOpacity(cargos,cargosIn);
+      cargos.position.x=lerp(-5.68,-5.48,cargosIn);
+
+      materialOpacity(subheader,subheaderIn);
+      subheader.position.z=lerp(-.12,.02,subheaderIn);
+
+      // Current dashboard from ExecutiveHubView: 4 compact metrics.
+      materialOpacity(dashboard,1-clientsIn);
+      metricCards.forEach((card,i)=>{
+        const local=metricIn[i];
+        const baseX=-3.48+i*2.34;
+        const tableX=-3.54+i*2.35;
+        materialOpacity(card,local*(1-clientsIn));
+        card.position.x=lerp(baseX,tableX,clientsSelect);
+        card.position.y=lerp(1.93,1.91,clientsSelect);
+        card.position.z=lerp(-.14,.04,local)-clientsSelect*.10;
+        card.scale.set(
+          lerp(.90,1,local),
+          lerp(.90,.38,clientsSelect),
+          1
+        );
+      });
+
+      // Sidebar selection and search field transform in place.
+      navMeshes.forEach((n,i)=>{
+        const active=i===0?(1-clientsSelect):(i===1?clientsSelect:0);
         n.back.material.color.setHex(active>.5?0x2563eb:0xf8fafc);
         n.labelMesh.material.color.setHex(active>.5?0xffffff:0x475569);
-      });
-
-      // Dashboard content reflows into the customer screen.
-      const customersBase=clientsIn*(1-formIn)+clientsReturn;
-      materialOpacity(customers,customersBase);
-      customers.position.set(
-        lerp(.16,0,clientsIn),
-        lerp(-.18,0,clientsIn),
-        lerp(-.16,.07,clientsIn)
-      );
-      customers.scale.setScalar(lerp(.94,1,clientsIn));
-
-      // The New Cliente button itself expands into the registration window.
-      materialOpacity(form,formIn*(1-saveClient));
-      const sourceButton=customers.userData.newButtonPos;
-      form.position.set(
-        lerp(sourceButton.x,0,formIn),
-        lerp(sourceButton.y,0,formIn),
-        lerp(.20,.14,formIn)
-      );
-      form.scale.setScalar(lerp(.07,1,formIn));
-      form.rotation.z=lerp(-.035,0,formIn);
-
-      // Existing customer cards recede but remain physically in the same world.
-      customers.userData.cards.forEach((card,i)=>{
-        const dim=formIn*(1-saveClient);
-        materialOpacity(card,customersBase*(1-.72*dim));
-        card.position.z=lerp(0,-.18,dim);
-        card.scale.setScalar(lerp(1,.94,dim));
-      });
-
-      // Save: form collapses back into the list and a real new card occupies the first slot.
-      materialOpacity(newCustomer,saveClient);
-      newCustomer.scale.setScalar(lerp(.52,1,saveClient));
-      newCustomer.position.z=lerp(.50,.09,saveClient);
-
-      // Existing first-row cards slide one cell to make room for the new record.
-      if(saveClient>.001){
-        const cards=customers.userData.cards;
-        const targets=[
-          [0,.43], [2.95,.43], [-2.95,-.79],
-          [0,-.79],[2.95,-.79],[2.95,-2.01]
-        ];
-        cards.forEach((card,i)=>{
-          const t=targets[Math.min(i,targets.length-1)];
-          card.position.x=lerp(card.position.x,t[0],saveClient);
-          card.position.y=lerp(card.position.y,t[1],saveClient);
+        n.icon.traverse(o=>{
+          if(o.isMesh)o.material.color.setHex(active>.5?0xffffff:0x64748b);
         });
+      });
+
+      materialOpacity(searchDash,(1-clientsSelect)*subheaderIn);
+      materialOpacity(searchClients,clientsSelect*subheaderIn);
+      materialOpacity(newBtnGroup,clientsIn*(1-formOpen));
+      newBtnGroup.scale.setScalar(1+.06*buttonFocus*(1-formOpen));
+      newBtnGroup.position.z=.04+.08*buttonFocus;
+
+      // Dashboard flattens into the table shell, then rows build one after another.
+      materialOpacity(customers,clientsIn);
+      materialOpacity(tableHead,clientsIn);
+      tableHead.position.z=lerp(-.15,.04,clientsIn);
+
+      tableRows.forEach((row,i)=>{
+        const local=rowIn[i]*(1-formOpen)+clientsReturn;
+        materialOpacity(row,local);
+        const base=baseRows[i];
+        const shifted=shiftedRows[i];
+        const saveShift=newRowIn;
+        row.position.x=base.x;
+        row.position.y=lerp(base.y,shifted.y,saveShift);
+        row.position.z=lerp(-.18,.03,rowIn[i])-formOpen*.10;
+        row.scale.setScalar(lerp(.96,1,rowIn[i]));
+      });
+
+      // The real Novo Cliente action becomes the modal, instead of a cut.
+      materialOpacity(form,formOpen*(1-formClose));
+      form.position.set(
+        lerp(3.75,0,formOpen),
+        lerp(2.35,.08,formOpen),
+        lerp(.42,.14,formOpen)
+      );
+      form.scale.setScalar(lerp(.055,1,formOpen)*(1-.06*formClose));
+      form.rotation.z=lerp(-.025,0,formOpen);
+      if(dim?.material){
+        dim.material.opacity=.42*formOpen*(1-formClose);
+        dim.material.depthWrite=false;
       }
 
-      // The abstract product background becomes the light product surface.
+      // Customer table remains physically behind the modal.
+      const tableDim=formOpen*(1-formClose);
+      customers.position.z=-.05-.16*tableDim;
+      customers.scale.setScalar(1-.025*tableDim);
+
+      // Step 1 — Natureza. The PF card is physically selected by scroll.
+      materialOpacity(step1,(1-step2In)*formOpen);
+      pfCard.position.z=.07+.10*choosePF;
+      pfCard.scale.setScalar(1+.035*choosePF);
+      pfCard.material.color.setHex(choosePF>.45?0xeff6ff:0xffffff);
+      pjCard.position.z=.07-.025*choosePF;
+      pjCard.scale.setScalar(1-.018*choosePF);
+
+      // Step 2 — Identificação replaces the same modal content.
+      materialOpacity(step2,step2In*(1-step3In)*formOpen);
+      step2.position.x=lerp(.34,0,step2In);
+      step2.position.z=lerp(-.10,.08,step2In);
+
+      fieldValues.forEach((value,i)=>{
+        const fill=mix(p,.708+i*.006,.720+i*.006);
+        materialOpacity(value,fill*(1-step3In)*formOpen);
+        value.position.z=.11+.035*fill;
+      });
+
+      // Step 3 — Endereço Inteligente uses the same card and stepper.
+      materialOpacity(step3,step3In*formOpen);
+      step3.position.x=lerp(.34,0,step3In);
+      step3.position.z=lerp(-.10,.08,step3In);
+      addressValues.forEach((value,i)=>{
+        const fill=mix(p,.764+i*.006,.776+i*.006);
+        materialOpacity(value,fill*formOpen);
+        value.position.z=.11+.035*fill;
+      });
+
+      // Stepper itself advances, so even between content swaps something changes.
+      const step2Active=step2In;
+      const step3Active=step3In;
+      stepDots[0].dot.material.color.setHex(step2Active>.25?0x10b981:0x2563eb);
+      stepDots[0].label.material.color.setHex(step2Active>.25?0x059669:0x2563eb);
+      stepDots[1].dot.material.color.setHex(step3Active>.25?0x10b981:(step2Active>.25?0x2563eb:0xe2e8f0));
+      stepDots[1].label.material.color.setHex(step3Active>.25?0x059669:(step2Active>.25?0x2563eb:0x94a3b8));
+      stepDots[2].dot.material.color.setHex(step3Active>.25?0x2563eb:0xe2e8f0);
+      stepDots[2].label.material.color.setHex(step3Active>.25?0x2563eb:0x94a3b8);
+      stepLineA.material.color.setHex(step2Active>.25?0x10b981:0xe2e8f0);
+      stepLineB.material.color.setHex(step3Active>.25?0x2563eb:0xe2e8f0);
+
+      materialOpacity(action1,(1-step2In)*formOpen);
+      materialOpacity(action2,step2In*(1-step3In)*formOpen);
+      materialOpacity(action3,step3In*formOpen);
+      actionBtn.scale.setScalar(1-.08*savePress*(1-formClose));
+      actionBtn.position.z=.09+.05*savePress;
+
+      // Saving collapses the modal back into the very table it came from.
+      if(formClose>.001){
+        form.position.x=lerp(0,3.72,formClose);
+        form.position.y=lerp(.08,2.35,formClose);
+        form.position.z=lerp(.14,.32,formClose);
+        form.scale.setScalar(lerp(1,.07,formClose));
+      }
+
+      // New record enters the exact first-row location while all rows move one slot.
+      materialOpacity(newRow,newRowIn);
+      newRow.position.y=1.48;
+      newRow.position.z=lerp(.38,.12,newRowIn);
+      newRow.scale.setScalar(lerp(.76,1.045,newRowIn));
+      if(settleNewRow>.001){
+        newRow.scale.setScalar(lerp(1.045,1,settleNewRow));
+        newRow.position.z=lerp(.12,.05,settleNewRow);
+      }
+
+      // Restore customers screen fully as the modal disappears.
+      const returnAlpha=Math.max(clientsIn*(1-formOpen),clientsReturn);
+      materialOpacity(tableHead,returnAlpha);
+      materialOpacity(customers,Math.max(clientsIn,clientsReturn));
+      materialOpacity(newBtnGroup,Math.max(clientsIn*(1-formOpen),clientsReturn));
+
+      // Abstract TGBC world becomes the actual light application surface.
       this.bg.material.uniforms.uAlpha.value=gradient*(1-appIn);
       this.cloud.material.uniforms.uAlpha.value=cloudAlpha*(1-appIn);
       this.markFragments.material.uniforms.uAlpha.value*=1-appIn;
 
-      // Central product logo + text become the actual application logo lockup.
+      // Hero identity becomes the real topbar brand as one lockup.
       const uiScale=this.appTour.scale.x||1;
       const designW=this.appTour.userData.W;
       const designH=this.appTour.userData.H;
-      const logoX=(-designW/2+.36)*uiScale;
-      const logoY=(designH/2-.28)*uiScale;
+      const logoX=(-designW/2+.28)*uiScale;
+      const logoY=(designH/2-.24)*uiScale;
 
       const rawFavHalf=this.targetMark.userData.halfWidth;
       const heroFavScale=1/rawFavHalf;
-      const targetFavHeight=.28*uiScale;
+      const targetFavHeight=.24*uiScale;
       const appFavScale=targetFavHeight/(rawFavHalf*2);
 
-      this.targetMark.position.x=lerp(0,logoX,appIn);
-      this.targetMark.position.y=lerp(0,logoY,appIn);
-      this.targetMark.position.z=lerp(0,.22,appIn);
+      this.targetMark.position.set(
+        lerp(0,logoX,appIn),
+        lerp(0,logoY,appIn),
+        lerp(0,.22,appIn)
+      );
       this.targetMark.scale.setScalar(lerp(heroFavScale,appFavScale,appIn));
 
-      // Dark hero wordmark transforms into the light-theme wordmark.
-      const heroTextAlpha=(1-appIn)*targetTextIn;
-      materialOpacity(this.targetWord,heroTextAlpha);
+      materialOpacity(this.targetWord,(1-appIn)*targetTextIn);
 
-      const lightWordH=.28*uiScale;
+      const lightWordH=targetFavHeight;
       const lightWordScale=lightWordH/Math.max(.001,this.targetWordLight.userData.height);
       const lightWordW=this.targetWordLight.userData.width*lightWordScale;
       this.targetWordLight.scale.setScalar(lightWordScale);
       this.targetWordLight.position.set(
-        logoX+targetFavHeight/2+.08*uiScale+lightWordW/2,
+        logoX+targetFavHeight/2+.055*uiScale+lightWordW/2,
         logoY,
         .22
       );
       materialOpacity(this.targetWordLight,appIn);
 
-      // The presentation caption has served its purpose by this point.
       materialOpacity(this.lead,(1-appIn)*targetTextIn);
     }
 

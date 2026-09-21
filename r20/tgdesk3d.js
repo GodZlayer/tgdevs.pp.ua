@@ -171,46 +171,74 @@ function polarPoint(angle,radius){
   ];
 }
 
+function qBezier(a,b,c,t){
+  const mt=1-t;
+  return [
+    mt*mt*a[0]+2*mt*t*b[0]+t*t*c[0],
+    mt*mt*a[1]+2*mt*t*b[1]+t*t*c[1]
+  ];
+}
+
+function outwardControl(a,b,strength=.31){
+  const mx=(a[0]+b[0])*.5;
+  const my=(a[1]+b[1])*.5;
+  const len=Math.max(.001,Math.hypot(mx,my));
+  return [
+    mx+(mx/len)*strength,
+    my+(my/len)*strength
+  ];
+}
+
+function triangularCometPath(from,to){
+  const control=outwardControl(from,to,.295);
+  const points=[];
+  const N=7;
+
+  for(let i=0;i<N;i++){
+    const t=i/(N-1);
+    // Tail does not occupy the full side. It starts after the previous corner
+    // and thickens aggressively only when approaching its own head.
+    const tt=.15+t*.78;
+    points.push(qBezier(from,control,to,tt));
+  }
+
+  return points;
+}
+
 export function createTGDeskMark3D(){
   const root=new THREE.Group();
 
-  // Canonical three-fold symmetry. Every comet is the same geometry rotated
-  // exactly 120 degrees; only the brand gradient changes across the mark.
+  // The center remains circular, but the orbital logic is deliberately NOT circular.
+  // The three comet heads sit on the vertices of a controlled equilateral triangle.
   const core=sphere(.420,'full',-.04);
   core.position.set(0,0,.035);
   root.add(core);
 
-  const headAngles=[
-    Math.PI/2,
-    Math.PI/2+Math.PI*2/3,
-    Math.PI/2+Math.PI*4/3
+  const R=.925;
+  const vertices=[
+    polarPoint(Math.PI/2,R),
+    polarPoint(Math.PI/2-Math.PI*2/3,R),
+    polarPoint(Math.PI/2-Math.PI*4/3,R)
   ];
 
-  const modes=['blue','blue','green'];
-  const biases=[.02,.055,-.025];
+  const modes=['blue','green','blue'];
+  const biases=[.015,-.020,.050];
 
-  const tails=[];
   const heads=[];
+  const tails=[];
 
   for(let i=0;i<3;i++){
-    const a=headAngles[i];
+    const head=vertices[i];
+    const previous=vertices[(i+2)%3];
 
-    // Far tip -> thick neck under the sphere.
-    // The angular sweep is identical for all three comets.
-    const points=[
-      polarPoint(a+THREE.MathUtils.degToRad(80),.820),
-      polarPoint(a+THREE.MathUtils.degToRad(63),.838),
-      polarPoint(a+THREE.MathUtils.degToRad(47),.855),
-      polarPoint(a+THREE.MathUtils.degToRad(32),.875),
-      polarPoint(a+THREE.MathUtils.degToRad(18),.888),
-      polarPoint(a+THREE.MathUtils.degToRad(8),.858)
-    ];
-
+    // Each tail follows one rounded side of the triangle.
+    // That gives the mark the "perfectly controlled orbit" requested:
+    // a three-fold engineered path rather than a natural orbital circle.
     const tail=taperedRibbon(
-      points,
-      .014,
-      .183,
-      .088,
+      triangularCometPath(previous,head),
+      .010,
+      .186,
+      .086,
       modes[i],
       biases[i]
     );
@@ -218,24 +246,22 @@ export function createTGDeskMark3D(){
     tails.push(tail);
     root.add(tail);
 
-    const head=sphere(
+    const orb=sphere(
       .205,
       modes[i],
       biases[i]
     );
 
-    head.position.set(
-      Math.cos(a)*.915,
-      Math.sin(a)*.915,
+    orb.position.set(
+      head[0],
+      head[1],
       .082
     );
 
-    heads.push(head);
-    root.add(head);
+    heads.push(orb);
+    root.add(orb);
   }
 
-  // One global light direction, so the highlights stay physically coherent
-  // while the geometry itself remains perfectly symmetric.
   addSoftHighlight(
     core,
     -.155,
@@ -259,13 +285,13 @@ export function createTGDeskMark3D(){
   }
 
   root.userData={
-    halfWidth:1.05,
-    halfHeight:1.10,
-    canonicalHeight:2.20,
-    headRadius:.915
+    halfWidth:1.08,
+    halfHeight:1.12,
+    canonicalHeight:2.24,
+    triangleRadius:R,
+    vertices:vertices.map(v=>[v[0],v[1]])
   };
 
-  // No baked asymmetry in the canonical resting state.
   root.rotation.set(0,0,0);
 
   return root;

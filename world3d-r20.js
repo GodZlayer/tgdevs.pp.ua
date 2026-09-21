@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { TGWorld3D as TGWorld3DBase } from './world3d-r16.js';
+import { TGWorld3D as TGWorld3DBase } from './world3d-r16.js?rev=27';
 import {
   clamp,
   mix,

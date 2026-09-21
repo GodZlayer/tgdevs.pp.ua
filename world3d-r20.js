@@ -13,7 +13,6 @@ import {
 } from './r20/motion.js';
 import {
   edgeKeyTexture,
-  sampleTextureAlpha,
   revealPlane,
   sloganTexture,
   gradientLine
@@ -22,6 +21,7 @@ import {
   createApiCycle,
   createMatterMorph
 } from './r20/matter.js';
+import { createTGDeskMark3D } from './r20/tgdesk3d.js';
 
 export class TGWorld3D extends TGWorld3DBase{
   constructor(canvas){
@@ -37,6 +37,12 @@ export class TGWorld3D extends TGWorld3DBase{
 
     this.deskFav=null;
     this.deskWord=null;
+
+    // Canonical TGDesk favicon is a real 3D object now.
+    // The raster is no longer used as the final mark.
+    this.deskMark3D=createTGDeskMark3D();
+    this.scene.add(this.deskMark3D);
+    opacity(this.deskMark3D,0);
 
     this.deskSlogan=revealPlane(
       sloganTexture(),
@@ -56,32 +62,7 @@ export class TGWorld3D extends TGWorld3DBase{
 
     this._r20Snapshots=null;
     this._r20BuildKey='';
-    this._deskFavTexture=null;
-
     const loader=new THREE.TextureLoader();
-
-    loader.load(
-      './tgdesk-favicon-r1.webp',
-      source=>{
-        const tex=edgeKeyTexture(source.image);
-
-        this._deskFavTexture=tex;
-
-        this.deskFav=revealPlane(
-          tex,
-          683/644,
-          2.08
-        );
-
-        this.scene.add(this.deskFav);
-        this.deskFav.visible=false;
-
-        this._r20BuildKey='';
-        window.dispatchEvent(
-          new Event('tgworldready')
-        );
-      }
-    );
 
     loader.load(
       './tgdesk-wordmark-r1.webp',
@@ -198,8 +179,7 @@ export class TGWorld3D extends TGWorld3DBase{
 
     const key=
       this._sizeKey+
-      '|'+
-      (this._deskFavTexture?1:0);
+      '|desk3d';
 
     if(this._r20BuildKey===key)return;
 
@@ -353,32 +333,42 @@ export class TGWorld3D extends TGWorld3DBase{
     this.matter.visible=false;
     this.scene.add(this.matter);
 
-    if(this._deskFavTexture){
-      const count=portrait?1800:3200;
+    {
+      const count=portrait?2200:3800;
 
-      const favX=portrait?0:1.42;
-      const favY=portrait?.30:.08;
-      const targetH=portrait?1.78:2.08;
+      const deskPos=this.deskMark3D.position.clone();
+      const deskScale=this.deskMark3D.scale.clone();
+      const deskQuat=this.deskMark3D.quaternion.clone();
+
+      this.deskMark3D.position.set(
+        portrait?0:1.42,
+        portrait?.30:.08,
+        .34
+      );
+      this.deskMark3D.scale.setScalar(
+        portrait?.82:1.0
+      );
+      this.deskMark3D.updateMatrixWorld(true);
 
       this.deskMorph=createMorph(
         sampleWorldRoots(
           [this.targetMark],
           count
         ),
-        sampleTextureAlpha(
-          this._deskFavTexture,
-          count,
-          targetH,
-          favX,
-          favY,
-          .32
+        sampleWorldRoots(
+          [this.deskMark3D],
+          count
         ),
         count,
-        .012
+        .011
       );
 
       this.deskMorph.visible=false;
       this.scene.add(this.deskMorph);
+
+      this.deskMark3D.position.copy(deskPos);
+      this.deskMark3D.scale.copy(deskScale);
+      this.deskMark3D.quaternion.copy(deskQuat);
     }
 
     this.targetMark.position.copy(markPos);
@@ -706,6 +696,49 @@ export class TGWorld3D extends TGWorld3DBase{
   }
 
   _renderDeskTransition(p,portrait){
+    // r16 still evaluates its gallery for p > .955.
+    // Once the closing page has finished, none of that legacy TGBC surface
+    // is allowed to reappear behind the cloud/prism.
+    if(p>=1.935){
+      if(this.appTour)this.appTour.visible=false;
+      if(this.appBackdrop)this.appBackdrop.visible=false;
+
+      if(this.bg?.material?.uniforms?.uAlpha){
+        this.bg.material.uniforms.uAlpha.value=0;
+        this.bg.visible=false;
+      }
+
+      if(this.cloud?.material?.uniforms?.uAlpha){
+        this.cloud.material.uniforms.uAlpha.value=0;
+        this.cloud.visible=false;
+      }
+
+      if(this.markFragments?.material?.uniforms?.uAlpha){
+        this.markFragments.material.uniforms.uAlpha.value=0;
+        this.markFragments.visible=false;
+      }
+
+      if(this.wordFragments?.material?.uniforms?.uAlpha){
+        this.wordFragments.material.uniforms.uAlpha.value=0;
+        this.wordFragments.visible=false;
+      }
+
+      opacity(this.targetWordLight,0);
+      opacity(this.targetWord,0);
+      opacity(this.lead,0);
+      opacity(this.scrollCue,0);
+    }
+
+    // TGBC favicon is the only survivor from the previous world.
+    // Keep it at the canonical hero center while it becomes TGDesk.
+    const rawHalf=Math.max(
+      .001,
+      this.targetMark?.userData?.halfWidth||1
+    );
+    this.targetMark.position.set(0,0,0);
+    this.targetMark.scale.setScalar(1/rawHalf);
+    this.targetMark.quaternion.identity();
+
     const prism=
       mix(p,1.925,2.185);
 
@@ -756,25 +789,30 @@ export class TGWorld3D extends TGWorld3DBase{
     const lineIn=
       mix(p,2.290,2.410);
 
-    if(this.deskFav){
-      this.deskFav.visible=
-        favIn>.001;
+    this.deskMark3D.position.set(
+      portrait?0:1.42,
+      portrait?.30:.08,
+      .34
+    );
 
-      this.deskFav.material.uniforms
-        .uAlpha.value=favIn;
+    this.deskMark3D.scale.setScalar(
+      lerp(
+        portrait?.68:.82,
+        portrait?.82:1.0,
+        favIn
+      )
+    );
 
-      this.deskFav.material.uniforms
-        .uReveal.value=
-          mix(p,2.145,2.235);
+    this.deskMark3D.rotation.set(
+      -.035+(.05*(1-favIn)),
+      .045-(.09*(1-favIn)),
+      .025*(1-favIn)
+    );
 
-      this.deskFav.position.set(
-        portrait?0:1.42,
-        portrait?.30:.08,
-        .34
-      );
-
-      this.deskFav.scale.setScalar(1);
-    }
+    opacity(
+      this.deskMark3D,
+      favIn
+    );
 
     if(this.deskWord){
       this.deskWord.visible=
@@ -870,6 +908,8 @@ export class TGWorld3D extends TGWorld3DBase{
       );
     }
 
+    if(this.deskFav)this.deskFav.visible=false;
+
     if(p>2.235){
       opacity(this.targetMark,0);
     }
@@ -895,6 +935,7 @@ export class TGWorld3D extends TGWorld3DBase{
     if(this.matter)this.matter.visible=false;
     if(this.deskMorph)setMorph(this.deskMorph,0,0);
     if(this.deskFav)this.deskFav.visible=false;
+    opacity(this.deskMark3D,0);
     if(this.deskWord)this.deskWord.visible=false;
     this.deskSlogan.visible=false;
     this.deskLine.visible=false;

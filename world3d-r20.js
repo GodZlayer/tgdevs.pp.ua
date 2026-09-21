@@ -75,6 +75,7 @@ export class TGWorld3D extends TGWorld3DBase{
           .62
         );
 
+        this.deskWord.renderOrder=52;
         this.scene.add(this.deskWord);
         this.deskWord.visible=false;
 
@@ -341,12 +342,12 @@ export class TGWorld3D extends TGWorld3DBase{
       const deskQuat=this.deskMark3D.quaternion.clone();
 
       this.deskMark3D.position.set(
-        portrait?0:1.42,
-        portrait?.30:.08,
+        portrait?0:1.12,
+        portrait?.28:.06,
         .34
       );
       this.deskMark3D.scale.setScalar(
-        portrait?.82:1.0
+        portrait?.80:.92
       );
       this.deskMark3D.updateMatrixWorld(true);
 
@@ -630,23 +631,30 @@ export class TGWorld3D extends TGWorld3DBase{
       );
     }
 
-    // Interface debris becomes the centered two-pattern cloud.
+    // Interface debris does not fade into a static cloud.
+    // Individual particles are born from the page, detach on different schedules
+    // and move through a deterministic turbulence field driven by scroll.
     if(this.matter?.material?.uniforms){
+      const birth=
+        mix(p,1.545,1.835);
+
       const cloud=
-        mix(p,1.585,1.925);
+        mix(p,1.565,1.930);
+
+      const m=this.matter.material.uniforms;
 
       this.matter.visible=
-        cloud>.001;
+        birth>.001;
 
-      this.matter.material.uniforms
-        .uCloud.value=cloud;
+      this.matter.renderOrder=18;
 
-      this.matter.material.uniforms
-        .uPrism.value=0;
-
-      this.matter.material.uniforms
-        .uAlpha.value=
-          mix(p,1.570,1.640);
+      m.uBirth.value=birth;
+      m.uCloud.value=cloud;
+      m.uPrism.value=0;
+      m.uCover.value=0;
+      m.uFlow.value=(p-1.535)*10.5;
+      m.uCoverCenter.value.set(0,0);
+      m.uAlpha.value=1;
     }
 
     const shellGone=
@@ -739,32 +747,49 @@ export class TGWorld3D extends TGWorld3DBase{
     this.targetMark.scale.setScalar(1/rawHalf);
     this.targetMark.quaternion.identity();
 
+    // The cloud first surges toward camera and physically covers the logo.
+    // It then retreats behind the identity and only then hardens into the prism.
+    const coverIn=
+      mix(p,1.935,2.055);
+
+    const coverOut=
+      mix(p,2.075,2.205);
+
+    const cover=
+      coverIn*(1-coverOut);
+
     const prism=
-      mix(p,1.925,2.185);
+      mix(p,2.175,2.465);
 
     if(this.matter?.material?.uniforms){
+      const m=this.matter.material.uniforms;
+
       this.matter.visible=true;
+      this.matter.renderOrder=
+        cover>.025?60:-2;
 
-      this.matter.material.uniforms
-        .uCloud.value=1;
-
-      this.matter.material.uniforms
-        .uPrism.value=prism;
-
-      this.matter.material.uniforms
-        .uAlpha.value=1;
+      m.uBirth.value=1;
+      m.uCloud.value=1;
+      m.uCover.value=cover;
+      m.uPrism.value=prism;
+      m.uFlow.value=(p-1.535)*10.5;
+      m.uCoverCenter.value.set(
+        portrait?0:.72,
+        portrait?.08:.03
+      );
+      m.uAlpha.value=1;
     }
 
-    // TGBC itself becomes TGDesk while the cloud becomes the prism.
+    // TGBC itself becomes TGDesk underneath that moving particle veil.
     const breakFav=
-      mix(p,1.955,2.045);
+      mix(p,1.970,2.085);
 
     const morph=
-      mix(p,2.015,2.175);
+      mix(p,2.025,2.205);
 
     const particleA=
-      mix(p,1.965,2.015)*
-      (1-mix(p,2.145,2.215));
+      mix(p,1.965,2.030)*
+      (1-mix(p,2.175,2.245));
 
     opacity(
       this.targetMark,
@@ -778,35 +803,53 @@ export class TGWorld3D extends TGWorld3DBase{
     );
 
     const favIn=
-      mix(p,2.135,2.225);
+      mix(p,2.115,2.255);
 
     const wordIn=
-      mix(p,2.205,2.345);
+      mix(p,2.245,2.405);
 
     const sloganIn=
-      mix(p,2.235,2.395);
+      mix(p,2.275,2.430);
 
     const lineIn=
-      mix(p,2.290,2.410);
+      mix(p,2.325,2.455);
+
+    const settle=
+      mix(p,2.180,2.470);
+
+    const markX=portrait?0:1.12;
+    const markY=portrait?.28:.06;
+    const markScale=portrait?.80:.92;
 
     this.deskMark3D.position.set(
-      portrait?0:1.42,
-      portrait?.30:.08,
-      .34
+      markX+
+        Math.sin((p-1.92)*7.3)*
+        .035*
+        (1-settle),
+      markY+
+        Math.cos((p-1.92)*6.1)*
+        .026*
+        (1-settle),
+      lerp(.06,.34,favIn)
     );
 
     this.deskMark3D.scale.setScalar(
       lerp(
-        portrait?.68:.82,
-        portrait?.82:1.0,
+        markScale*.73,
+        markScale,
         favIn
-      )
+      )+
+      Math.sin(favIn*Math.PI)*
+      .045
     );
 
     this.deskMark3D.rotation.set(
-      -.035+(.05*(1-favIn)),
-      .045-(.09*(1-favIn)),
-      .025*(1-favIn)
+      lerp(.085,0,settle),
+      lerp(-.120,0,settle),
+      lerp(.105,0,settle)+
+        Math.sin((p-1.90)*5.4)*
+        .018*
+        (1-settle)
     );
 
     opacity(
@@ -823,26 +866,45 @@ export class TGWorld3D extends TGWorld3DBase{
 
       this.deskWord.material.uniforms
         .uReveal.value=
-          mix(p,2.205,2.345);
+          mix(p,2.245,2.405);
 
       if(portrait){
         this.deskWord.position.set(
           0,
-          -1.18,
-          .34
+          -1.18+
+            Math.sin((p-2.22)*4.8)*
+            .025*
+            (1-settle),
+          lerp(-.26,.36,wordIn)
         );
 
         this.deskWord.scale
-          .setScalar(.86);
+          .setScalar(
+            .86*
+            lerp(.94,1,wordIn)
+          );
       }else{
+        // Derived from the real favicon half-width + exact wordmark width:
+        // there is now an intentional gap, so "TGDesk" is always complete.
         this.deskWord.position.set(
-          3.52,
-          .08,
-          .34
+          3.68+
+            Math.sin((p-2.22)*4.6)*
+            .030*
+            (1-settle),
+          .06,
+          lerp(-.26,.36,wordIn)
         );
 
         this.deskWord.scale
-          .setScalar(.88);
+          .setScalar(
+            .88*
+            lerp(.94,1,wordIn)
+          );
+      }
+
+      if(wordIn>.995){
+        this.deskWord.material.uniforms
+          .uReveal.value=1;
       }
     }
 
@@ -854,7 +916,7 @@ export class TGWorld3D extends TGWorld3DBase{
 
     this.deskSlogan.material.uniforms
       .uReveal.value=
-        mix(p,2.235,2.395);
+        mix(p,2.275,2.430);
 
     if(portrait){
       this.deskSlogan.position.set(
@@ -867,9 +929,12 @@ export class TGWorld3D extends TGWorld3DBase{
         .setScalar(.68);
     }else{
       this.deskSlogan.position.set(
-        -2.55,
-        .22,
-        .33
+        -2.55+
+          Math.sin((p-2.24)*3.8)*
+          .028*
+          (1-settle),
+        .18,
+        lerp(-.22,.33,sloganIn)
       );
 
       this.deskSlogan.scale
@@ -897,8 +962,8 @@ export class TGWorld3D extends TGWorld3DBase{
     }else{
       this.deskLine.position.set(
         -2.55,
-        -.32,
-        .31
+        -.34,
+        lerp(-.12,.31,lineIn)
       );
 
       this.deskLine.scale.set(
@@ -910,7 +975,7 @@ export class TGWorld3D extends TGWorld3DBase{
 
     if(this.deskFav)this.deskFav.visible=false;
 
-    if(p>2.235){
+    if(p>2.255){
       opacity(this.targetMark,0);
     }
   }

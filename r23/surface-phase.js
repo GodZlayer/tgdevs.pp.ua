@@ -351,6 +351,7 @@ export function resolveTGDeskSolid(
   const {
     core,
     nodes,
+    blades,
     guide
   }=root.userData;
 
@@ -377,8 +378,8 @@ export function resolveTGDeskSolid(
   core.userData.highlight.material.opacity=
     .56*coreA;
 
-  // Technical actors materialize from the particle path one after another,
-  // but with heavy overlap so it reads as one continuous event.
+  // Each comet materializes as one object: its blade and its head overlap heavily.
+  // This keeps the particle -> solid transition faithful to the real favicon silhouette.
   nodes.forEach(
     (node,i)=>{
       const start=
@@ -397,14 +398,20 @@ export function resolveTGDeskSolid(
 
       node.userData.highlight.material.opacity=
         .56*a;
+
+      if(blades?.[i]){
+        blades[i].material.opacity=a;
+        blades[i].visible=a>.001;
+      }
     }
   );
 
+  // The guide is structure only; it must never define the logo silhouette.
   guide.material.opacity=
-    .11*
+    .018*
     smoothLocal(
       r,
-      .34,
-      .88
+      .42,
+      .92
     );
 }

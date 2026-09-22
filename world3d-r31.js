@@ -9,31 +9,61 @@ import {
   createTGDeskPreview,
   updateTGDeskPreview,
   hideTGDeskPreview
-} from './r31/tgdesk-preview.js';
+} from './r30/tgdesk-preview.js';
 
 
 function cloneVisualRoot(root){
   if(!root)return null;
-  const clone=root.clone(true);
 
-  const src=[];
-  const dst=[];
-  root.traverse(o=>src.push(o));
-  clone.traverse(o=>dst.push(o));
-
-  for(let i=0;i<Math.min(src.length,dst.length);i++){
-    const a=src[i];
-    const b=dst[i];
-    if(!a?.isMesh || !b?.isMesh)continue;
-
-    if(Array.isArray(a.material)){
-      b.material=a.material.map(m=>m?.clone?.()||m);
-    }else if(a.material){
-      b.material=a.material.clone?.()||a.material;
+  const cloneMaterial=m=>{
+    if(Array.isArray(m)){
+      return m.map(x=>x?.clone?.()||x);
     }
-  }
+    return m?.clone?.()||m;
+  };
 
-  return clone;
+  const copyNode=src=>{
+    let dst;
+
+    if(src.isMesh){
+      dst=new THREE.Mesh(
+        src.geometry,
+        cloneMaterial(src.material)
+      );
+    }else if(src.isPoints){
+      dst=new THREE.Points(
+        src.geometry,
+        cloneMaterial(src.material)
+      );
+    }else if(src.isLineSegments){
+      dst=new THREE.LineSegments(
+        src.geometry,
+        cloneMaterial(src.material)
+      );
+    }else if(src.isLine){
+      dst=new THREE.Line(
+        src.geometry,
+        cloneMaterial(src.material)
+      );
+    }else{
+      dst=new THREE.Group();
+    }
+
+    dst.position.copy(src.position);
+    dst.quaternion.copy(src.quaternion);
+    dst.scale.copy(src.scale);
+    dst.visible=src.visible;
+    dst.renderOrder=src.renderOrder;
+    dst.frustumCulled=src.frustumCulled;
+
+    src.children.forEach(
+      child=>dst.add(copyNode(child))
+    );
+
+    return dst;
+  };
+
+  return copyNode(root);
 }
 
 function setRootAlpha(root,value){

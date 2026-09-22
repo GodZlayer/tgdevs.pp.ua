@@ -411,12 +411,38 @@ export class TGWorld3D extends TGWorld3DBase{
         (1-bleedOut);
 
       this.crmBleedPlane.visible=bleedA>.001;
-      this.crmBleedMaterial.opacity=.96*bleedA;
+      this.crmBleedMaterial.opacity=.98*bleedA;
+
+      // The old white full-viewport backdrop existed only to hide letterbox
+      // space. Once that space is the live blurred continuation, keeping the
+      // white plane would paint over the bleed. Hide it only for this final
+      // composite pass; the sharp appTour still carries its own real white
+      // application surface.
+      const backdropVisible=
+        this.appBackdrop?.visible;
+      const backdropOpacity=
+        this.appBackdrop?.material?.opacity;
+
+      if(this.appBackdrop){
+        this.appBackdrop.visible=false;
+      }
 
       this.renderer.render(
         this.scene,
         this.camera
       );
+
+      if(this.appBackdrop){
+        this.appBackdrop.visible=
+          !!backdropVisible;
+        if(
+          this.appBackdrop.material &&
+          backdropOpacity!==undefined
+        ){
+          this.appBackdrop.material.opacity=
+            backdropOpacity;
+        }
+      }
     }
 
     if(

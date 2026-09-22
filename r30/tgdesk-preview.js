@@ -426,14 +426,14 @@ function makeApertureMaterial(texture){
     depthWrite:false,
     depthTest:false,
     toneMapped:false,
-    vertexShader:\`
+    vertexShader:`
       varying vec2 vUv;
       void main(){
         vUv=uv;
         gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);
       }
-    \`,
-    fragmentShader:\`
+    `,
+    fragmentShader:`
       uniform sampler2D uMap;
       uniform float uAlpha;
       uniform float uAperture;
@@ -453,7 +453,7 @@ function makeApertureMaterial(texture){
         vec3 glow=vec3(.08,.78,1.0)*edge*.34;
         gl_FragColor=vec4(min(px.rgb+glow,vec3(1.0)),px.a*uAlpha*mask);
       }
-    \`
+    `
   });
 }
 
@@ -471,14 +471,14 @@ function makeBleedMaterial(texture){
     depthWrite:false,
     depthTest:false,
     toneMapped:false,
-    vertexShader:\`
+    vertexShader:`
       varying vec2 vUv;
       void main(){
         vUv=uv;
         gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);
       }
-    \`,
-    fragmentShader:\`
+    `,
+    fragmentShader:`
       uniform sampler2D uMap;
       uniform float uAlpha;
       uniform float uAperture;
@@ -516,7 +516,7 @@ function makeBleedMaterial(texture){
 
         gl_FragColor=vec4(col,uAlpha*mask);
       }
-    \`
+    `
   });
 }
 

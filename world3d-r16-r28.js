@@ -1483,6 +1483,61 @@ function createAppTour(font){
   customers.add(newRow);
   materialOpacity(newRow,0);
 
+
+  // Adaptive portrait composition: same customer data, reorganized instead of
+  // shrinking/cropping the desktop table.
+  const customersCompact=new THREE.Group();
+  customersCompact.position.set(0,-.18,.10);
+  root.add(customersCompact);
+  materialOpacity(customersCompact,0);
+
+  const compactHeader=uiCard(4.55,.58,0xffffff,.075,.016);
+  compactHeader.position.set(0,2.43,.01);
+  customersCompact.add(compactHeader);
+  addUiText(customersCompact,'Clientes',font,.125,0x0f172a,-2.00,2.43,.08);
+  const compactAdd=uiCard(1.18,.30,0x2563eb,.055,.012);
+  compactAdd.position.set(1.50,2.43,.05);
+  customersCompact.add(compactAdd);
+  addUiText(customersCompact,'+ Novo Cliente',font,.052,0xffffff,1.50,2.43,.08,'center');
+
+  const compactRows=[];
+  rowData.forEach((r,i)=>{
+    const row=new THREE.Group();
+    const y=1.82-i*.72;
+    row.position.set(0,y,.02);
+
+    const card=uiCard(4.55,.62,0xffffff,.075,.016);
+    row.add(card);
+
+    const stripe=uiCard(.055,.42,i===0?0x2563eb:0xdbe3ec,.025,.010);
+    stripe.position.set(-2.10,0,.04);
+    row.add(stripe);
+
+    addUiText(row,r[0],font,.072,0x1e293b,-1.92,.13,.08);
+    addUiText(row,r[2],font,.051,0x64748b,-1.92,-.10,.08);
+    addUiText(row,r[1],font,.047,0x475569,.18,.13,.08);
+    addUiText(row,r[3],font,.043,0x64748b,.18,-.10,.08);
+    addUiText(row,'Pronto',font,.050,0x059669,1.92,.01,.08,'right');
+
+    customersCompact.add(row);
+    compactRows.push(row);
+  });
+
+  const compactNewRow=new THREE.Group();
+  compactNewRow.position.set(0,1.82,.14);
+  const compactNewBack=uiCard(4.55,.62,0xeff6ff,.075,.018);
+  compactNewRow.add(compactNewBack);
+  const compactNewStripe=uiCard(.055,.42,0x2563eb,.025,.010);
+  compactNewStripe.position.set(-2.10,0,.04);
+  compactNewRow.add(compactNewStripe);
+  addUiText(compactNewRow,'Cliente Novo',font,.072,0x1d4ed8,-1.92,.13,.08);
+  addUiText(compactNewRow,'Belo Horizonte/MG',font,.051,0x64748b,-1.92,-.10,.08);
+  addUiText(compactNewRow,'000.111.222-33',font,.047,0x475569,.18,.13,.08);
+  addUiText(compactNewRow,'Isento',font,.043,0x64748b,.18,-.10,.08);
+  addUiText(compactNewRow,'Pronto',font,.050,0x059669,1.92,.01,.08,'right');
+  customersCompact.add(compactNewRow);
+  materialOpacity(compactNewRow,0);
+
   // Customer flow uses the same TGBC visual grammar as the shell.
   const form=new THREE.Group();
   contentRoot.add(form);
@@ -1806,6 +1861,7 @@ function createAppTour(font){
     subBg,subLine,searchBox,newBtn,
     contentRoot,dashboard,metricCards,
     customers,tableHead,tableRows,newRow,baseRows,shiftedRows,
+    customersCompact,compactHeader,compactAdd,compactRows,compactNewRow,
     form,dim,modal,modalHeader,modalHeaderLine,modalTitle,modalMeta,modalClose,stepper,footer,cancelBtn,
     pfCard,pjCard,step1,step2,step3,stepDots,stepLineA,stepLineB,
     fieldValues,addressValues,actionBtn,action1,action2,action3,

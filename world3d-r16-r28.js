@@ -1343,8 +1343,8 @@ function createAppTour(font){
   cargos.position.set(-5.48,-2.88,.03);
   const cargosBack=uiCard(1.46,.33,0xf8fafc,.065,.014);
   cargos.add(cargosBack);
-  const cargosIcon=createModuleGlyph(0x8b5cf6);cargosIcon.position.set(-.55,0,.04);cargos.add(cargosIcon);
-  const cargosLabel=addUiText(cargos,'Cargos',font,.086,0x7c3aed,-.34,0,.06);
+  const cargosIcon=createModuleGlyph(0x64748b);cargosIcon.position.set(-.55,0,.04);cargos.add(cargosIcon);
+  const cargosLabel=addUiText(cargos,'Cargos',font,.086,0x475569,-.34,0,.06);
   shell.add(cargos);
   addUiText(shell,'v1.0  •  TGBC',font,.053,0x94a3b8,-5.92,-3.25,.05);
 
@@ -2488,9 +2488,9 @@ export class TGWorld3D{
       });
 
       cargosBack.material.color.setHex(cargosActive?0x2563eb:0xf8fafc);
-      cargosLabel.material.color.setHex(cargosActive?0xffffff:0x7c3aed);
+      cargosLabel.material.color.setHex(cargosActive?0xffffff:0x475569);
       cargosIcon.traverse(o=>{
-        if(o.isMesh)o.material.color.setHex(cargosActive?0xffffff:0x8b5cf6);
+        if(o.isMesh)o.material.color.setHex(cargosActive?0xffffff:0x64748b);
       });
       cargos.position.z=cargosActive?.09:.03;
       cargos.scale.setScalar(cargosActive?1.03:1);

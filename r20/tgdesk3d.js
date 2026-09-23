@@ -57,7 +57,7 @@ function colorizeGeometry(geo,{mode='full',bias=0}={}){
 
 function sphere(radius,mode='full',bias=0){
   const geo=colorizeGeometry(
-    new THREE.SphereGeometry(radius,56,40),
+    new THREE.SphereGeometry(radius,96,64),
     {mode,bias}
   );
   const m=new THREE.Mesh(geo,glossyVertexMaterial());
@@ -74,7 +74,7 @@ function taperedRibbon(points,startWidth,endWidth,depth=.085,mode='full',bias=0)
     .50
   );
 
-  const N=72;
+  const N=128;
   const left=[];
   const right=[];
   const prev=new THREE.Vector3();
@@ -153,7 +153,7 @@ function addSoftHighlight(parent,x,y,z,sx,sy,opacity=.50){
   mat.toneMapped=false;
 
   const h=new THREE.Mesh(
-    new THREE.SphereGeometry(1,24,16),
+    new THREE.SphereGeometry(1,48,32),
     mat
   );
 

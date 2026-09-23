@@ -173,10 +173,32 @@ export class TGWorld3D extends TGWorld3DBase{
       (r.sidebarCollapse-.08)/.72
     );
 
+    const clientsOut=
+      1-mix(p,.965,1.015);
+    const clientsCompactMix=
+      adaptive*stage.clientsIn*clientsOut;
+
+    // Gallery modules keep their own wide information architecture. Once
+    // Clients exits, fit the content canvas itself (without the navigation
+    // sidebar) instead of inheriting the compact customer-list bounds.
+    const galleryIn=mix(p,.985,1.025);
+    const galleryW=9.72;
+    const galleryH=5.55;
+    const galleryScale=Math.min(
+      this.viewW/galleryW,
+      this.viewH/galleryH
+    )*.965;
+
     let scale=lerp(
       desktopScale,
       compactScale,
-      adaptive
+      clientsCompactMix
+    );
+
+    scale=lerp(
+      scale,
+      galleryScale,
+      adaptive*galleryIn
     );
 
     scale=lerp(
@@ -190,14 +212,35 @@ export class TGWorld3D extends TGWorld3DBase{
 
     const desktopX=
       -contentLocalX*desktopScale*r.crmFocusX;
+    const galleryX=
+      -contentLocalX*galleryScale;
+
+    const adaptiveCenter=
+      Math.max(
+        clientsCompactMix,
+        adaptive*formPresence
+      );
+
+    const composedX=lerp(
+      desktopX,
+      0,
+      adaptiveCenter
+    );
 
     this.appTour.scale.setScalar(scale);
     this.appTour.position.set(
-      lerp(desktopX,0,adaptive),
+      lerp(
+        composedX,
+        galleryX,
+        adaptive*galleryIn
+      ),
       lerp(
         this.viewH*r.crmFocusY,
         0,
-        adaptive
+        Math.max(
+          adaptiveCenter,
+          adaptive*galleryIn
+        )
       ),
       0
     );

@@ -38,7 +38,7 @@ export function getResponsiveProfile(width,height){
   const cameraFov=34-2.4*vertical+1.15*wide+.35*square;
   const cameraZ=10+2.45*vertical+.34*wide;
 
-  const crmZoom=1+vertical*(.62+.20*compact)+tall*.07;
+  const crmZoom=1+vertical*(.95+.28*compact)+tall*.12;
   const crmFocusX=vertical*(.70+.14*compact);
   const crmFocusY=vertical*.028;
 
@@ -68,7 +68,7 @@ export function getResponsiveProfile(width,height){
     contentShift:.78*narrow,
     contentScale:1+.035*narrow,
     headerCompression:.55*narrow,
-    modalScale:lerp(1,.90,narrow),
+    modalScale:lerp(1,.98,narrow),
     searchCompression:.18*narrow
   };
 }

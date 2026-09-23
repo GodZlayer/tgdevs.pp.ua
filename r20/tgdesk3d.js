@@ -126,8 +126,8 @@ function taperedRibbon(points,startWidth,endWidth,depth=.085,mode='full',bias=0)
       bevelEnabled:true,
       bevelThickness:.018,
       bevelSize:.016,
-      bevelSegments:3,
-      curveSegments:2
+      bevelSegments:5,
+      curveSegments:5
     }),
     {mode,bias}
   );

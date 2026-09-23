@@ -129,8 +129,16 @@ export class TGWorld3D extends TGWorld3DBase{
     const r=this.responsive;
     const W=this.appTour.userData.W;
     const H=this.appTour.userData.H;
-    const contain=Math.min(this.viewW/W,this.viewH/H);
-    const scale=contain*r.crmZoom;
+    const widthFit=this.viewW/W;
+    const heightFit=this.viewH/H;
+
+    // Portrait is not a miniature desktop. Grow from the width fit toward
+    // the available height, then crop laterally in world space. This keeps
+    // the same CRM and timeline while making the useful state readable.
+    const scale=Math.min(
+      heightFit*.985,
+      widthFit*r.crmZoom
+    );
     const contentLocalX=
       this.appTour.userData.contentRoot?.position?.x||.92;
 

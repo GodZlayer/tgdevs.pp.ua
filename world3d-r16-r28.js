@@ -121,7 +121,7 @@ function svgExtruded(svgText,targetHeight,depth=.045,bevel=.003){
   for(const path of data.paths){
     const shapes=SVGLoader.createShapes(path);
     for(const shape of shapes){
-      const geo=new THREE.ExtrudeGeometry(shape,{depth,bevelEnabled:true,bevelThickness:bevel,bevelSize:bevel,bevelSegments:1,curveSegments:4});
+      const geo=new THREE.ExtrudeGeometry(shape,{depth,bevelEnabled:true,bevelThickness:bevel,bevelSize:bevel,bevelSegments:3,curveSegments:8});
       geo.translate(0,0,-depth/2);
       geo.computeBoundingBox();
       geos.push(geo);
@@ -149,7 +149,7 @@ function svgStrokeTube(svgText,targetHeight){
   const data=loader.parse(svgText);
   const path=data.paths[data.paths.length-1];
   const sub=path.subPaths[0];
-  const pts=sub.getPoints(180);
+  const pts=sub.getPoints(320);
   let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
   pts.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
   const cx=(minX+maxX)/2,cy=(minY+maxY)/2;
@@ -157,7 +157,7 @@ function svgStrokeTube(svgText,targetHeight){
   const v=pts.map(p=>new THREE.Vector3((p.x-cx)*scale,-(p.y-cy)*scale,0));
   const curve=new THREE.CatmullRomCurve3(v,false,'centripetal');
   const radius=2.5*scale;
-  const trackG=new THREE.TubeGeometry(curve,180,radius,8,false);
+  const trackG=new THREE.TubeGeometry(curve,320,radius,12,false);
   const progressG=trackG.clone();
   addGradientColors(progressG,-targetHeight/2,targetHeight/2);
   const track=new THREE.Mesh(trackG,physicalSolid(0x11181b,.18));
@@ -316,16 +316,35 @@ function createOfficialTGDevsSurface(){
 function createTGDevsMark(){
   const root=new THREE.Group();
   const surface=createOfficialTGDevsSurface();
+  const vectorSurface=svgExtruded(
+    TGDEVS_GEAR_SVG,
+    2.0,
+    .030,
+    .0025
+  );
   const ring=svgStrokeTube(TGDEVS_LOADER_SVG,2.0);
 
   ring.track.position.z=.005;
   ring.progress.position.z=.012;
-  root.add(ring.track,ring.progress,surface);
+  surface.position.z=.024;
+  vectorSurface.position.z=.032;
+  vectorSurface.traverse(o=>{
+    if(o.isMesh)o.renderOrder=4;
+  });
+  materialOpacity(vectorSurface,0);
+
+  root.add(
+    ring.track,
+    ring.progress,
+    surface,
+    vectorSurface
+  );
 
   root.userData={
     track:ring.track,
     progress:ring.progress,
-    surface
+    surface,
+    vectorSurface
   };
   return root;
 }
@@ -1987,14 +2006,23 @@ export class TGWorld3D{
     progress.geometry.setDrawRange(0,Math.floor(full*build));
 
     const officialSurface=this.sourceMark.userData.surface;
+    const vectorSurface=this.sourceMark.userData.vectorSurface;
     const finalMark=mix(build,.86,.985);
+    const vectorIn=mix(finalMark,.92,1.0);
     officialSurface.material.uniforms.uAngle.value=lerp(0,Math.PI*4,build);
     officialSurface.material.uniforms.uFull.value=finalMark;
 
     materialOpacity(this.sourceMark,1-breakMark);
     materialOpacity(progress,(1-finalMark)*(1-breakMark));
     track.material.opacity=.18*(1-finalMark)*(1-breakMark)*(1-build*.82);
-    officialSurface.material.uniforms.uAlpha.value=1-breakMark;
+    officialSurface.material.uniforms.uAlpha.value=
+      (1-breakMark)*(1-vectorIn);
+    if(vectorSurface){
+      materialOpacity(
+        vectorSurface,
+        (1-breakMark)*vectorIn
+      );
+    }
 
     // TGDevs materializes as particles while the outer cloud closes into a full sphere.
     this.markFragments.material.uniforms.uBreak.value=breakMark;

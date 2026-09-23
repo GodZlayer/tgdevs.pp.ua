@@ -123,29 +123,82 @@ export class TGWorld3D extends TGWorld3DBase{
     }
   }
 
-  _layoutCRMResponsive(){
+  _crmStage(p){
+    return {
+      clientsIn:mix(p,.566,.612),
+      formOpen:mix(p,.650,.680),
+      formClose:mix(p,.828,.858),
+      clientsReturn:mix(p,.842,.872),
+      newRowIn:mix(p,.858,.900),
+      settleNewRow:mix(p,.900,.955)
+    };
+  }
+
+  _layoutCRMResponsive(p=0){
     if(!this.appTour||!this.viewW||!this.viewH)return;
 
     const r=this.responsive;
-    const W=this.appTour.userData.W;
-    const H=this.appTour.userData.H;
+    const u=this.appTour.userData;
+    const W=u.W;
+    const H=u.H;
     const widthFit=this.viewW/W;
     const heightFit=this.viewH/H;
 
-    // Portrait is not a miniature desktop. Grow from the width fit toward
-    // the available height, then crop laterally in world space. This keeps
-    // the same CRM and timeline while making the useful state readable.
-    const scale=Math.min(
+    const desktopScale=Math.min(
       heightFit*.985,
       widthFit*r.crmZoom
     );
+
+    // The compact CRM is a genuine alternate composition of the same data,
+    // not a crop. It has its own authored world bounds.
+    const compactW=4.90;
+    const compactH=5.35;
+    const compactScale=Math.min(
+      this.viewW/compactW,
+      this.viewH/compactH
+    )*.965;
+
+    // While a modal is open, fit the modal itself rather than the list behind it.
+    const stage=this._crmStage(p);
+    const formPresence=
+      stage.formOpen*(1-stage.formClose);
+    const modalW=6.90;
+    const modalH=5.45;
+    const modalScale=Math.min(
+      this.viewW/modalW,
+      this.viewH/modalH
+    )*.965;
+
+    const adaptive=clamp(
+      (r.sidebarCollapse-.08)/.72
+    );
+
+    let scale=lerp(
+      desktopScale,
+      compactScale,
+      adaptive
+    );
+
+    scale=lerp(
+      scale,
+      modalScale,
+      adaptive*formPresence
+    );
+
     const contentLocalX=
-      this.appTour.userData.contentRoot?.position?.x||.92;
+      u.contentRoot?.position?.x||.92;
+
+    const desktopX=
+      -contentLocalX*desktopScale*r.crmFocusX;
 
     this.appTour.scale.setScalar(scale);
     this.appTour.position.set(
-      -contentLocalX*scale*r.crmFocusX,
-      this.viewH*r.crmFocusY,
+      lerp(desktopX,0,adaptive),
+      lerp(
+        this.viewH*r.crmFocusY,
+        0,
+        adaptive
+      ),
       0
     );
 
@@ -156,7 +209,7 @@ export class TGWorld3D extends TGWorld3DBase{
     super._stabilizeCRMPreview(p);
 
     if(p>=.44&&p<1.535){
-      this._layoutCRMResponsive();
+      this._layoutCRMResponsive(p);
     }
   }
 
@@ -257,6 +310,212 @@ export class TGWorld3D extends TGWorld3DBase{
     if(u.modalHeader&&u.modal){
       u.modalHeader.scale.x=1;
       u.modal.scale.x=1;
+    }
+  }
+
+  _applyAdaptiveCustomerComposition(p){
+    if(
+      p<.44||
+      p>=1.535||
+      !this.appTour?.userData
+    )return;
+
+    const u=this.appTour.userData;
+    const r=this.responsive;
+    const adaptive=clamp(
+      (r.sidebarCollapse-.08)/.72
+    );
+
+    const stage=this._crmStage(p);
+    const formPresence=
+      stage.formOpen*(1-stage.formClose);
+
+    // Only Clients has a dedicated compact composition. Before that point
+    // the normal dashboard remains intact, preventing an empty mobile frame.
+    const clientPhase=stage.clientsIn;
+    const compactA=
+      adaptive*
+      clientPhase*
+      (1-formPresence);
+
+    const desktopClientA=
+      clientPhase*
+      (1-adaptive)*
+      (1-formPresence);
+
+    if(u.customers){
+      nodeOpacity(
+        u.customers,
+        Math.max(
+          desktopClientA,
+          stage.clientsReturn*(1-adaptive)
+        )
+      );
+    }
+
+    if(u.tableHead){
+      nodeOpacity(
+        u.tableHead,
+        Math.max(
+          desktopClientA,
+          stage.clientsReturn*(1-adaptive)
+        )
+      );
+    }
+
+    if(u.customersCompact){
+      nodeOpacity(
+        u.customersCompact,
+        Math.max(
+          compactA,
+          stage.clientsReturn*adaptive
+        )
+      );
+
+      // Keep the compact list centered in its own design space.
+      u.customersCompact.position.set(
+        0,
+        -.12,
+        .16
+      );
+      u.customersCompact.scale.setScalar(
+        lerp(.97,1,adaptive)
+      );
+    }
+
+    const rowIn=[
+      mix(p,.580,.598),
+      mix(p,.590,.608),
+      mix(p,.600,.618),
+      mix(p,.610,.628),
+      mix(p,.620,.638),
+      mix(p,.630,.648)
+    ];
+
+    (u.compactRows||[]).forEach((row,i)=>{
+      const a=
+        Math.max(
+          rowIn[i]*(1-formPresence),
+          stage.clientsReturn
+        )*adaptive;
+
+      nodeOpacity(row,a);
+
+      const baseY=1.82-i*.72;
+      const shiftedY=baseY-.72*stage.newRowIn;
+
+      row.position.set(
+        0,
+        lerp(baseY,shiftedY,stage.newRowIn),
+        lerp(-.05,.03,rowIn[i])
+      );
+      row.scale.setScalar(
+        lerp(.965,1,rowIn[i])
+      );
+    });
+
+    if(u.compactNewRow){
+      const a=
+        stage.newRowIn*adaptive;
+      nodeOpacity(u.compactNewRow,a);
+      u.compactNewRow.position.set(
+        0,
+        1.82,
+        lerp(.34,.12,stage.newRowIn)
+      );
+      u.compactNewRow.scale.setScalar(
+        stage.settleNewRow>.001
+        ? lerp(1.035,1,stage.settleNewRow)
+        : lerp(.78,1.035,stage.newRowIn)
+      );
+    }
+
+    // The desktop toolbar/sidebar progressively ceases to be the mobile
+    // navigation. The compact header becomes the local navigation surface.
+    if(u.subheader){
+      nodeOpacity(
+        u.subheader,
+        1-adaptive*clientPhase
+      );
+    }
+
+    if(u.sidebar){
+      nodeOpacity(
+        u.sidebar,
+        1-adaptive*.94
+      );
+    }
+    if(u.sideBorder){
+      nodeOpacity(
+        u.sideBorder,
+        1-adaptive
+      );
+    }
+    if(u.sidebarTitle){
+      nodeOpacity(
+        u.sidebarTitle,
+        1-adaptive
+      );
+    }
+
+    (u.navMeshes||[]).forEach(n=>{
+      nodeOpacity(
+        n.holder,
+        1-adaptive*.92
+      );
+    });
+
+    if(u.cargos){
+      nodeOpacity(
+        u.cargos,
+        1-adaptive*.92
+      );
+    }
+
+    // Header metadata is useful in landscape but competes with the product
+    // itself in a narrow viewport.
+    if(u.headerDetails){
+      nodeOpacity(
+        u.headerDetails,
+        1-adaptive*.82
+      );
+    }
+
+    // The modal remains the same workflow but is physically recentered in
+    // the compact world instead of inheriting the desktop content offset.
+    if(u.form?.visible&&formPresence>.001){
+      const targetLocalX=
+        -(u.contentRoot?.position?.x||0);
+
+      u.form.position.x=lerp(
+        u.form.position.x,
+        targetLocalX,
+        adaptive*formPresence
+      );
+
+      u.form.position.y=lerp(
+        u.form.position.y,
+        .05,
+        adaptive*formPresence
+      );
+
+      // Counteract contentRoot enlargement from desktop reflow. The outer
+      // appTour scale already fits the modal to the physical viewport.
+      const parentScale=
+        u.contentRoot?.scale?.x||1;
+
+      const compensation=
+        parentScale>0
+        ? 1/parentScale
+        : 1;
+
+      u.form.scale.multiplyScalar(
+        lerp(
+          1,
+          compensation,
+          adaptive*formPresence
+        )
+      );
     }
   }
 
@@ -477,6 +736,7 @@ export class TGWorld3D extends TGWorld3DBase{
     const p=state.p||0;
 
     this._applyCRMInternalReflow(p);
+    this._applyAdaptiveCustomerComposition(p);
     this._applyFluidHero(state);
     this._applyFluidTGDeskIdentity(p);
 

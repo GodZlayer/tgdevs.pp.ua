@@ -115,7 +115,16 @@ function materialOpacity(root,a){
 
 function svgExtruded(svgText,targetHeight,depth=.045,bevel=.003){
   const loader=new SVGLoader();
-  const data=loader.parse(svgText);
+
+  // SVGLoader r180 does not resolve paint-server URLs such as
+  // fill="url(#gearGradient)". Geometry extraction does not need that paint:
+  // vertex colors are applied below from the canonical TGDevs gradient.
+  const geometrySvg=svgText.replace(
+    /(fill|stroke)=["']url\([^"']+\)["']/gi,
+    '$1="#ffffff"'
+  );
+
+  const data=loader.parse(geometrySvg);
   const raw=new THREE.Group();
   const geos=[];
   for(const path of data.paths){
@@ -1143,7 +1152,7 @@ function createFragmentMorph(from,to,maxCount,size){
 }
 
 
-function uiMat(color,opacity=1){
+function uiMat(color=0xffffff,opacity=1){
   const m=new THREE.MeshBasicMaterial({
     color,
     transparent:true,
@@ -1155,7 +1164,7 @@ function uiMat(color,opacity=1){
   return m;
 }
 
-function uiFlat(color,opacity=1){
+function uiFlat(color=0xffffff,opacity=1){
   const m=new THREE.MeshBasicMaterial({
     color,
     transparent:true,
@@ -1771,9 +1780,9 @@ function createAppTour(font){
     const col=i%3,row=Math.floor(i/3);
     const x=-3.05+col*3.08,y=.88-row*1.52;
     const c=uiCard(2.78,1.28,0xffffff,.10,.020);c.position.set(x,y,.01);tiersScreen.add(c);
-    const dot=new THREE.Mesh(new THREE.SphereGeometry(.055,8,6),uiFlat(t[5]));dot.position.set(x-1.13,y+.37,.08);tiersScreen.add(dot);
+    const dot=new THREE.Mesh(new THREE.SphereGeometry(.055,8,6),uiFlat(t[4]));dot.position.set(x-1.13,y+.37,.08);tiersScreen.add(dot);
     addUiText(tiersScreen,t[0],font,.075,0x1e293b,x-.98,y+.37,.08);
-    addUiText(tiersScreen,t[1],font,.047,t[5],x+.95,y+.37,.08,'right');
+    addUiText(tiersScreen,t[1],font,.047,t[4],x+.95,y+.37,.08,'right');
     addUiText(tiersScreen,t[2],font,.050,0x64748b,x-1.13,y+.12,.08);
     addUiText(tiersScreen,'Modulos Liberados',font,.042,0x94a3b8,x-1.13,y-.18,.08);
     t[3].forEach((m,j)=>{

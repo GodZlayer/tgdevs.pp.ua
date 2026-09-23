@@ -363,7 +363,7 @@ function createPanelGeometry(){
 
 function cylinderBetween(a,b,r,mat){
   const d=new THREE.Vector3().subVectors(b,a);
-  const g=addGradientColors(new THREE.CylinderGeometry(r,r,d.length(),8,1,false),-.1,.1);
+  const g=addGradientColors(new THREE.CylinderGeometry(r,r,d.length(),16,1,false),-.1,.1);
   const m=new THREE.Mesh(g,mat);
   m.position.copy(a).add(b).multiplyScalar(.5);
   m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());
@@ -426,7 +426,7 @@ function createTGBCPanel(angle){
     bevelEnabled:true,
     bevelThickness:.022,
     bevelSize:.018,
-    bevelSegments:2
+    bevelSegments:4
   });
   geo.center();
 
@@ -439,13 +439,13 @@ function createTGBCPanel(angle){
 
 function createTGBCRingArc(start,end,color){
   const curve=new ArcCurve(.625,start,end);
-  const geo=new THREE.TubeGeometry(curve,28,.043,10,false);
+  const geo=new THREE.TubeGeometry(curve,64,.043,16,false);
   return new THREE.Mesh(geo,tgbcSolid(color));
 }
 
 function createTGBCNode(angle){
   const color=tgbcColorAtAngle(angle);
-  const geo=new THREE.SphereGeometry(.158,24,16);
+  const geo=new THREE.SphereGeometry(.158,48,32);
   const mesh=new THREE.Mesh(geo,tgbcSolid(color));
   mesh.position.set(Math.cos(angle)*1.145,Math.sin(angle)*1.145,.035);
   return mesh;
@@ -501,13 +501,13 @@ function createTGBCMark(){
 
   // Central sphere is deliberately last.
   const center=new THREE.Group();
-  const centerGeo=addGradientColors(new THREE.SphereGeometry(.525,36,24),-.54,.54);
+  const centerGeo=addGradientColors(new THREE.SphereGeometry(.525,72,48),-.54,.54);
   const centerSphere=new THREE.Mesh(centerGeo,tgbcGradient());
   centerSphere.position.z=.055;
   center.add(centerSphere);
 
   // Inner highlight rim around the core.
-  const innerGeo=addGradientColors(new THREE.TorusGeometry(.585,.034,10,72),-.62,.62);
+  const innerGeo=addGradientColors(new THREE.TorusGeometry(.585,.034,16,128),-.62,.62);
   const inner=new THREE.Mesh(innerGeo,tgbcGradient());
   center.add(inner);
 
@@ -531,9 +531,9 @@ function createTGBCMark(){
 
 function createTextMesh(text,font,size,kind='gradient',depth=.105){
   const g=new TextGeometry(text,{
-    font,size,depth,curveSegments:2,
+    font,size,depth,curveSegments:6,
     bevelEnabled:true,bevelThickness:.012,
-    bevelSize:.009,bevelSegments:1
+    bevelSize:.009,bevelSegments:3
   });
   g.computeBoundingBox();
   const b=g.boundingBox;
@@ -554,7 +554,7 @@ function createTextMesh(text,font,size,kind='gradient',depth=.105){
 function createContourWordSurface(data,targetHeight,{businessLight=false,tgdevsPremium=false}={}){
   const ratio=data.ratio;
   const canvas=document.createElement('canvas');
-  const H=tgdevsPremium?1024:512;
+  const H=tgdevsPremium?1536:1024;
   const W=Math.max(256,Math.round(H*ratio));
   canvas.width=W;canvas.height=H;
   const ctx=canvas.getContext('2d',{alpha:true});
@@ -623,7 +623,7 @@ function createContourWordSurface(data,targetHeight,{businessLight=false,tgdevsP
   texture.minFilter=THREE.LinearMipmapLinearFilter;
   texture.magFilter=THREE.LinearFilter;
   texture.generateMipmaps=true;
-  texture.anisotropy=tgdevsPremium?8:1;
+  texture.anisotropy=tgdevsPremium?12:8;
 
   const width=targetHeight*ratio;
   const root=new THREE.Group();

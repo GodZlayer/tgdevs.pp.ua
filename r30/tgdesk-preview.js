@@ -522,16 +522,21 @@ function makeBleedMaterial(texture){
 
 export function createTGDeskPreview(){
   const canvas=document.createElement('canvas');
-  canvas.width=1600;
-  canvas.height=900;
+  const renderScale=Math.min(
+    1.60,
+    Math.max(1.35,globalThis.devicePixelRatio||1)
+  );
+  canvas.width=Math.round(1600*renderScale);
+  canvas.height=Math.round(900*renderScale);
   const ctx=canvas.getContext('2d',{alpha:false});
+  ctx.setTransform(renderScale,0,0,renderScale,0,0);
 
   const texture=new THREE.CanvasTexture(canvas);
   texture.colorSpace=THREE.SRGBColorSpace;
   texture.minFilter=THREE.LinearMipmapLinearFilter;
   texture.magFilter=THREE.LinearFilter;
   texture.generateMipmaps=true;
-  texture.anisotropy=8;
+  texture.anisotropy=12;
 
   const bleedMaterial=makeBleedMaterial(texture);
   const bleed=new THREE.Mesh(

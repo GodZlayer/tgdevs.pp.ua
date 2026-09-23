@@ -1144,12 +1144,11 @@ function createFragmentMorph(from,to,maxCount,size){
 
 
 function uiMat(color,opacity=1){
-  const m=new THREE.MeshStandardMaterial({
+  const m=new THREE.MeshBasicMaterial({
     color,
-    roughness:.78,
-    metalness:0,
     transparent:true,
     opacity,
+    side:THREE.DoubleSide,
     depthWrite:opacity>.96
   });
   m.toneMapped=false;
@@ -1187,7 +1186,7 @@ function uiCard(w,h,color=0xffffff,r=.12,depth=.026){
   const g=new THREE.ExtrudeGeometry(roundedShape(w,h,r),{
     depth,
     bevelEnabled:false,
-    curveSegments:6
+    curveSegments:12
   });
   g.translate(0,0,-depth/2);
   const m=new THREE.Mesh(g,uiMat(color));
@@ -1204,7 +1203,7 @@ function uiLine(w,h,color=0xe2e8f0){
 function uiText(text,font,size,color=0x0f172a,align='left',depth=.014){
   const g=new TextGeometry(text,{
     font,size,depth,
-    curveSegments:2,
+    curveSegments:5,
     bevelEnabled:false
   });
   g.computeBoundingBox();
@@ -1475,32 +1474,34 @@ function createAppTour(font){
   customers.add(newRow);
   materialOpacity(newRow,0);
 
-  // Real CustomerModal: dark header + stepper + three content states.
+  // Customer flow uses the same TGBC visual grammar as the shell.
   const form=new THREE.Group();
   contentRoot.add(form);
   materialOpacity(form,0);
 
-  const dim=uiCard(9.45,4.95,0x0f172a,.10,.018);
+  const dim=uiCard(9.45,4.95,0x0b1220,.08,.012);
   dim.position.set(0,.10,-.10);form.add(dim);
-  dim.material.opacity=.42;
+  dim.material.opacity=.26;
   dim.material.transparent=true;
 
-  const modal=uiCard(6.55,4.95,0xffffff,.14,.032);
+  const modal=uiCard(6.55,4.95,0xffffff,.095,.022);
   modal.position.set(0,.10,.02);form.add(modal);
 
-  const modalHeader=uiCard(6.55,.66,0x0f172a,.08,.020);
+  const modalHeader=uiCard(6.55,.66,0xf8fafc,.075,.016);
   modalHeader.position.set(0,2.245,.06);form.add(modalHeader);
-  addUiText(form,'Novo Cliente',font,.145,0xffffff,-2.72,2.34,.10);
-  addUiText(form,'Cadastro Fiscal Completo  •  NF-e / SEFAZ',font,.060,0x94a3b8,-2.72,2.13,.10);
-  addUiText(form,'×',font,.16,0x94a3b8,2.82,2.27,.10,'center');
+  const modalHeaderLine=uiLine(6.18,.012,0xdbe3ec);
+  modalHeaderLine.position.set(0,1.915,.085);form.add(modalHeaderLine);
+  const modalTitle=addUiText(form,'Novo Cliente',font,.132,0x0f172a,-2.72,2.34,.10);
+  const modalMeta=addUiText(form,'Cadastro Fiscal Completo  •  NF-e / SEFAZ',font,.057,0x64748b,-2.72,2.13,.10);
+  const modalClose=addUiText(form,'×',font,.145,0x64748b,2.82,2.27,.10,'center');
 
-  const stepper=uiCard(6.55,.58,0xf1f5f9,.01,.014);
+  const stepper=uiCard(6.55,.58,0xf8fafc,.01,.012);
   stepper.position.set(0,1.62,.05);form.add(stepper);
 
   const stepDots=[];
   const stepLabels=['Natureza','Identificacao','Endereco Inteligente'];
   [-1.72,0,1.72].forEach((x,i)=>{
-    const d=uiCard(.25,.25,i===0?0x2563eb:0xe2e8f0,.12,.012);
+    const d=uiCard(.25,.25,i===0?0x2563eb:0xe5eaf0,.10,.010);
     d.position.set(x,1.64,.08);form.add(d);
     addUiText(form,String(i+1),font,.060,i===0?0xffffff:0x64748b,x,1.64,.11,'center');
     const label=addUiText(form,stepLabels[i],font,.058,i===0?0x2563eb:0x94a3b8,x+.20,1.64,.11);
@@ -1562,8 +1563,8 @@ function createAppTour(font){
   const sefaz=uiCard(5.72,.34,0xf8fafc,.06,.012);sefaz.position.set(0,-1.02,.06);step3.add(sefaz);
   addUiText(step3,'Parametros tributarios SEFAZ pre-configurados para Pessoa Fisica.',font,.053,0x64748b,-2.55,-1.02,.10);
 
-  const footer=uiCard(6.55,.56,0xf8fafc,.01,.014);footer.position.set(0,-2.08,.06);form.add(footer);
-  const cancelBtn=uiCard(.88,.28,0xe2e8f0,.055,.012);cancelBtn.position.set(-2.35,-2.08,.09);form.add(cancelBtn);
+  const footer=uiCard(6.55,.56,0xf8fafc,.01,.012);footer.position.set(0,-2.08,.06);form.add(footer);
+  const cancelBtn=uiCard(.88,.28,0xe8edf3,.055,.010);cancelBtn.position.set(-2.35,-2.08,.09);form.add(cancelBtn);
   addUiText(form,'Cancelar',font,.058,0x475569,-2.35,-2.08,.12,'center');
   const actionBtn=uiCard(1.24,.30,0x2563eb,.055,.014);actionBtn.position.set(2.24,-2.08,.09);form.add(actionBtn);
   const action1=addUiText(form,'Continuar',font,.060,0xffffff,2.24,-2.08,.12,'center');
@@ -1792,9 +1793,12 @@ function createAppTour(font){
   root.userData={
     shell,headerDetails,sidebarTitle,cargos,navMeshes,subheader,
     searchDash,searchClients,newBtnGroup,
+    surface,header,sidebar,headerBorder,sideBorder,
+    subBg,subLine,searchBox,newBtn,
     contentRoot,dashboard,metricCards,
     customers,tableHead,tableRows,newRow,baseRows,shiftedRows,
-    form,dim,modal,pfCard,pjCard,step1,step2,step3,stepDots,stepLineA,stepLineB,
+    form,dim,modal,modalHeader,modalHeaderLine,modalTitle,modalMeta,modalClose,stepper,footer,cancelBtn,
+    pfCard,pjCard,step1,step2,step3,stepDots,stepLineA,stepLineB,
     fieldValues,addressValues,actionBtn,action1,action2,action3,
     stockScreen,fiscalScreen,statsScreen,servicesScreen,tiersScreen,
     searchStock,searchGeneric,cargosBack,cargosIcon,cargosLabel,
@@ -2285,7 +2289,7 @@ export class TGWorld3D{
       form.scale.setScalar(lerp(.055,1,formOpen)*(1-.06*formClose));
       form.rotation.z=lerp(-.025,0,formOpen);
       if(dim?.material){
-        dim.material.opacity=.42*formOpen*(1-formClose);
+        dim.material.opacity=.26*formOpen*(1-formClose);
         dim.material.depthWrite=false;
       }
 
@@ -2326,14 +2330,14 @@ export class TGWorld3D{
       // Stepper itself advances, so even between content swaps something changes.
       const step2Active=step2In;
       const step3Active=step3In;
-      stepDots[0].dot.material.color.setHex(step2Active>.25?0x10b981:0x2563eb);
-      stepDots[0].label.material.color.setHex(step2Active>.25?0x059669:0x2563eb);
-      stepDots[1].dot.material.color.setHex(step3Active>.25?0x10b981:(step2Active>.25?0x2563eb:0xe2e8f0));
-      stepDots[1].label.material.color.setHex(step3Active>.25?0x059669:(step2Active>.25?0x2563eb:0x94a3b8));
-      stepDots[2].dot.material.color.setHex(step3Active>.25?0x2563eb:0xe2e8f0);
+      stepDots[0].dot.material.color.setHex(step2Active>.25?0x93b4e8:0x2563eb);
+      stepDots[0].label.material.color.setHex(step2Active>.25?0x3b6fb8:0x2563eb);
+      stepDots[1].dot.material.color.setHex(step3Active>.25?0x93b4e8:(step2Active>.25?0x2563eb:0xe5eaf0));
+      stepDots[1].label.material.color.setHex(step3Active>.25?0x3b6fb8:(step2Active>.25?0x2563eb:0x94a3b8));
+      stepDots[2].dot.material.color.setHex(step3Active>.25?0x2563eb:0xe5eaf0);
       stepDots[2].label.material.color.setHex(step3Active>.25?0x2563eb:0x94a3b8);
-      stepLineA.material.color.setHex(step2Active>.25?0x10b981:0xe2e8f0);
-      stepLineB.material.color.setHex(step3Active>.25?0x2563eb:0xe2e8f0);
+      stepLineA.material.color.setHex(step2Active>.25?0x93b4e8:0xdbe3ec);
+      stepLineB.material.color.setHex(step3Active>.25?0x2563eb:0xdbe3ec);
 
       materialOpacity(action1,(1-step2In)*formOpen);
       materialOpacity(action2,step2In*(1-step3In)*formOpen);

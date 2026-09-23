@@ -523,7 +523,7 @@ function makeBleedMaterial(texture){
 export function createTGDeskPreview(){
   const canvas=document.createElement('canvas');
   const renderScale=Math.min(
-    1.60,
+    2.00,
     Math.max(1.35,globalThis.devicePixelRatio||1)
   );
   canvas.width=Math.round(1600*renderScale);
@@ -536,7 +536,7 @@ export function createTGDeskPreview(){
   texture.minFilter=THREE.LinearMipmapLinearFilter;
   texture.magFilter=THREE.LinearFilter;
   texture.generateMipmaps=true;
-  texture.anisotropy=12;
+  texture.anisotropy=16;
 
   const bleedMaterial=makeBleedMaterial(texture);
   const bleed=new THREE.Mesh(

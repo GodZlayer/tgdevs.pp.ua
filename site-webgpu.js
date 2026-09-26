@@ -102,7 +102,7 @@ if(particleView.getUint32(0,true)!==0x46574754||particleView.getUint16(4,true)!=
 const fieldCount=particleCount,fieldGeometry=new THREE.BufferGeometry(),waveU=new Float32Array(fieldCount),waveD=new Float32Array(fieldCount),waveLayer=new Float32Array(fieldCount),waveSeed=new Float32Array(fieldCount);
 for(let i=0;i<fieldCount;i++){const offset=particleHeader+i*particleStride;waveU[i]=particleView.getFloat32(offset,true);waveD[i]=particleView.getFloat32(offset+4,true);waveLayer[i]=particleView.getFloat32(offset+8,true);waveSeed[i]=particleView.getFloat32(offset+12,true);}
 fieldGeometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(fieldCount*3),3));fieldGeometry.setAttribute('waveU',new THREE.BufferAttribute(waveU,1));fieldGeometry.setAttribute('waveD',new THREE.BufferAttribute(waveD,1));fieldGeometry.setAttribute('waveLayer',new THREE.BufferAttribute(waveLayer,1));fieldGeometry.setAttribute('waveSeed',new THREE.BufferAttribute(waveSeed,1));
-const fieldFlow=uniform(0),fieldBuild=uniform(0),orbMorph=uniform(0),orbExpand=uniform(0),orbSpreadExtent=uniform(1.8),orbSphereOpacity=uniform(.12),fieldVisible=uniform(1),fieldPortrait=uniform(0),particleLogoClear=uniform(0),particleFocusX=uniform(0),particleFocusY=uniform(0),particleFocusRadius=uniform(1.2);
+const fieldFlow=uniform(0),fieldBuild=uniform(0),orbMorph=uniform(0),orbExpand=uniform(0),orbSpreadExtent=uniform(1.8),orbSphereRadius=uniform(4.6),orbSphereOpacity=uniform(.95),fieldVisible=uniform(1),fieldPortrait=uniform(0),particleLogoClear=uniform(0),particleFocusX=uniform(0),particleFocusY=uniform(0),particleFocusRadius=uniform(1.2);
 const u=attribute('waveU','float'),d=attribute('waveD','float'),layer=attribute('waveLayer','float'),seed=attribute('waveSeed','float');
 const phase=mix(.3,2.1,layer).add(seed.sub(.5).mul(.55));
 const w1=sin(u.mul(mix(8.3,7,layer)).add(d.mul(3.1)).add(phase).add(fieldFlow.mul(1.3)));
@@ -110,7 +110,7 @@ const w2=sin(u.mul(mix(16.2,15,layer)).sub(d.mul(5)).add(phase.mul(.7)).sub(fiel
 // Keep the authored two particle sheets close together. Wide vertical offsets
 // made them read as two unrelated clumps that crossed the marks and text.
 const sideOffset=mix(.22,-.22,layer),sheet=vec3(u.mul(7.1).sub(3.55).add(d.sub(.5).mul(sideOffset)),mix(-.05,-.14,layer).add(w1.mul(.30)).add(w2.mul(.075)).add(d.sub(.5).mul(.28)),mix(-1.18,-.86,d).add(w2.mul(.07)));
-const theta=u.mul(Math.PI*2),sphereY=d.mul(-2).add(1),radial=sqrt(max(0,sphereY.mul(sphereY).oneMinus())),radius=mix(1.2,.95,fieldPortrait);
+const theta=u.mul(Math.PI*2),sphereY=d.mul(-2).add(1),radial=sqrt(max(0,sphereY.mul(sphereY).oneMinus())),radius=orbSphereRadius.mul(mix(1,.82,fieldPortrait));
 const sphere=vec3(radial.mul(cos(theta)),sphereY,radial.mul(sin(theta))).mul(radius),folded=mix(sheet,sphere,orbMorph),expanded=folded.mul(mix(1,orbSpreadExtent,orbExpand));
 const reveal=mix(u,u.oneMinus(),layer),born=smoothstep(reveal.mul(.88),reveal.mul(.88).add(.14),fieldBuild),colorT=mix(u,u.oneMinus(),layer),brandColor=mix(mix(color('#0b7cff'),color('#00c7d9'),colorT.div(.55)),mix(color('#00c7d9'),color('#00e66b'),colorT.sub(.55).div(.45)),colorT.greaterThan(.55));
 const fieldMaterial=new THREE.PointsNodeMaterial({transparent:true,depthWrite:false,sizeAttenuation:false});
@@ -119,8 +119,8 @@ fieldMaterial.sizeNode=seed.mul(1.5).add(.65).mul(mix(1,.72,orbMorph));fieldMate
 const field=new THREE.Points(fieldGeometry,fieldMaterial);field.frustumCulled=false;scene.add(field);
 
 const progressBar=document.querySelector('#progress'),hint=document.querySelector('#scrollHint');
-const timelineResponse=await fetch('./blender/assets/site_timeline_r1.json?v=29');if(!timelineResponse.ok)throw new Error('Timeline Blender ausente');const sceneTimeline=await timelineResponse.json();
-orbSpreadExtent.value=sceneTimeline.settings?.particleSpreadExtent??1.8;orbSphereOpacity.value=sceneTimeline.settings?.particleOrbOpacity??.12;
+const timelineResponse=await fetch('./blender/assets/site_timeline_r1.json?v=30');if(!timelineResponse.ok)throw new Error('Timeline Blender ausente');const sceneTimeline=await timelineResponse.json();
+orbSpreadExtent.value=sceneTimeline.settings?.particleSpreadExtent??1.8;orbSphereRadius.value=sceneTimeline.settings?.particleOrbRadius??4.6;orbSphereOpacity.value=sceneTimeline.settings?.particleOrbOpacity??.95;
 document.documentElement.style.setProperty('--scroll-range',`${sceneTimeline.scroll.trackHeightPx}px`);
 function timelineValue(name,scroll){const track=sceneTimeline.tracks[name];if(!track)return 0;const frame=clamp(scroll)*sceneTimeline.frameEnd,index=Math.min(track.length-1,Math.floor(frame)),next=Math.min(track.length-1,index+1);return THREE.MathUtils.lerp(track[index],track[next],frame-index);}
 function resize(){const w=Math.max(1,innerWidth),h=Math.max(1,innerHeight),portrait=compactLayout(),cameraZ=portrait?12.4:10,cameraFov=portrait?32:34,portraitWorldScale=.74;renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=cameraFov;camera.position.z=cameraZ;camera.updateProjectionMatrix();

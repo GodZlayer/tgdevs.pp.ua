@@ -47,7 +47,10 @@ def frame_values(frame):
     final_mark = between(tg_build, .90, .99)
     # The field briefly folds into an orb, then clears before the logo's own
     # point-cloud morph starts; two particle systems never compete in place.
-    orb = between(legacy, .18, .19) * (1.0 - between(legacy, .19, .20))
+    # Let the sheet field gather into a full spatial sphere as the TGDevs
+    # mark dissolves, then keep that sphere surrounding the transition before
+    # the following scene takes over.
+    orb = between(legacy, .18, .22) * (1.0 - between(legacy, .295, .33))
     breakup = between(legacy, .200, .245)
     # Let the TGDevs mark clear before the TGBC modules move into their
     # desktop lockup position. The particle transition bridges this pause.
@@ -91,6 +94,7 @@ def frame_values(frame):
         # away from both finished brand lockups. The field must not cut
         # through the logos while they are being read.
         'particle_opacity': max(
+            .72 * orb,
             (1.0 - .52 * between(legacy, .355, .425)) *
             (1.0 - .82 * between(legacy, .125, .15)) *
             (1.0 - .55 * between(legacy, .395, .415)) *
@@ -145,7 +149,8 @@ scene['purpose'] = 'Authoritative modular scene and scroll timeline for the WebG
 scene['scroll_domain'] = 'normalized 0..1 maps to frames 0..1000; the CRM preview is outside this scene.'
 scene['runtime_contract'] = 'GLB assets + site_timeline_r1.json + site_particles_r1.bin; WebGPU/TSL renders the live scene.'
 scene['particle_spread_extent'] = 1.5
-scene['particle_orb_opacity'] = .12
+scene['particle_orb_radius'] = 4.6
+scene['particle_orb_opacity'] = .95
 
 for collection_name in (
     '01 TGDevs • canonical vector geometry',
@@ -470,6 +475,7 @@ manifest = {
     'frameEnd': 1000,
     'scroll': {'start': 0, 'end': 1, 'frameExpression': 'scroll * 1000', 'trackHeightPx': 5268},
     'settings': {'particleSpreadExtent': float(scene['particle_spread_extent']),
+                 'particleOrbRadius': float(scene['particle_orb_radius']),
                  'particleOrbOpacity': float(scene['particle_orb_opacity'])},
     'tracks': tracks,
     'markers': [{'label': label, 'frame': round(position / .439 * 1000)}

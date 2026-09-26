@@ -58,31 +58,34 @@ async function sampleBlenderVectorPoints(path,count){
   for(let i=0;i<count;i++){const offset=header+i*record;positions[i*3]=view.getFloat32(offset,true);positions[i*3+1]=view.getFloat32(offset+4,true);rgb[i*3]=view.getUint8(offset+8)/255;rgb[i*3+1]=view.getUint8(offset+9)/255;rgb[i*3+2]=view.getUint8(offset+10)/255;}
   return {positions,rgb,aspect};
 }
-function createMorph(from,to,count){
+function createMorph(from,to,count,customOrder=null){
   const geometry=new THREE.BufferGeometry();
-  // PointsNodeMaterial's default vertex path still reads `position` even when
-  // the final clip-space position is supplied by the custom TSL node.
   geometry.setAttribute('position',new THREE.BufferAttribute(from.positions,3));
   geometry.setAttribute('normal',new THREE.BufferAttribute(new Float32Array(count*3),3));
   geometry.setAttribute('fromPosition',new THREE.BufferAttribute(from.positions,3));geometry.setAttribute('toPosition',new THREE.BufferAttribute(to.positions,3));
   geometry.setAttribute('fromColor',new THREE.BufferAttribute(from.rgb,3));geometry.setAttribute('toColor',new THREE.BufferAttribute(to.rgb,3));
-  const progress=uniform(0),breakup=uniform(0),fade=uniform(0),seed=new Float32Array(count),order=new Float32Array(count);
+  const progress=uniform(0),breakup=uniform(0),fade=uniform(0),morphPhase=uniform(0),seed=new Float32Array(count),order=new Float32Array(count);
   const seeded=n=>{const value=Math.sin(n*12.9898+78.233)*43758.5453;return value-Math.floor(value);};
   for(let i=0;i<count;i++){
     const currentSeed=seeded(i*8.71),x=to.positions[i*3],y=to.positions[i*3+1],radius=Math.hypot(x,y);
-    seed[i]=currentSeed;
-    order[i]=radius<.27?.91+currentSeed*.06:(((Math.PI/2-Math.atan2(y,x)+Math.PI*2)%(Math.PI*2))/(Math.PI*2))*.84;
+    seed[i]=currentSeed;order[i]=customOrder?customOrder[i]:(radius<.27?.91+currentSeed*.06:(((Math.PI/2-Math.atan2(y,x)+Math.PI*2)%(Math.PI*2))/(Math.PI*2))*.84);
   }
   geometry.setAttribute('seed',new THREE.BufferAttribute(seed,1));geometry.setAttribute('order',new THREE.BufferAttribute(order,1));
   const a=attribute('fromPosition','vec3'),b=attribute('toPosition','vec3'),ca=attribute('fromColor','vec3'),cb=attribute('toColor','vec3'),s=attribute('seed','float'),o=attribute('order','float');
-  const breakupT=smoothstep(0,1,breakup),phase=s.mul(Math.PI*2),scatter=vec3(a.x.add(cos(phase).mul(s.mul(.26).add(.10).mul(breakupT))),a.y.add(sin(phase).mul(s.mul(.26).add(.10).mul(breakupT))),a.z.add(sin(phase.mul(1.7)).mul(s.mul(.32).add(.12).mul(breakupT))));
+  const breakupT=smoothstep(0,1,breakup),phase=s.mul(Math.PI*2),scatter=vec3(a.x.add(cos(phase).mul(s.mul(.9).add(.65).mul(breakupT))),a.y.add(sin(phase).mul(s.mul(.9).add(.65).mul(breakupT))),a.z.add(sin(phase.mul(1.7)).mul(s.mul(.8).add(.35).mul(breakupT))));
   const local=smoothstep(o.sub(.035),o.add(.085),progress),motion=sin(local.mul(Math.PI)),point=mix(scatter,b,local);
   const mat=new THREE.PointsNodeMaterial({size:2.2,transparent:true,depthWrite:false,sizeAttenuation:false});
-  mat.sizeNode=motion.mul(.32).add(1).mul(3.4);
-  mat.positionNode=vec3(point.x,point.y,point.z.add(motion.mul(s.mul(.22).add(.10))));
-  mat.colorNode=mix(ca,cb,local);mat.opacityNode=fade;mat.alphaTest=.01;
+  mat.sizeNode=motion.mul(.32).add(1).mul(1.8);mat.positionNode=vec3(point.x,point.y,point.z.add(motion.mul(s.mul(.12).add(.05))));
+  mat.colorNode=mix(ca,cb,local);mat.opacityNode=fade.mul(mix(1,smoothstep(.02,.45,local),morphPhase));mat.alphaTest=.01;
   const points=new THREE.Points(geometry,mat);points.frustumCulled=false;
-  return {points,progress,breakup,fade,from,to};
+  return {points,progress,breakup,fade,morphPhase};
+}
+function particleFitScale(samples,solids){
+  const pointBounds=new THREE.Box3().makeEmpty();
+  for(let i=0;i<samples.positions.length;i+=3)pointBounds.expandByPoint(new THREE.Vector3(samples.positions[i],samples.positions[i+1],samples.positions[i+2]));
+  const solidBounds=new THREE.Box3().makeEmpty();solids.forEach(root=>solidBounds.union(new THREE.Box3().setFromObject(root)));
+  const pointSize=pointBounds.getSize(new THREE.Vector3()),solidSize=solidBounds.getSize(new THREE.Vector3());
+  return new THREE.Vector3(solidSize.x/pointSize.x,solidSize.y/pointSize.y,1);
 }
 function setGroupOpacity(root,alpha){root.traverse(o=>{if(!o.isMesh)return;const materials=Array.isArray(o.material)?o.material:[o.material];for(const m of materials){if(!m)continue;m.transparent=true;m.opacity=alpha;m.depthWrite=alpha>.03;}});}
 const logoCount=7200;
@@ -90,9 +93,33 @@ const [markA,markB]=await Promise.all([
   sampleBlenderVectorPoints('./blender/assets/tgdevsMark-points-r2.bin?v=22',logoCount),
   sampleBlenderVectorPoints('./blender/assets/tgbcMark-points-r2.bin?v=22',logoCount)
 ]);
-const markMorph=createMorph(markA,markB,logoCount);
-markMorph.points.material.size=3.4;
-world.add(markMorph.points);
+// Blender's image pixel rows start at the bottom; the TGDevs source sampler
+// stored them with the image-space Y direction, so flip only that particle
+// source into the same upright world coordinates used by the solid favicon.
+for(let i=0;i<logoCount;i++)markA.positions[i*3+1]*=-1;
+world.updateMatrixWorld(true);
+const tgdevsParticleScale=particleFitScale(markA,[tgdevs.gear,tgdevs.arcMesh]);
+const tgbcParticleScale=particleFitScale(markB,[tgbc.first,...tgbc.steps,tgbc.center]);
+// Two independently authored point sets crossfade: TGDevs dissolves from its
+// own upright silhouette while TGBC particles assemble from their own target.
+// Partition target points by the six Blender-authored module regions and center.
+// Their reveal order now follows the same staggered clock as the solid mark,
+// instead of sweeping around the whole logo like another outer ring.
+const tgbcParticleOrder=new Float32Array(logoCount);
+const tgbcAssemblyGroups=[{x:0,y:1.16},{x:.82,y:.58},{x:.82,y:-.58},{x:0,y:-1.16},{x:-.82,y:-.58},{x:-.82,y:.58}];
+for(let i=0;i<logoCount;i++){
+  const x=markB.positions[i*3],y=markB.positions[i*3+1],radius=Math.hypot(x,y);
+  if(radius<.29){tgbcParticleOrder[i]=.88+Math.sin(i*12.9898)*.035;continue;}
+  let nearest=0,nearestDistance=Infinity;
+  for(let group=0;group<tgbcAssemblyGroups.length;group++){
+    const target=tgbcAssemblyGroups[group],distance=(x-target.x)**2+(y-target.y)**2;
+    if(distance<nearestDistance){nearestDistance=distance;nearest=group;}
+  }
+  tgbcParticleOrder[i]=nearest*.12+.04+((i*0.61803398875)%1)*.035;
+}
+const tgdevsParticles=createMorph(markA,markA,logoCount),tgbcParticles=createMorph(markB,markB,logoCount,tgbcParticleOrder);
+for(const cloud of [tgdevsParticles,tgbcParticles])cloud.points.material.size=1.8;
+world.add(tgdevsParticles.points,tgbcParticles.points);
 for(const node of [tgdevs.mark,tgdevs.arc,tgdevs.counter,tgdevs.counterHub,tgdevs.word,tgbc.first,...tgbc.steps,tgbc.center,tgbc.word,...slogans,leadText])setGroupOpacity(node,0);
 
 // Blender authors the deterministic seed/layout fields; TSL evaluates their
@@ -119,7 +146,7 @@ fieldMaterial.sizeNode=seed.mul(1.5).add(.65).mul(mix(1,.72,orbMorph));fieldMate
 const field=new THREE.Points(fieldGeometry,fieldMaterial);field.frustumCulled=false;scene.add(field);
 
 const progressBar=document.querySelector('#progress'),hint=document.querySelector('#scrollHint');
-const timelineResponse=await fetch('./blender/assets/site_timeline_r1.json?v=30');if(!timelineResponse.ok)throw new Error('Timeline Blender ausente');const sceneTimeline=await timelineResponse.json();
+const timelineResponse=await fetch('./blender/assets/site_timeline_r1.json?v=37');if(!timelineResponse.ok)throw new Error('Timeline Blender ausente');const sceneTimeline=await timelineResponse.json();
 orbSpreadExtent.value=sceneTimeline.settings?.particleSpreadExtent??1.8;orbSphereRadius.value=sceneTimeline.settings?.particleOrbRadius??4.6;orbSphereOpacity.value=sceneTimeline.settings?.particleOrbOpacity??.95;
 document.documentElement.style.setProperty('--scroll-range',`${sceneTimeline.scroll.trackHeightPx}px`);
 function timelineValue(name,scroll){const track=sceneTimeline.tracks[name];if(!track)return 0;const frame=clamp(scroll)*sceneTimeline.frameEnd,index=Math.min(track.length-1,Math.floor(frame)),next=Math.min(track.length-1,index+1);return THREE.MathUtils.lerp(track[index],track[next],frame-index);}
@@ -133,13 +160,13 @@ function resize(){const w=Math.max(1,innerWidth),h=Math.max(1,innerHeight),portr
   const tgWordScale=portrait?Math.min(.66,3.05/5.3):Math.min(.92,3.1/5.3);
   tgdevs.word.position.set(portrait?0:.42,portrait?-1.24-tgdevsWordHeight*tgWordScale/2:0,0);
   tgdevs.word.scale.setScalar(tgWordScale);
-  tgbc.word.position.set(portrait?0:2.1,portrait?-1.24:0,0);
-  tgbc.word.scale.setScalar(portrait?.54:.5);
+  tgbc.word.position.set(portrait?0:2.1,portrait?-1.48:-.24,0);
+  tgbc.word.scale.setScalar(portrait?.68:.64);
   for(const root of [...slogans,leadText])root.position.z=.05;
-  field.geometry.setDrawRange(0,portrait?13000:16000);fieldPortrait.value=portrait?1:0;markMorph.points.position.set(0,0,.1);
+  field.geometry.setDrawRange(0,portrait?13000:16000);fieldPortrait.value=portrait?1:0;
 }
 async function render(){const maxScroll=Math.max(1,document.documentElement.scrollHeight-innerHeight),p=clamp(scrollY/maxScroll),portrait=compactLayout(),at=name=>timelineValue(name,p);
-  const wordBuild=at('tgdevs_word_build'),orb=at('particle_orb_morph'),breakMark=at('tgdevs_breakup'),clockBuild=at('tgbc_assembly'),morphProgress=at('morph_progress'),expand=at('particle_spread'),centerBuild=at('tgbc_center_build'),targetTextIn=at('tgbc_word_opacity');
+  const wordBuild=at('tgdevs_word_build'),orb=at('particle_orb_morph'),clockBuild=at('tgbc_assembly'),expand=at('particle_spread'),targetTextIn=at('tgbc_word_opacity');
   const logoVisible=at('tgdevs_mark_opacity');setGroupOpacity(tgdevs.mark,logoVisible);setGroupOpacity(tgdevs.gear,at('gear_opacity'));setGroupOpacity(tgdevs.arc,logoVisible);setGroupOpacity(tgdevs.counter,at('counter_opacity'));setGroupOpacity(tgdevs.counterHub,at('counter_opacity'));
   const arcProgress=at('ring_progress'),arcIndexCount=tgdevs.arcMesh.geometry.index.count;tgdevs.arcMesh.geometry.setDrawRange(0,Math.floor(arcIndexCount*arcProgress/3)*3);
   tgdevs.gear.rotation.z=Math.PI*2*at('gear_turns_ccw');
@@ -153,18 +180,24 @@ async function render(){const maxScroll=Math.max(1,document.documentElement.scro
   if(portrait)tgdevs.word.position.y=-1.24-tgdevsWordHeight*tgWordScale/2;
   setGroupOpacity(tgdevs.word,at('tgdevs_word_opacity'));
   tgdevs.mark.rotation.y=at('tgdevs_yaw');
-  markMorph.progress.value=morphProgress;markMorph.breakup.value=breakMark;
-  const morphFadeOut=at('morph_fade_out'),markMorphAlpha=at('morph_opacity');markMorph.fade.value=markMorphAlpha;
-  const heroMark=world.scale.x||1;markMorph.points.scale.setScalar(heroMark*1.55);markMorph.points.position.x=THREE.MathUtils.lerp(0,portrait?0:-2.5,morphProgress);
-  markMorph.points.visible=markMorphAlpha>.002;
+  const dissolveOpacity=at('tgdevs_dissolve_opacity');
+  const tgbcParticleProgress=at('tgbc_particle_progress'),tgbcParticleOpacity=at('tgbc_particle_opacity');
+  tgdevsParticles.progress.value=1;tgdevsParticles.breakup.value=0;tgdevsParticles.fade.value=dissolveOpacity;
+  // The point clouds are children of `world`; applying its responsive scale
+  // locally as well would shrink them twice on portrait layouts.
+  tgdevsParticles.points.scale.copy(tgdevsParticleScale);
+  tgdevsParticles.points.position.set(0,0,.12);tgdevsParticles.points.visible=dissolveOpacity>.002;
+  tgbcParticles.progress.value=tgbcParticleProgress;tgbcParticles.breakup.value=0;tgbcParticles.fade.value=tgbcParticleOpacity;tgbcParticles.morphPhase.value=1;
+  tgbcParticles.points.scale.copy(tgbcParticleScale);
+  tgbcParticles.points.position.set(portrait?0:-2.1,0,.12);tgbcParticles.points.visible=tgbcParticleOpacity>.002;
   setGroupOpacity(tgbc.first,at('tgbc_first_opacity'));
   tgbc.steps.forEach((step,i)=>{const local=at(`tgbc_module_${i+1}_progress`);setGroupOpacity(step,at(`tgbc_module_${i+1}_opacity`));step.scale.setScalar(.76+.24*local);});
-  setGroupOpacity(tgbc.center,at('tgbc_module_center_opacity'));tgbc.center.scale.setScalar(.76+.24*centerBuild);setGroupOpacity(tgbc.word,targetTextIn);
+  const centerBuild=at('tgbc_center_build');setGroupOpacity(tgbc.center,at('tgbc_module_center_opacity'));tgbc.center.scale.setScalar(.76+.24*centerBuild);setGroupOpacity(tgbc.word,targetTextIn);
   fieldFlow.value=at('particle_flow');fieldBuild.value=at('particle_reveal');orbMorph.value=orb;orbExpand.value=expand;fieldVisible.value=at('particle_opacity');particleLogoClear.value=Math.max(at('tgdevs_build'),at('tgbc_full_mark_opacity'));particleFocusX.value=portrait?0:THREE.MathUtils.lerp(0,-2.1*world.scale.x,clockBuild);particleFocusY.value=0;particleFocusRadius.value=1.24*(portrait?.74:world.scale.x);
   const gradientIn=at('background_opacity');sceneBackdrop.style.opacity=String(gradientIn);
   world.rotation.y=at('scene_yaw');progressBar.style.width=`${p*100}%`;progressBar.parentElement.style.opacity=String(p>0?1:0);status.style.opacity=String(p>0?1:0);hint.style.opacity=String(at('scroll_hint_opacity'));
   const copyWidths=[3.4,2.6,4,3.6];slogans.forEach((root,i)=>{const alpha=at(`slogan_0${i+1}_opacity`),fit=portrait?Math.min(.95,4/copyWidths[i]):Math.min(1.15,4/copyWidths[i]);setGroupOpacity(root,alpha);root.position.set(portrait?0:-4.25,portrait?2.38:.05,-.08+.13*alpha);root.scale.setScalar(fit);});
-  setGroupOpacity(leadText,targetTextIn);const leadScale=portrait?Math.min(.48,3.15/4.1):Math.min(.74,3.15/4.1);leadText.position.set(0,portrait?2.18:.05,.05);leadText.scale.setScalar(leadScale);
+  setGroupOpacity(leadText,at('tgbc_lead_opacity'));const leadScale=portrait?1.05:1.1;leadText.position.set(0,portrait?2.18:.05,.05);leadText.scale.setScalar(leadScale);
   await renderer.renderAsync(scene,camera);status.textContent='PRÉVIA VISUAL TGDEVS';
 }
 let pending=false,renderDirty=false;

@@ -45,22 +45,26 @@ def frame_values(frame):
     tg_build = between(legacy, .005, .13)
     word_build = between(tg_build, .48, .94)
     final_mark = between(tg_build, .90, .99)
-    # The field briefly folds into an orb, then clears before the logo's own
-    # point-cloud morph starts; two particle systems never compete in place.
+    # The field folds into an orb while the TGDevs mark dissolves.
     # Let the sheet field gather into a full spatial sphere as the TGDevs
     # mark dissolves, then keep that sphere surrounding the transition before
     # the following scene takes over.
     orb = between(legacy, .18, .22) * (1.0 - between(legacy, .295, .33))
     breakup = between(legacy, .200, .245)
+    # TGDevs dissolves into its own particle silhouette and clears. Later, a
+    # TGBC particle mark and its matching solid modules build from one clock.
+    # Crossfade the independent particle silhouettes while TGBC assembles.
+    # Give its first modules time to appear before the TGDevs cloud clears.
+    dissolve_opacity = breakup * (1.0 - between(legacy, .300, .365))
     # Let the TGDevs mark clear before the TGBC modules move into their
     # desktop lockup position. The particle transition bridges this pause.
     clock = between(legacy, .300, .420)
-    morph_progress = between(legacy, .200, .300)
-    morph_fade = 1.0 - between(legacy, .295, .315)
     expand = between(legacy, .315, .395)
     tgbc_in = between(legacy, .405, .425)
     center = between(clock, .62, .76)
-    target_text = between(legacy, .415, .438) * center
+    # Finish the TGBC supporting line before the end of the scroll range so
+    # the final lockup holds at full opacity instead of fading in at the edge.
+    target_text = between(legacy, .405, .420) * center
     slogan_out = 1.0 - between(legacy, .201, .225)
     logo_visible = 1.0 - breakup
     arc_progress = between(tg_build, 0.0, .985)
@@ -98,18 +102,20 @@ def frame_values(frame):
             (1.0 - .52 * between(legacy, .355, .425)) *
             (1.0 - .82 * between(legacy, .125, .15)) *
             (1.0 - .55 * between(legacy, .395, .415)) *
-            (1.0 - .84 * between(legacy, .295, .340)),
-            .12 * between(legacy, .395, .425)),
+            (1.0 - .84 * between(legacy, .295, .340)) *
+            (1.0 - between(legacy, .395, .430))),
         'tgdevs_breakup': breakup,
         'tgdevs_mark_opacity': logo_visible,
-        'morph_progress': morph_progress,
-        'morph_opacity': breakup * morph_fade,
-        'morph_fade_out': morph_fade,
+        'tgdevs_dissolve_progress': breakup,
+        'tgdevs_dissolve_opacity': dissolve_opacity,
+        'tgbc_particle_progress': clock,
+        'tgbc_particle_opacity': clock * (1.0 - between(legacy, .405, .420)),
         'tgbc_assembly': clock,
         'tgbc_first_opacity': first_alpha,
         'tgbc_full_mark_opacity': tgbc_in,
         'tgbc_center_build': center,
         'tgbc_word_opacity': target_text,
+        'tgbc_lead_opacity': between(legacy, .395, .405),
         'background_opacity': between(legacy, .325, .395),
         'scroll_hint_opacity': 1.0 - between(legacy, .005, .035),
         'scene_yaw': math.sin(legacy * math.pi) * .045,
@@ -127,12 +133,18 @@ def frame_values(frame):
         'slogan_04_opacity': min(between(legacy, .099, .109),
                                  1.0 - between(legacy, .123, .129)) * slogan_out,
     }
+    module_progress = []
     for index in range(6):
         start = index * .12
         local = between(clock, start, start + .13)
+        module_progress.append(local)
         values[f'tgbc_module_{index + 1}_opacity'] = local
         values[f'tgbc_module_{index + 1}_progress'] = local
     values['tgbc_module_center_opacity'] = center
+    # Drive the point logo from the same staggered assembly envelopes as the
+    # solid modules, without changing their original reveal timing.
+    values['tgbc_particle_progress'] = sum([clock, *module_progress, center]) / 8.0
+    values['tgbc_particle_opacity'] = values['tgbc_particle_progress'] * (1.0 - between(legacy, .405, .420))
     return values
 
 # One master scene links the original, editable Blender brand collections.

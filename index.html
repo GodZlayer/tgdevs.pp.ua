@@ -1,38 +1,43 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#030607">
-  <link rel="icon" type="image/png" href="favicon.png">
-  <link rel="canonical" href="https://www.tgdevs.pp.ua/">
-  <title>TGDevs — Sistemas que simplificam</title>
-  <meta name="description" content="TGDevs constrói sistemas sofisticados, prontos para o mundo moderno e para a sua empresa.">
+  <meta name="description" content="Sistemas que simplificam.">
   <meta property="og:title" content="TGDevs — Sistemas que simplificam">
-  <meta property="og:image" content="https://www.tgdevs.pp.ua/favicon.png">
+  <meta property="og:image" content="https://www.tgdevs.pp.ua/blender/assets/tgdevs-og-r2.jpg?v=24">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:url" content="https://www.tgdevs.pp.ua/">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="site3d-r33.css">
+  <link rel="canonical" href="https://www.tgdevs.pp.ua/">
+  <link rel="icon" type="image/png" href="blender/assets/tgdevs-favicon-r3.png?v=24" sizes="512x512">
+  <title>TGDevs — Sistemas que simplificam</title>
+  <link rel="stylesheet" href="site-webgpu.css?build=opening-black-r1">
   <script type="importmap">
     {
       "imports": {
-        "three": "./vendor/three.module.r180.min.js",
-        "three/addons/loaders/FontLoader.js": "./vendor/FontLoader.r180.js",
-        "three/addons/geometries/TextGeometry.js": "./vendor/TextGeometry.r180.js"
+        "three": "./vendor/webgpu/three.webgpu.min.js",
+        "three/webgpu": "./vendor/webgpu/three.webgpu.min.js",
+        "three/tsl": "./vendor/webgpu/three.tsl.min.js",
+        "three/addons/": "./vendor/webgpu/addons/"
       }
     }
   </script>
 </head>
 <body>
-  <main class="world" id="top">
-    <div class="design-space">
-      <canvas id="worldCanvas" width="1440" height="900" aria-label="Apresentação 3D TGDevs"></canvas>
-    </div>
+  <main id="experience">
+    <div id="sceneBackdrop" aria-hidden="true"></div>
+    <canvas id="world" aria-label="Apresentação 3D TGDevs e TG Business Center"></canvas>
+    <div class="scroll-hint" id="scrollHint"><span class="wheel"></span><span>Role para descobrir</span></div>
+    <div class="progress" aria-hidden="true"><i id="progress"></i></div>
+    <div class="status" id="status">INICIANDO EXPERIÊNCIA 3D</div>
   </main>
-
-  <div class="scroll-space" aria-hidden="true"></div>
-  <script type="module" src="site3d-r33.js"></script>
+  <div id="scrollTrack" aria-hidden="true"></div>
+  <script type="module" src="site-webgpu.js?build=blender-scene-r59"></script>
 </body>
 </html>

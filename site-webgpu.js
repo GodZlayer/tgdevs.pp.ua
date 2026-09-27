@@ -146,7 +146,7 @@ fieldMaterial.sizeNode=seed.mul(1.5).add(.65).mul(mix(1,.72,orbMorph));fieldMate
 const field=new THREE.Points(fieldGeometry,fieldMaterial);field.frustumCulled=false;scene.add(field);
 
 const progressBar=document.querySelector('#progress'),hint=document.querySelector('#scrollHint');
-const timelineResponse=await fetch('./blender/assets/site_timeline_r1.json?v=37');if(!timelineResponse.ok)throw new Error('Timeline Blender ausente');const sceneTimeline=await timelineResponse.json();
+const timelineResponse=await fetch('./blender/assets/site_timeline_r1.json?v=38');if(!timelineResponse.ok)throw new Error('Timeline Blender ausente');const sceneTimeline=await timelineResponse.json();
 orbSpreadExtent.value=sceneTimeline.settings?.particleSpreadExtent??1.8;orbSphereRadius.value=sceneTimeline.settings?.particleOrbRadius??4.6;orbSphereOpacity.value=sceneTimeline.settings?.particleOrbOpacity??.95;
 document.documentElement.style.setProperty('--scroll-range',`${sceneTimeline.scroll.trackHeightPx}px`);
 function timelineValue(name,scroll){const track=sceneTimeline.tracks[name];if(!track)return 0;const frame=clamp(scroll)*sceneTimeline.frameEnd,index=Math.min(track.length-1,Math.floor(frame)),next=Math.min(track.length-1,index+1);return THREE.MathUtils.lerp(track[index],track[next],frame-index);}
@@ -156,12 +156,14 @@ function resize(){const w=Math.max(1,innerWidth),h=Math.max(1,innerHeight),portr
   // Keep responsive changes in the camera framing instead of moving the mark.
   world.position.set(0,0,0);world.scale.setScalar(portrait?portraitWorldScale:1);
   for(const root of [tgdevs.mark,tgdevs.arc,tgdevs.counter,tgdevs.counterHub])root.position.set(0,0,.1);
-  for(const root of [...tgbc.steps,tgbc.first,tgbc.center])root.position.set(portrait?0:-2.1,0,.1);
+  // Both brand symbols share one authored center across the entire transition.
+  // Keep the TGBC modules directly over the TGDevs favicon on desktop too.
+  for(const root of [...tgbc.steps,tgbc.first,tgbc.center])root.position.set(0,0,.1);
   const tgWordScale=portrait?Math.min(.66,3.05/5.3):Math.min(.92,3.1/5.3);
   tgdevs.word.position.set(portrait?0:.42,portrait?-1.24-tgdevsWordHeight*tgWordScale/2:0,0);
   tgdevs.word.scale.setScalar(tgWordScale);
-  tgbc.word.position.set(portrait?0:2.1,portrait?-1.48:-.24,0);
-  tgbc.word.scale.setScalar(portrait?.68:.64);
+  tgbc.word.position.set(0,-1.48,0);
+  tgbc.word.scale.setScalar(portrait?.68:.68);
   for(const root of [...slogans,leadText])root.position.z=.05;
   field.geometry.setDrawRange(0,portrait?13000:16000);fieldPortrait.value=portrait?1:0;
 }
@@ -189,15 +191,17 @@ async function render(){const maxScroll=Math.max(1,document.documentElement.scro
   tgdevsParticles.points.position.set(0,0,.12);tgdevsParticles.points.visible=dissolveOpacity>.002;
   tgbcParticles.progress.value=tgbcParticleProgress;tgbcParticles.breakup.value=0;tgbcParticles.fade.value=tgbcParticleOpacity;tgbcParticles.morphPhase.value=1;
   tgbcParticles.points.scale.copy(tgbcParticleScale);
-  tgbcParticles.points.position.set(portrait?0:-2.1,0,.12);tgbcParticles.points.visible=tgbcParticleOpacity>.002;
+  // Both particle marks use the same origin so the TGBC forms directly over
+  // the dissolving TGDevs favicon, independent of the responsive layout.
+  tgbcParticles.points.position.set(0,0,.12);tgbcParticles.points.visible=tgbcParticleOpacity>.002;
   setGroupOpacity(tgbc.first,at('tgbc_first_opacity'));
   tgbc.steps.forEach((step,i)=>{const local=at(`tgbc_module_${i+1}_progress`);setGroupOpacity(step,at(`tgbc_module_${i+1}_opacity`));step.scale.setScalar(.76+.24*local);});
   const centerBuild=at('tgbc_center_build');setGroupOpacity(tgbc.center,at('tgbc_module_center_opacity'));tgbc.center.scale.setScalar(.76+.24*centerBuild);setGroupOpacity(tgbc.word,targetTextIn);
-  fieldFlow.value=at('particle_flow');fieldBuild.value=at('particle_reveal');orbMorph.value=orb;orbExpand.value=expand;fieldVisible.value=at('particle_opacity');particleLogoClear.value=Math.max(at('tgdevs_build'),at('tgbc_full_mark_opacity'));particleFocusX.value=portrait?0:THREE.MathUtils.lerp(0,-2.1*world.scale.x,clockBuild);particleFocusY.value=0;particleFocusRadius.value=1.24*(portrait?.74:world.scale.x);
+  fieldFlow.value=at('particle_flow');fieldBuild.value=at('particle_reveal');orbMorph.value=orb;orbExpand.value=expand;fieldVisible.value=at('particle_opacity');particleLogoClear.value=Math.max(at('tgdevs_build'),at('tgbc_full_mark_opacity'));particleFocusX.value=0;particleFocusY.value=0;particleFocusRadius.value=1.24*(portrait?.74:world.scale.x);
   const gradientIn=at('background_opacity');sceneBackdrop.style.opacity=String(gradientIn);
   world.rotation.y=at('scene_yaw');progressBar.style.width=`${p*100}%`;progressBar.parentElement.style.opacity=String(p>0?1:0);status.style.opacity=String(p>0?1:0);hint.style.opacity=String(at('scroll_hint_opacity'));
-  const copyWidths=[3.4,2.6,4,3.6];slogans.forEach((root,i)=>{const alpha=at(`slogan_0${i+1}_opacity`),fit=portrait?Math.min(.95,4/copyWidths[i]):Math.min(1.15,4/copyWidths[i]);setGroupOpacity(root,alpha);root.position.set(portrait?0:-4.25,portrait?2.38:.05,-.08+.13*alpha);root.scale.setScalar(fit);});
-  setGroupOpacity(leadText,at('tgbc_lead_opacity'));const leadScale=portrait?1.05:1.1;leadText.position.set(0,portrait?2.18:.05,.05);leadText.scale.setScalar(leadScale);
+  const copyWidths=[3.4,2.6,4,3.6];slogans.forEach((root,i)=>{const alpha=at(`slogan_0${i+1}_opacity`),fit=portrait?Math.min(.95,4/copyWidths[i]):Math.min(1.15,4/copyWidths[i]);setGroupOpacity(root,alpha);root.position.set(0,portrait?2.38:2.28,-.08+.13*alpha);root.scale.setScalar(fit);});
+  setGroupOpacity(leadText,at('tgbc_lead_opacity'));const leadScale=portrait?1.05:.96;leadText.position.set(0,2.18,.05);leadText.scale.setScalar(leadScale);
   await renderer.renderAsync(scene,camera);status.textContent='PRÉVIA VISUAL TGDEVS';
 }
 let pending=false,renderDirty=false;

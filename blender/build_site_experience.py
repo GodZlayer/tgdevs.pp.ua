@@ -55,7 +55,7 @@ def frame_values(frame):
     # TGBC particle mark and its matching solid modules build from one clock.
     # Crossfade the independent particle silhouettes while TGBC assembles.
     # Give its first modules time to appear before the TGDevs cloud clears.
-    dissolve_opacity = breakup * (1.0 - between(legacy, .300, .365))
+    dissolve_opacity = breakup * (1.0 - between(legacy, .285, .325))
     # Let the TGDevs mark clear before the TGBC modules move into their
     # desktop lockup position. The particle transition bridges this pause.
     clock = between(legacy, .300, .420)

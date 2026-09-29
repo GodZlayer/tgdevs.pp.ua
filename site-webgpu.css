@@ -12,5 +12,16 @@ body{min-height:100svh}
 .progress{position:absolute;z-index:2;top:0;left:0;right:0;height:2px;background:#ffffff0c}.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#087cff,#00c7d9,#00e66b);box-shadow:0 0 14px #00c7d955}
 .status{position:absolute;z-index:2;right:22px;bottom:21px;font-size:9px;letter-spacing:.15em;color:#557079;opacity:0;transition:opacity .2s ease}
 #scrollTrack{height:calc(100svh + var(--scroll-range,5268px));pointer-events:none}
+.timeline-editor{position:fixed;z-index:5;left:clamp(12px,3vw,42px);right:clamp(12px,3vw,42px);bottom:clamp(12px,3vh,28px);padding:14px 18px 10px;border:1px solid #77dff044;border-radius:12px;background:#071219e8;box-shadow:0 14px 46px #0008;backdrop-filter:blur(14px);color:#dcecf0;font-size:12px}
+.timeline-editor[hidden]{display:none}
+.timeline-editor__header,.timeline-editor footer{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.timeline-editor__header>div{display:flex;align-items:baseline;gap:14px;white-space:nowrap}.timeline-editor strong{font-size:13px;color:#f4feff}.timeline-editor__header span,.timeline-editor footer{color:#91a8ae}
+#timelineMarkers{display:flex;flex:1;justify-content:flex-end;gap:5px;overflow-x:auto;scrollbar-width:thin;padding:2px 0 7px}
+#timelineMarkers button{flex:none;border:1px solid #24778a;border-radius:5px;padding:5px 8px;background:#0b2731;color:#a9d3dc;font:inherit;white-space:nowrap;cursor:pointer}
+#timelineMarkers button:hover,#timelineMarkers button[aria-current=true]{border-color:#13d1d4;background:#064454;color:white}
+#timelineScrubber{display:block;width:100%;height:18px;margin:5px 0 3px;accent-color:#05c9cf;cursor:ew-resize}
+.timeline-editor footer{font-size:10px;letter-spacing:.04em}.timeline-editor footer a{color:#46dce2;text-decoration:none}
+html.timeline-preview,html.timeline-preview body{overflow:hidden;height:100%;overscroll-behavior:none}html.timeline-preview #scrollTrack{height:0}
+@media(max-width:760px){.timeline-editor{padding:11px 12px 9px}.timeline-editor__header{display:block}.timeline-editor__header>div{justify-content:space-between;margin-bottom:7px}#timelineMarkers{justify-content:flex-start}.timeline-editor footer span:nth-child(2){display:none}}
 @media (orientation:portrait){.scroll-hint{bottom:28px}}
 @media (prefers-reduced-motion:reduce){.wheel:after{animation:none}}

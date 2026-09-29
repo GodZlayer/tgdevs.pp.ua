@@ -38,6 +38,14 @@
     <div class="status" id="status">INICIANDO EXPERIÊNCIA 3D</div>
   </main>
   <div id="scrollTrack" aria-hidden="true"></div>
-  <script type="module" src="site-webgpu.js?build=blender-scene-r63"></script>
+  <section id="timelineEditor" class="timeline-editor" aria-label="Editor interativo da timeline Blender" hidden>
+    <header class="timeline-editor__header">
+      <div><strong>TGDevs · Timeline</strong><span id="timelineMarkerLabel">Frame 0</span></div>
+      <nav id="timelineMarkers" aria-label="Marcadores da cena"></nav>
+    </header>
+    <input id="timelineScrubber" type="range" min="0" max="1000" value="0" step="1" aria-label="Frame da timeline" />
+    <footer><span id="timelineFrameLabel">00:00:00</span><span>Preview sincronizado com a timeline do Blender</span><a href="./blender/GPU_VALIDATION_README.md" target="_blank" rel="noreferrer">Fluxo Blender</a></footer>
+  </section>
+  <script type="module" src="site-webgpu.js?build=single-glb-universe-r1"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@
 
 Reconstruir a experiência do site desde a abertura até o último frame imediatamente anterior ao preview do CRM TGBC. Remover do site ativo o preview CRM e tudo o que vem depois dele. Preservar, sem mudar sua intenção, a sequência, as marcas, a narrativa e a timeline guiada pelo scroll existentes no projeto original.
 
-Os projetos de marca originais continuam sendo a fonte de verdade no computador. Blender lê esses arquivos diretamente, gera uma cena editável e exporta os assets usados pelo site. O runtime visual é integralmente WebGPU com Three.js `WebGPURenderer` e TSL; se o browser não oferecer/inicializar WebGPU, o site informa a indisponibilidade em vez de cair para WebGL.
+O site e a autoria Blender agora vivem neste único repositório. `blender/assets/tgdevs_site_experience_r1.blend` é a fonte editável; o build exporta a cena, a timeline amostrada e os dados de partículas para `blender/assets/tgdevs_universe_r1.glb`. O runtime lê esse único GLB e deixa scroll e interações de timeline no site. Os arquivos-fonte canônicos das marcas estão versionados localmente neste repositório. O runtime visual é WebGPU com Three.js `WebGPURenderer` e TSL; se o browser não oferecer/inicializar WebGPU, o site informa a indisponibilidade em vez de cair para WebGL.
 
 ## Experiência que deve permanecer
 
@@ -19,12 +19,21 @@ O novo scroll normaliza o intervalo original `p=0..0,439` para `p=0..1`. O previ
 ## Fontes canônicas locais
 
 - TGDevs: imagem de marca atual entregue pelo usuário, arquivada em `blender/sources/tgdevs-logo-current.png`; contornos e SVG locais continuam como referência para o loader/timeline.
-- TGBC: `Documents/TGBC-FULL/TGBusinessCenter/logo-fav/fav.png` e `logotext-dark.png`.
+- TGBC: `blender/sources/tgbc-favicon-original.png` e `tgbc-wordmark-dark.png` (cópias locais dos originais).
 - Blender 5.2.1 LTS instalado em `C:\Program Files\Blender Foundation\Blender 5.2\blender.exe`.
 
-O build não precisa das cópias intermediárias de marcas dentro do site. Os exports Blender que o runtime consome ficam versionados/agrupados em `blender/assets/`.
+O build e o site usam somente arquivos deste repositório. O pacote visual servido pelo site é `blender/assets/tgdevs_universe_r1.glb`; a fonte editável é `blender/assets/tgdevs_site_experience_r1.blend`.
 
-## Estado atual implementado
+## Arquitetura consolidada — estado atual
+
+- Este repositório contém site, cena Blender, fontes das marcas e exportador. O repositório source separado não é dependência do build nem do runtime.
+- Há uma cena Blender mestre. Seus objetos, keyframes, marcadores e dois alvos de partículas ordenados ficam editáveis no `.blend`.
+- `blender/export_site_artifacts.ps1` gera um único GLB. Malhas, texturas, amostras de timeline, marcadores, configurações de partículas e pontos de morph são empacotados nele. Não há GLBs de marca, arquivos JSON de timeline ou BINs de runtime separados.
+- `site-webgpu.js` faz uma requisição ao GLB, converte o scroll em quadro e aplica os dados ao renderer WebGPU. O editor local também busca os marcadores e os mesmos quadros desse GLB.
+- Para editar: salve o `.blend` e rode `blender/export_site_artifacts.ps1`. Para reconstruir também a cena-base e as imagens de marca a partir das fontes locais, rode `blender/build_site.ps1 -RebuildSiteMaster`.
+- Os valores dos keyframes chegam ao navegador pela timeline armazenada em `asset.extras.tgdevs`. A lógica de rendering TSL/WebGPU continua no runtime porque GLB não transporta shaders WebGPU executáveis.
+
+## Registro histórico das revisões anteriores
 
 - `index.html` inicia `site-webgpu.js` e remove o CRM e cenas posteriores do fluxo ativo.
 - O runtime atual cria Three.js `WebGPURenderer`, usa TSL para a nuvem e animação dos pontos, testa `navigator.gpu`, desabilita o fallback interno para WebGL do Three.js e confirma `renderer.backend.isWebGPUBackend`. WebGPU ausente ou falha de inicialização mostra mensagem explícita. Erros de boot e rejeições ao carregar assets também substituem a mensagem inicial por um aviso visível.
@@ -88,10 +97,10 @@ Nenhuma publicação foi feita. Preview local: `http://127.0.0.1:8765/`.
 Na raiz do projeto:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File blender\build_brand_assets.ps1
+powershell -ExecutionPolicy Bypass -File blender\build_site.ps1
 ```
 
-O script usa as fontes canônicas nos projetos vizinhos; Blender deve continuar instalado no caminho indicado. `ffmpeg` também é necessário para a amostragem do wordmark e a conversão dos exports web.
+O script usa apenas as fontes canônicas deste repositório; Blender deve continuar instalado no caminho indicado. `ffmpeg` também é necessário para a amostragem do wordmark e a conversão dos exports web.
 
 ### Restauração das métricas da Cena 1
 

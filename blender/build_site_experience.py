@@ -1,26 +1,22 @@
-"""Build the editable Blender master scene and its WebGPU scroll data.
+"""Build the editable Blender master scene used by the single-GLB exporter.
 
 Run from the site root:
   blender -b blender/assets/tgdevs_brands_r2.blend --python blender/build_site_experience.py
 
-Blender owns the scene modules, named scroll controls, markers, and sampled
-curves. The browser consumes the generated manifest and Blender-authored point
-data; WebGPU/TSL remains responsible for real-time deformation and rendering.
+Blender owns scene modules, named scroll controls, markers, curves, and particle
+source geometry. export_site_artifacts.py packages these and derived point maps
+into one GLB; WebGPU/TSL remains responsible for real-time rendering.
 """
 import bpy
 import json
 import math
 import os
 import re
-import struct
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 OUT = os.path.join(ROOT, 'blender', 'assets')
 os.makedirs(OUT, exist_ok=True)
 MASTER = os.path.join(OUT, 'tgdevs_site_experience_r1.blend')
-TIMELINE = os.path.join(OUT, 'site_timeline_r1.json')
-PARTICLES = os.path.join(OUT, 'site_particles_r1.bin')
-ARTWORK = os.path.join(OUT, 'site_artwork_r1.glb')
 
 if bpy.context.scene is None or not bpy.data.collections.get('01 TGDevs • canonical vector geometry'):
     raise RuntimeError('Open tgdevs_brands_r2.blend before building the site master scene.')
@@ -159,7 +155,7 @@ scene.frame_end = 1000
 scene.render.fps = 30
 scene['purpose'] = 'Authoritative modular scene and scroll timeline for the WebGPU site.'
 scene['scroll_domain'] = 'normalized 0..1 maps to frames 0..1000; the CRM preview is outside this scene.'
-scene['runtime_contract'] = 'GLB assets + site_timeline_r1.json + site_particles_r1.bin; WebGPU/TSL renders the live scene.'
+scene['runtime_contract'] = 'One tgdevs_universe_r1.glb contains scene meshes, sampled timeline, and WebGPU particle inputs.'
 scene['particle_spread_extent'] = 1.5
 scene['particle_orb_radius'] = 4.6
 scene['particle_orb_opacity'] = .95
@@ -381,30 +377,6 @@ copy_specs = (
 for name, text, size, width in copy_specs:
     make_text(name, text, make_root(name), size, width, (.91, .96, .98))
 
-# Export the uncompressed, triangle-ordered arc before the compressed artwork.
-# Blender's glTF exporter can change view-layer selection state after export,
-# so this isolated object must be exported first.
-bpy.ops.object.select_all(action='DESELECT')
-for name in ('TGDEVS_ARC', 'TGDEVS_ARC_MESH'):
-    obj = bpy.data.objects.get(name)
-    if obj is None:
-        raise RuntimeError(f'The Blender scene is missing arc object {name}.')
-    obj.select_set(True)
-bpy.context.view_layer.objects.active = bpy.data.objects['TGDEVS_ARC']
-bpy.ops.export_scene.gltf(filepath=os.path.join(OUT, 'site_arc_r1.glb'), export_format='GLB', use_selection=True,
-                          export_apply=True, export_draco_mesh_compression_enable=False)
-
-# Export just the named, Blender-authored artwork hierarchy. The canonical
-# source collections remain editable in the .blend but are not duplicated here.
-bpy.ops.object.select_all(action='DESELECT')
-for obj in art_collection.objects:
-    if obj.name not in {'TGDEVS_ARC', 'TGDEVS_ARC_MESH'}:
-        obj.select_set(True)
-bpy.context.view_layer.objects.active = tg_mark
-bpy.ops.export_scene.gltf(filepath=ARTWORK, export_format='GLB', use_selection=True,
-                          export_apply=True, export_draco_mesh_compression_enable=True,
-                          export_draco_mesh_compression_level=6)
-
 # The custom-property curves are intentionally named after visible scene
 # controls. Artists can edit them in Blender's Graph Editor; the exporter
 # samples those same curves for deterministic, scroll-scrubbable WebGPU playback.
@@ -474,28 +446,6 @@ if control.animation_data and control.animation_data.action:
         for point in curve.keyframe_points:
             point.interpolation = 'LINEAR'
 
-tracks = {key: [] for key in channels}
-for frame in range(1001):
-    scene.frame_set(frame)
-    for key in channels:
-        tracks[key].append(round(float(control[key]), 7))
-manifest = {
-    'schema': 'tgdevs.webgpu.scene-timeline.v1',
-    'authoring': 'Blender 5.2 • TGDevs WebGPU Scroll Master',
-    'fps': scene.render.fps,
-    'frameStart': 0,
-    'frameEnd': 1000,
-    'scroll': {'start': 0, 'end': 1, 'frameExpression': 'scroll * 1000', 'trackHeightPx': 5268},
-    'settings': {'particleSpreadExtent': float(scene['particle_spread_extent']),
-                 'particleOrbRadius': float(scene['particle_orb_radius']),
-                 'particleOrbOpacity': float(scene['particle_orb_opacity'])},
-    'tracks': tracks,
-    'markers': [{'label': label, 'frame': round(position / .439 * 1000)}
-                for label, position in markers],
-}
-with open(TIMELINE, 'w', encoding='utf-8') as stream:
-    json.dump(manifest, stream, separators=(',', ':'))
-
 # Blender-authored seeds and layout attributes for the two moving wave sheets.
 def seeded(number):
     value = math.sin(number * 12.9898 + 78.233) * 43758.5453
@@ -517,19 +467,13 @@ for index in range(particle_count):
     attributes['wave_depth'].data[index].value = seeded(index * 5.731 + .31)
     attributes['wave_layer'].data[index].value = float(index % 2)
     attributes['wave_seed'].data[index].value = seeded(index * 11.17 + .7)
-with open(PARTICLES, 'wb') as stream:
-    stream.write(struct.pack('<4sHH', b'TGWF', 1, particle_count))
-    for index in range(particle_count):
-        stream.write(struct.pack('<4f',
-            attributes['wave_u'].data[index].value,
-            attributes['wave_depth'].data[index].value,
-            attributes['wave_layer'].data[index].value,
-            attributes['wave_seed'].data[index].value,
-        ))
-
 scene.frame_set(0)
 bpy.context.window.scene = scene
+import sys
+sys.path.insert(0, os.path.dirname(__file__))
+from morph_targets import embed_targets
+embed_targets(OUT)
 bpy.ops.wm.save_as_mainfile(filepath=MASTER)
 print('SITE_MASTER', MASTER)
-print('SITE_TIMELINE', TIMELINE, 'tracks', len(tracks), 'frames', 1001)
-print('SITE_PARTICLES', PARTICLES, 'points', particle_count)
+print('SITE_TIMELINE_READY', len(channels), 'channels and', len(scene.timeline_markers), 'markers')
+print('SITE_PARTICLE_SOURCE_READY', particle_count, 'points')

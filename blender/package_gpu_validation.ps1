@@ -13,13 +13,10 @@ $Files = @(
   'index.html', 'site-webgpu.js', 'site-webgpu.css',
   'vendor\webgpu\THREE-LICENSE.txt', 'vendor\webgpu\three.core.min.js',
   'vendor\webgpu\three.tsl.min.js', 'vendor\webgpu\three.webgpu.min.js',
-  'vendor\webgpu\addons\loaders\DRACOLoader.js', 'vendor\webgpu\addons\loaders\GLTFLoader.js',
+  'vendor\webgpu\addons\loaders\GLTFLoader.js',
   'vendor\webgpu\addons\utils\BufferGeometryUtils.js',
-  'vendor\webgpu\draco\draco_wasm_wrapper.js', 'vendor\webgpu\draco\draco_decoder.wasm',
   'blender\assets\tgdevs-favicon-r3.png', 'blender\assets\tgbc-favicon-r2.png',
-  'blender\assets\site_artwork_r1.glb', 'blender\assets\site_arc_r1.glb',
-  'blender\assets\tgdevsMark-points-r2.bin', 'blender\assets\tgbcMark-points-r2.bin',
-  'blender\assets\site_timeline_r1.json', 'blender\assets\site_particles_r1.bin',
+  'blender\assets\tgdevs_universe_r1.glb',
   'blender\GPU_VALIDATION_README.md'
 )
 foreach ($RelativePath in $Files) {

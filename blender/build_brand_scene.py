@@ -1,10 +1,9 @@
 import bpy, os, re, json, math, struct
 ROOT=os.path.abspath(os.path.join(os.path.dirname(__file__),'..')); OUT=os.path.join(ROOT,'blender','assets'); os.makedirs(OUT,exist_ok=True)
-TGDEVS_ORIGINAL=os.path.abspath(os.path.join(ROOT,'..','TGDevs','public'))
+TGDEVS_ORIGINAL=ROOT
 TGDEVS_FAVICON=os.path.join(ROOT,'blender','sources','tgdevs-favicon-full-r3.png')
 TGDEVS_SVG_SOURCE=os.path.join(TGDEVS_ORIGINAL,'brandSvgSource-r1.js')
-TGBC_ORIGINAL=os.path.join(os.path.expanduser('~'),'Documents','TGBC-FULL','TGBusinessCenter')
-TGBC_WORDMARK=os.path.join(TGBC_ORIGINAL,'logo-fav','logotext-dark.png')
+TGBC_WORDMARK=os.path.join(ROOT,'blender','sources','tgbc-wordmark-dark.png')
 TGBC_FAVICON=os.path.join(ROOT,'blender','sources','tgbc-favicon-r2-source.png')
 TGDEVS_ARC_LAYER=os.path.join(ROOT,'blender','sources','tgdevs-favicon-arc-r3.png')
 TGDEVS_GEAR_LAYER=os.path.join(ROOT,'blender','sources','tgdevs-favicon-gear-r3.png')

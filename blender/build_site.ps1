@@ -8,8 +8,8 @@ $SiteMaster = Join-Path $ProjectRoot 'blender\assets\tgdevs_site_experience_r1.b
 $AssetsDir = Join-Path $ProjectRoot 'blender\assets'
 $TgdevsLogoSource = Join-Path $PSScriptRoot 'sources\tgdevs-logo-current.png'
 $TgdevsFaviconSource = Join-Path $PSScriptRoot 'sources\tgdevs-favicon-full-r3.png'
-$TgbcFaviconSource = Join-Path $env:USERPROFILE 'Documents\TGBC-FULL\TGBusinessCenter\logo-fav\fav.png'
-$TgbcFaviconCrop = Join-Path $PSScriptRoot 'sources\tgbc-favicon-r2-source.png'
+$TgbcFaviconSource = Join-Path $PSScriptRoot 'sources\tgbc-favicon-original.png'
+$TgbcFaviconCrop = Join-Path $AssetsDir 'tgbc-favicon-build-crop.png'
 
 if (-not (Test-Path -LiteralPath $BlenderPath)) { throw "Blender not found: $BlenderPath" }
 if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) { throw 'ffmpeg is required for image conversion and JPEG export.' }
@@ -22,23 +22,18 @@ if ($LASTEXITCODE -ne 0) { throw 'TGBC favicon crop failed.' }
 
 Push-Location $ProjectRoot
 try {
-  # Keep the default localhost preview in sync with each local Blender build.
-  & $BlenderPath --background --python blender\build_brand_scene.py
-  if ($LASTEXITCODE -ne 0) { throw 'Blender scene build failed.' }
-
-  & $BlenderPath --background $BlendFile --python blender\export_brand_parts.py
-  if ($LASTEXITCODE -ne 0) { throw 'Blender GLB export failed.' }
-
   if ($RebuildSiteMaster -or -not (Test-Path -LiteralPath $SiteMaster)) {
+    # The brand scene is a transient construction input; only the site master
+    # remains as the editable .blend source in this repository.
+    & $BlenderPath --background --python blender\build_brand_scene.py
+    if ($LASTEXITCODE -ne 0) { throw 'Blender source geometry build failed.' }
+
     & $BlenderPath --background $BlendFile --python blender\build_site_experience.py
     if ($LASTEXITCODE -ne 0) { throw 'Blender site scene build failed.' }
   }
 
   & $BlenderPath --background $SiteMaster --python blender\export_site_artifacts.py
   if ($LASTEXITCODE -ne 0) { throw 'Blender site artifact export failed.' }
-
-  & $BlenderPath --background $BlendFile --python blender\render_tgdevs_favicon.py
-  if ($LASTEXITCODE -ne 0) { throw 'Blender favicon render failed.' }
 
   & ffmpeg -hide_banner -loglevel error -y -i $TgdevsFaviconSource -vf 'scale=512:512:force_original_aspect_ratio=decrease:flags=lanczos,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=0x00000000' -frames:v 1 (Join-Path $AssetsDir 'tgdevs-favicon-r3.png')
   if ($LASTEXITCODE -ne 0) { throw 'Canonical TGDevs favicon PNG creation failed.' }
@@ -47,9 +42,6 @@ try {
 
   & ffmpeg -hide_banner -loglevel error -y -f lavfi -i 'color=c=0x030607:s=1200x630' -i $TgdevsLogoSource -filter_complex '[1:v]scale=1100:-1:flags=lanczos[logo];[0:v][logo]overlay=(W-w)/2:(H-h)/2:format=auto' -frames:v 1 -q:v 2 -pix_fmt yuvj444p (Join-Path $AssetsDir 'tgdevs-og-r2.jpg')
   if ($LASTEXITCODE -ne 0) { throw 'Social preview JPEG optimization failed.' }
-
-  $FaviconRender = Join-Path $AssetsDir 'tgdevs-favicon-render-r2.png'
-  Remove-Item -LiteralPath $FaviconRender
 
   Get-Item (Join-Path $AssetsDir 'tgdevs-favicon-r3.png'), (Join-Path $AssetsDir 'tgbc-favicon-r2.png'), (Join-Path $AssetsDir 'tgdevs-og-r2.jpg') |
     Select-Object Name, Length

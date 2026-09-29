@@ -1,21 +1,23 @@
-"""Export the active, editable Blender site scene to static browser assets.
+"""Export the active Blender scene as one self-contained WebGPU GLB.
 
 Run against blender/assets/tgdevs_site_experience_r1.blend after editing its
-named timeline curves or modular artwork.
+named timeline curves or modular artwork. Timeline, particle layout and logo
+morph samples are packed into the GLB asset extras alongside all visible meshes.
 """
 import bpy
+import base64
 import json
 import os
 import struct
+import sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 OUT = os.path.join(ROOT, 'blender', 'assets')
-TIMELINE = os.path.join(OUT, 'site_timeline_r1.json')
-PARTICLES = os.path.join(OUT, 'site_particles_r1.bin')
-ARTWORK = os.path.join(OUT, 'site_artwork_r1.glb')
-ARC_ARTWORK = os.path.join(OUT, 'site_arc_r1.glb')
+UNIVERSE = os.path.join(OUT, 'tgdevs_universe_r1.glb')
 
 scene = bpy.context.scene
+sys.path.insert(0, os.path.dirname(__file__))
+from morph_targets import embed_targets, encode_target
 control = bpy.data.objects.get('TIMELINE • Scroll-controlled scene state')
 if scene.name != 'TGDevs • WebGPU Scroll Master' or control is None:
     raise RuntimeError('Open tgdevs_site_experience_r1.blend before exporting site artifacts.')
@@ -25,6 +27,11 @@ if art_collection is None:
 particle_object = bpy.data.objects.get('WEBGPU • two-sheet particle source • 16,000 points')
 if particle_object is None or particle_object.type != 'MESH':
     raise RuntimeError('The Blender scene is missing its editable particle source mesh.')
+targets = {name: bpy.data.objects.get(name) for name in ('TGDEVS • particle morph target', 'TGBC • particle morph target')}
+if any(target is None for target in targets.values()):
+    embed_targets(OUT)
+    bpy.ops.wm.save_as_mainfile(filepath=bpy.data.filepath)
+    targets = {name: bpy.data.objects.get(name) for name in ('TGDEVS • particle morph target', 'TGBC • particle morph target')}
 
 channels = sorted(key for key, value in control.items() if isinstance(value, (int, float)))
 if not channels:
@@ -52,9 +59,6 @@ manifest = {
     'tracks': tracks,
     'markers': [{'label': marker.name, 'frame': marker.frame} for marker in scene.timeline_markers],
 }
-with open(TIMELINE, 'w', encoding='utf-8') as stream:
-    json.dump(manifest, stream, separators=(',', ':'))
-
 mesh = particle_object.data
 attributes = {name: mesh.attributes.get(name) for name in ('wave_u', 'wave_depth', 'wave_layer', 'wave_seed')}
 if any(attribute is None or len(attribute.data) != len(mesh.vertices) for attribute in attributes.values()):
@@ -62,31 +66,50 @@ if any(attribute is None or len(attribute.data) != len(mesh.vertices) for attrib
 count = len(mesh.vertices)
 if count > 65535:
     raise RuntimeError('The current compact particle format supports at most 65,535 points.')
-with open(PARTICLES, 'wb') as stream:
-    stream.write(struct.pack('<4sHH', b'TGWF', 1, count))
-    for index in range(count):
-        stream.write(struct.pack('<4f', *(attributes[name].data[index].value for name in ('wave_u', 'wave_depth', 'wave_layer', 'wave_seed'))))
+particle_bytes = bytearray()
+particle_bytes.extend(struct.pack('<4sHH', b'TGWF', 1, count))
+for index in range(count):
+    particle_bytes.extend(struct.pack('<4f', *(attributes[name].data[index].value for name in ('wave_u', 'wave_depth', 'wave_layer', 'wave_seed'))))
 
+# Export every visible module, including the progressive arc, into one scene.
+# Draco is disabled because it may reorder arc triangles and break drawRange.
 bpy.ops.object.select_all(action='DESELECT')
 for obj in art_collection.objects:
-    if obj.name not in {'TGDEVS_ARC', 'TGDEVS_ARC_MESH'}:
+    if obj != particle_object:
         obj.select_set(True)
 if not art_collection.objects:
     raise RuntimeError('The Blender website artwork collection is empty.')
-bpy.context.view_layer.objects.active = art_collection.objects[0]
-bpy.ops.export_scene.gltf(filepath=ARTWORK, export_format='GLB', use_selection=True,
-                          export_apply=True, export_draco_mesh_compression_enable=True,
-                          export_draco_mesh_compression_level=6)
-bpy.ops.object.select_all(action='DESELECT')
-for name in ('TGDEVS_ARC', 'TGDEVS_ARC_MESH'):
-    obj = bpy.data.objects.get(name)
-    if obj is None:
-        raise RuntimeError(f'The Blender scene is missing arc object {name}.')
-    obj.select_set(True)
-bpy.context.view_layer.objects.active = bpy.data.objects['TGDEVS_ARC']
-bpy.ops.export_scene.gltf(filepath=ARC_ARTWORK, export_format='GLB', use_selection=True,
-                          export_apply=True, export_draco_mesh_compression_enable=False)
-print('EXPORTED_SITE_ARTWORK', ARTWORK, os.path.getsize(ARTWORK))
-print('EXPORTED_SITE_ARC', ARC_ARTWORK, os.path.getsize(ARC_ARTWORK))
-print('EXPORTED_SITE_TIMELINE', TIMELINE, len(tracks), 'tracks', frame_end - frame_start + 1, 'frames')
-print('EXPORTED_SITE_PARTICLES', PARTICLES, count, 'points')
+bpy.context.view_layer.objects.active = bpy.data.objects.get('TGDEVS_MARK') or art_collection.objects[0]
+bpy.ops.export_scene.gltf(filepath=UNIVERSE, export_format='GLB', use_selection=True,
+                          export_apply=True, export_extras=True,
+                          export_draco_mesh_compression_enable=False)
+
+# Store nonstandard WebGPU data in glTF asset.extras. It remains part of the
+# same GLB download and is ignored safely by ordinary glTF viewers.
+extras = {
+    'schema': 'tgdevs.webgpu.universe.v1',
+    'timeline': manifest,
+    'particleLayout': base64.b64encode(particle_bytes).decode('ascii'),
+    'tgdevsMarkPoints': base64.b64encode(encode_target(targets['TGDEVS • particle morph target'])).decode('ascii'),
+    'tgbcMarkPoints': base64.b64encode(encode_target(targets['TGBC • particle morph target'])).decode('ascii'),
+}
+with open(UNIVERSE, 'rb') as stream:
+    source = stream.read()
+if source[:4] != b'glTF' or struct.unpack_from('<I', source, 4)[0] != 2:
+    raise RuntimeError('Blender did not produce a valid GLB 2.0 file.')
+json_length, json_type = struct.unpack_from('<II', source, 12)
+if json_type != 0x4E4F534A:
+    raise RuntimeError('GLB JSON chunk is missing or malformed.')
+document = json.loads(source[20:20 + json_length].decode('utf-8').rstrip(' \t\r\n\0'))
+document.setdefault('asset', {}).setdefault('extras', {})['tgdevs'] = extras
+json_chunk = json.dumps(document, separators=(',', ':'), ensure_ascii=False).encode('utf-8')
+json_chunk += b' ' * ((-len(json_chunk)) % 4)
+rest = source[20 + json_length:]
+packed = struct.pack('<4sII', b'glTF', 2, 12 + 8 + len(json_chunk) + len(rest))
+packed += struct.pack('<II', len(json_chunk), 0x4E4F534A) + json_chunk + rest
+with open(UNIVERSE, 'wb') as stream:
+    stream.write(packed)
+
+print('EXPORTED_SITE_UNIVERSE', UNIVERSE, os.path.getsize(UNIVERSE))
+print('PACKED_TIMELINE', len(channels), 'tracks', frame_end - frame_start + 1, 'frames')
+print('PACKED_PARTICLES', count, 'points and two 7,200-point logo morph targets')

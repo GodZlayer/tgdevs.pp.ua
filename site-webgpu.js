@@ -1,7 +1,6 @@
 import * as THREE from 'three/webgpu';
 import { attribute, color, cos, max, mix, sin, smoothstep, sqrt, uniform, vec3 } from 'three/tsl';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
 const canvas=document.querySelector('#world');
 const status=document.querySelector('#status');
@@ -29,14 +28,25 @@ const key=new THREE.DirectionalLight(0xc6f1ff,3.5);key.position.set(-4,6,9);scen
 const rim=new THREE.PointLight(0x00d9c6,36,30,2);rim.position.set(5,-2,5);scene.add(rim);
 
 const world=new THREE.Group();scene.add(world);
-const loader=new GLTFLoader(),draco=new DRACOLoader();draco.setDecoderPath('./vendor/webgpu/draco/');loader.setDRACOLoader(draco);
-const artworkGLTF=await loader.loadAsync('./blender/assets/site_artwork_r1.glb?v=9'),artwork=artworkGLTF.scene;world.add(artwork);
-const arcGLTF=await loader.loadAsync('./blender/assets/site_arc_r1.glb?v=6');world.add(arcGLTF.scene);
+const loader=new GLTFLoader();
+const universeGLTF=await loader.loadAsync('./blender/assets/tgdevs_universe_r1.glb?v=1'),artwork=universeGLTF.scene;world.add(artwork);
+const universe=universeGLTF.parser.json.asset?.extras?.tgdevs;
+if(universe?.schema!=='tgdevs.webgpu.universe.v1'||!universe.timeline||!universe.particleLayout||!universe.tgdevsMarkPoints||!universe.tgbcMarkPoints)throw new Error('O GLB TGDevs não contém a cena completa e seus dados de timeline.');
+function decodeEmbeddedBase64(encoded){const binary=atob(encoded),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);return bytes.buffer;}
 const art=name=>{const object=world.getObjectByName(name);if(!object)throw new Error(`Objeto Blender ausente no export: ${name}`);return object;};
 const tgdevs={mark:art('TGDEVS_MARK'),arc:art('TGDEVS_ARC'),arcMesh:art('TGDEVS_ARC_MESH'),gear:art('TGDEVS_GEAR'),counter:art('TGDEVS_COUNTER'),counterHub:art('TGDEVS_COUNTER_HUB'),word:art('TGDEVS_WORD')};
 const tgbc={first:art('TGBC_MODULE_0'),steps:Array.from({length:6},(_,i)=>art(`TGBC_MODULE_${i+1}`)),center:art('TGBC_MODULE_CENTER'),word:art('TGBC_WORD')};
 const tgdevsWordBox=new THREE.Box3().setFromObject(tgdevs.word),tgdevsWordHeight=tgdevsWordBox.getSize(new THREE.Vector3()).y;
 const slogans=Array.from({length:4},(_,i)=>art(`SLOGAN_0${i+1}`)),leadText=art('TGBC_LEAD');
+// Preserve Blender-authored transforms as the base pose. Responsive framing
+// and animation are applied as offsets so artists can move/rotate/scale named
+// module roots in the .blend without having the browser reset those edits.
+const authoredRoots=[tgdevs.mark,tgdevs.arc,tgdevs.gear,tgdevs.counter,tgdevs.counterHub,tgdevs.word,tgbc.first,...tgbc.steps,tgbc.center,tgbc.word,...slogans,leadText];
+const authoredPose=new Map(authoredRoots.map(root=>[root.name,{position:root.position.clone(),quaternion:root.quaternion.clone(),scale:root.scale.clone()}]));
+const localZAxis=new THREE.Vector3(0,0,1),localYAxis=new THREE.Vector3(0,1,0);
+function posePosition(root,x=0,y=0,z=0){const base=authoredPose.get(root.name);root.position.set(base.position.x+x,base.position.y+y,base.position.z+z);}
+function poseScale(root,factor=1){root.scale.copy(authoredPose.get(root.name).scale).multiplyScalar(factor);}
+function poseRotation(root,axis,angle){root.quaternion.copy(authoredPose.get(root.name).quaternion).multiply(new THREE.Quaternion().setFromAxisAngle(axis,angle));}
 if(!tgdevs.arcMesh.geometry.index)throw new Error('Geometria segmentada do arco Blender sem índices');
 world.traverse(object=>{if(!object.isMesh)return;object.castShadow=false;object.receiveShadow=false;for(const material of(Array.isArray(object.material)?object.material:[object.material])){if(material){material.transparent=true;material.depthWrite=false;material.toneMapped=false;}}
   if(['TGDEVS_GEAR_ART','TGDEVS_ARC_MESH','TGDEVS_COUNTER_NEEDLE'].includes(object.name)){
@@ -45,13 +55,16 @@ world.traverse(object=>{if(!object.isMesh)return;object.castShadow=false;object.
   }
 });
 const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+const editorMode=new URLSearchParams(location.search).get('editor')==='timeline';
+const editorPanel=document.querySelector('#timelineEditor'),scrubber=document.querySelector('#timelineScrubber'),frameLabel=document.querySelector('#timelineFrameLabel'),markerLabel=document.querySelector('#timelineMarkerLabel'),markerNav=document.querySelector('#timelineMarkers');
+let previewFrame=0;
+if(editorMode){document.documentElement.classList.add('timeline-preview');editorPanel.hidden=false;document.title='Editor de timeline · TGDevs';}
 const smooth=t=>t*t*(3-2*t);
 const between=(p,a,b)=>smooth(clamp((p-a)/(b-a)));
 const compactLayout=()=>innerHeight>innerWidth||innerWidth/innerHeight<1.5;
-async function sampleBlenderVectorPoints(path,count){
-  const response=await fetch(path);if(!response.ok)throw new Error(`Falha ao carregar pontos vetoriais Blender: ${path}`);
-  const bytes=await response.arrayBuffer(),view=new DataView(bytes),header=14,record=11;
-  if(bytes.byteLength<header||view.getUint32(0,true)!==0x50564754||view.getUint16(4,true)!==1)throw new Error(`Arquivo de pontos vetoriais Blender inválido: ${path}`);
+function sampleBlenderVectorPoints(encoded,count){
+  const bytes=decodeEmbeddedBase64(encoded),view=new DataView(bytes),header=14,record=11;
+  if(bytes.byteLength<header||view.getUint32(0,true)!==0x50564754||view.getUint16(4,true)!==1)throw new Error('Fonte de pontos vetoriais Blender inválida dentro do GLB');
   const storedCount=view.getUint16(6,true),aspect=view.getFloat32(10,true);
   if(storedCount!==count||bytes.byteLength!==header+count*record)throw new Error(`Quantidade inesperada de pontos vetoriais Blender: ${storedCount}`);
   const positions=new Float32Array(count*3),rgb=new Float32Array(count*3);
@@ -89,10 +102,7 @@ function particleFitScale(samples,solids){
 }
 function setGroupOpacity(root,alpha){root.traverse(o=>{if(!o.isMesh)return;const materials=Array.isArray(o.material)?o.material:[o.material];for(const m of materials){if(!m)continue;m.transparent=true;m.opacity=alpha;m.depthWrite=alpha>.03;}});}
 const logoCount=7200;
-const [markA,markB]=await Promise.all([
-  sampleBlenderVectorPoints('./blender/assets/tgdevsMark-points-r2.bin?v=22',logoCount),
-  sampleBlenderVectorPoints('./blender/assets/tgbcMark-points-r2.bin?v=22',logoCount)
-]);
+const [markA,markB]=[sampleBlenderVectorPoints(universe.tgdevsMarkPoints,logoCount),sampleBlenderVectorPoints(universe.tgbcMarkPoints,logoCount)];
 // Blender's image pixel rows start at the bottom; the TGDevs source sampler
 // stored them with the image-space Y direction, so flip only that particle
 // source into the same upright world coordinates used by the solid favicon.
@@ -124,7 +134,7 @@ for(const node of [tgdevs.mark,tgdevs.arc,tgdevs.counter,tgdevs.counterHub,tgdev
 
 // Blender authors the deterministic seed/layout fields; TSL evaluates their
 // deformation per frame so the scroll can scrub backward without baking video.
-const particleResponse=await fetch('./blender/assets/site_particles_r1.bin?v=4');if(!particleResponse.ok)throw new Error('Dados de partículas Blender ausentes');const particleBuffer=await particleResponse.arrayBuffer(),particleView=new DataView(particleBuffer),particleCount=particleView.getUint16(6,true),particleHeader=8,particleStride=16;
+const particleBuffer=decodeEmbeddedBase64(universe.particleLayout),particleView=new DataView(particleBuffer),particleCount=particleView.getUint16(6,true),particleHeader=8,particleStride=16;
 if(particleView.getUint32(0,true)!==0x46574754||particleView.getUint16(4,true)!==1||particleBuffer.byteLength!==particleHeader+particleCount*particleStride)throw new Error('Dados de partículas Blender inválidos');
 const fieldCount=particleCount,fieldGeometry=new THREE.BufferGeometry(),waveU=new Float32Array(fieldCount),waveD=new Float32Array(fieldCount),waveLayer=new Float32Array(fieldCount),waveSeed=new Float32Array(fieldCount);
 for(let i=0;i<fieldCount;i++){const offset=particleHeader+i*particleStride;waveU[i]=particleView.getFloat32(offset,true);waveD[i]=particleView.getFloat32(offset+4,true);waveLayer[i]=particleView.getFloat32(offset+8,true);waveSeed[i]=particleView.getFloat32(offset+12,true);}
@@ -146,42 +156,46 @@ fieldMaterial.sizeNode=seed.mul(1.5).add(.65).mul(mix(1,.72,orbMorph));fieldMate
 const field=new THREE.Points(fieldGeometry,fieldMaterial);field.frustumCulled=false;scene.add(field);
 
 const progressBar=document.querySelector('#progress'),hint=document.querySelector('#scrollHint');
-const timelineResponse=await fetch('./blender/assets/site_timeline_r1.json?v=38');if(!timelineResponse.ok)throw new Error('Timeline Blender ausente');const sceneTimeline=await timelineResponse.json();
+const sceneTimeline=universe.timeline;
 orbSpreadExtent.value=sceneTimeline.settings?.particleSpreadExtent??1.8;orbSphereRadius.value=sceneTimeline.settings?.particleOrbRadius??4.6;orbSphereOpacity.value=sceneTimeline.settings?.particleOrbOpacity??.95;
 document.documentElement.style.setProperty('--scroll-range',`${sceneTimeline.scroll.trackHeightPx}px`);
-function timelineValue(name,scroll){const track=sceneTimeline.tracks[name];if(!track)return 0;const frame=clamp(scroll)*sceneTimeline.frameEnd,index=Math.min(track.length-1,Math.floor(frame)),next=Math.min(track.length-1,index+1);return THREE.MathUtils.lerp(track[index],track[next],frame-index);}
+const timelineEnd=sceneTimeline.frameEnd-sceneTimeline.frameStart;
+function readFrame(){return editorMode?previewFrame:clamp(scrollY/Math.max(1,document.documentElement.scrollHeight-innerHeight))*timelineEnd;}
+function timelineValue(name,frame){const track=sceneTimeline.tracks[name];if(!track)return 0;const localFrame=clamp(frame,0,timelineEnd),index=Math.min(track.length-1,Math.floor(localFrame)),next=Math.min(track.length-1,index+1);return THREE.MathUtils.lerp(track[index],track[next],localFrame-index);}
+function formatFrame(frame){const seconds=frame/sceneTimeline.fps,minutes=Math.floor(seconds/60),wholeSeconds=Math.floor(seconds%60),subframe=Math.floor((seconds%1)*sceneTimeline.fps);return `${String(minutes).padStart(2,'0')}:${String(wholeSeconds).padStart(2,'0')}:${String(subframe).padStart(2,'0')}`;}
+function updateEditorUI(frame){if(!editorMode)return;const rounded=Math.round(frame);scrubber.value=String(rounded);frameLabel.textContent=formatFrame(rounded);const marker=sceneTimeline.markers.reduce((closest,item)=>Math.abs(item.frame-rounded)<Math.abs(closest.frame-rounded)?item:closest,sceneTimeline.markers[0]);markerLabel.textContent=marker?`${marker.label} · ${rounded}/${timelineEnd}`:`Frame ${rounded}`;}
+if(editorMode){scrubber.max=String(timelineEnd);for(const marker of sceneTimeline.markers){const button=document.createElement('button');button.type='button';button.textContent=marker.label;button.title=`Frame ${marker.frame}`;button.addEventListener('click',()=>{previewFrame=clamp(marker.frame,0,timelineEnd);updateEditorUI(previewFrame);request();});markerNav.append(button);}scrubber.addEventListener('input',()=>{previewFrame=Number(scrubber.value);updateEditorUI(previewFrame);request();});previewFrame=clamp(Number(new URLSearchParams(location.search).get('frame')||0),0,timelineEnd);updateEditorUI(previewFrame);}
 function resize(){const w=Math.max(1,innerWidth),h=Math.max(1,innerHeight),portrait=compactLayout(),cameraZ=portrait?12.4:10,cameraFov=portrait?32:34,portraitWorldScale=.74;renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=cameraFov;camera.position.z=cameraZ;camera.updateProjectionMatrix();
   // Scene 1 uses the original authored hero metrics: the favicon is centered
   // at the camera origin, unit scale on desktop, and .74 on portrait layouts.
   // Keep responsive changes in the camera framing instead of moving the mark.
   world.position.set(0,0,0);world.scale.setScalar(portrait?portraitWorldScale:1);
-  for(const root of [tgdevs.mark,tgdevs.arc,tgdevs.counter,tgdevs.counterHub])root.position.set(0,0,.1);
+  for(const root of [tgdevs.mark,tgdevs.arc,tgdevs.gear,tgdevs.counter,tgdevs.counterHub])posePosition(root,0,0,.1);
   // Both brand symbols share one authored center across the entire transition.
   // Keep the TGBC modules directly over the TGDevs favicon on desktop too.
-  for(const root of [...tgbc.steps,tgbc.first,tgbc.center])root.position.set(0,0,.1);
+  for(const root of [...tgbc.steps,tgbc.first,tgbc.center])posePosition(root,0,0,.1);
   const tgWordScale=portrait?Math.min(.66,3.05/5.3):Math.min(.92,3.1/5.3);
-  tgdevs.word.position.set(portrait?0:.42,portrait?-1.24-tgdevsWordHeight*tgWordScale/2:0,0);
-  tgdevs.word.scale.setScalar(tgWordScale);
-  tgbc.word.position.set(0,-1.48,0);
-  tgbc.word.scale.setScalar(portrait?.68:.68);
-  for(const root of [...slogans,leadText])root.position.z=.05;
+  posePosition(tgdevs.word,portrait?0:.42,portrait?-1.24-tgdevsWordHeight*tgWordScale/2:0,0);
+  poseScale(tgdevs.word,tgWordScale);
+  posePosition(tgbc.word,0,-1.48,0);
+  poseScale(tgbc.word,.68);
+  for(const root of [...slogans,leadText])posePosition(root,0,0,.05);
   field.geometry.setDrawRange(0,portrait?13000:16000);fieldPortrait.value=portrait?1:0;
 }
-async function render(){const maxScroll=Math.max(1,document.documentElement.scrollHeight-innerHeight),p=clamp(scrollY/maxScroll),portrait=compactLayout(),at=name=>timelineValue(name,p);
+async function render(){const frame=readFrame(),p=frame/Math.max(1,timelineEnd),portrait=compactLayout(),at=name=>timelineValue(name,frame);updateEditorUI(frame);
   const wordBuild=at('tgdevs_word_build'),orb=at('particle_orb_morph'),clockBuild=at('tgbc_assembly'),expand=at('particle_spread'),targetTextIn=at('tgbc_word_opacity');
   const logoVisible=at('tgdevs_mark_opacity');setGroupOpacity(tgdevs.mark,logoVisible);setGroupOpacity(tgdevs.gear,at('gear_opacity'));setGroupOpacity(tgdevs.arc,logoVisible);setGroupOpacity(tgdevs.counter,at('counter_opacity'));setGroupOpacity(tgdevs.counterHub,at('counter_opacity'));
   const arcProgress=at('ring_progress'),arcIndexCount=tgdevs.arcMesh.geometry.index.count;tgdevs.arcMesh.geometry.setDrawRange(0,Math.floor(arcIndexCount*arcProgress/3)*3);
-  tgdevs.gear.rotation.z=Math.PI*2*at('gear_turns_ccw');
+  poseRotation(tgdevs.gear,localZAxis,Math.PI*2*at('gear_turns_ccw'));
   // The aligned source needle points about 40° above +X. These offsets place
   // its tip at 7 o'clock first and 2 o'clock last, rotating around the hub.
-  const counterProgress=at('counter_progress');tgdevs.counter.rotation.z=THREE.MathUtils.lerp(-8*Math.PI/9,-37*Math.PI/18,counterProgress);
+  const counterProgress=at('counter_progress');poseRotation(tgdevs.counter,localZAxis,THREE.MathUtils.lerp(-8*Math.PI/9,-37*Math.PI/18,counterProgress));
   // Reveal the wordmark only in its clear lockup position. Sliding it out
   // from the gear made the two silhouettes pass through each other.
   const tgWordScale=portrait?Math.min(.66,3.05/5.3):Math.min(.92,3.1/5.3);
-  const wordFinalX=1.3+5.3*tgWordScale/2;tgdevs.word.position.x=portrait?0:wordFinalX;
-  if(portrait)tgdevs.word.position.y=-1.24-tgdevsWordHeight*tgWordScale/2;
+  const wordFinalX=1.3+5.3*tgWordScale/2;posePosition(tgdevs.word,portrait?0:wordFinalX,portrait?-1.24-tgdevsWordHeight*tgWordScale/2:0,0);
   setGroupOpacity(tgdevs.word,at('tgdevs_word_opacity'));
-  tgdevs.mark.rotation.y=at('tgdevs_yaw');
+  poseRotation(tgdevs.mark,localYAxis,at('tgdevs_yaw'));
   const dissolveOpacity=at('tgdevs_dissolve_opacity');
   const tgbcParticleProgress=at('tgbc_particle_progress'),tgbcParticleOpacity=at('tgbc_particle_opacity');
   tgdevsParticles.progress.value=1;tgdevsParticles.breakup.value=0;tgdevsParticles.fade.value=dissolveOpacity;
@@ -195,13 +209,13 @@ async function render(){const maxScroll=Math.max(1,document.documentElement.scro
   // the dissolving TGDevs favicon, independent of the responsive layout.
   tgbcParticles.points.position.set(0,0,.12);tgbcParticles.points.visible=tgbcParticleOpacity>.002;
   setGroupOpacity(tgbc.first,at('tgbc_first_opacity'));
-  tgbc.steps.forEach((step,i)=>{const local=at(`tgbc_module_${i+1}_progress`);setGroupOpacity(step,at(`tgbc_module_${i+1}_opacity`));step.scale.setScalar(.76+.24*local);});
-  const centerBuild=at('tgbc_center_build');setGroupOpacity(tgbc.center,at('tgbc_module_center_opacity'));tgbc.center.scale.setScalar(.76+.24*centerBuild);setGroupOpacity(tgbc.word,targetTextIn);
+  tgbc.steps.forEach((step,i)=>{const local=at(`tgbc_module_${i+1}_progress`);setGroupOpacity(step,at(`tgbc_module_${i+1}_opacity`));poseScale(step,.76+.24*local);});
+  const centerBuild=at('tgbc_center_build');setGroupOpacity(tgbc.center,at('tgbc_module_center_opacity'));poseScale(tgbc.center,.76+.24*centerBuild);setGroupOpacity(tgbc.word,targetTextIn);
   fieldFlow.value=at('particle_flow');fieldBuild.value=at('particle_reveal');orbMorph.value=orb;orbExpand.value=expand;fieldVisible.value=at('particle_opacity');particleLogoClear.value=Math.max(at('tgdevs_build'),at('tgbc_full_mark_opacity'));particleFocusX.value=0;particleFocusY.value=0;particleFocusRadius.value=1.24*(portrait?.74:world.scale.x);
   const gradientIn=at('background_opacity');sceneBackdrop.style.opacity=String(gradientIn);
   world.rotation.y=at('scene_yaw');progressBar.style.width=`${p*100}%`;progressBar.parentElement.style.opacity=String(p>0?1:0);status.style.opacity=String(p>0?1:0);hint.style.opacity=String(at('scroll_hint_opacity'));
-  const copyWidths=[3.4,2.6,4,3.6];slogans.forEach((root,i)=>{const alpha=at(`slogan_0${i+1}_opacity`),fit=portrait?Math.min(.95,4/copyWidths[i]):Math.min(1.15,4/copyWidths[i]);setGroupOpacity(root,alpha);root.position.set(0,portrait?2.38:2.28,-.08+.13*alpha);root.scale.setScalar(fit);});
-  setGroupOpacity(leadText,at('tgbc_lead_opacity'));const leadScale=portrait?1.05:.96;leadText.position.set(0,2.18,.05);leadText.scale.setScalar(leadScale);
+  const copyWidths=[3.4,2.6,4,3.6];slogans.forEach((root,i)=>{const alpha=at(`slogan_0${i+1}_opacity`),fit=portrait?Math.min(.95,4/copyWidths[i]):Math.min(1.15,4/copyWidths[i]);setGroupOpacity(root,alpha);posePosition(root,0,portrait?2.38:2.28,-.08+.13*alpha);poseScale(root,fit);});
+  setGroupOpacity(leadText,at('tgbc_lead_opacity'));const leadScale=portrait?1.05:.96;posePosition(leadText,0,2.18,.05);poseScale(leadText,leadScale);
   await renderer.renderAsync(scene,camera);status.textContent='PRÉVIA VISUAL TGDEVS';
 }
 let pending=false,renderDirty=false;
